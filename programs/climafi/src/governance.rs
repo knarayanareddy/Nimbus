@@ -22,6 +22,9 @@ use anchor_lang::prelude::*;
 use crate::errors::ClimaFiError;
 use crate::state::GlobalConfig;
 
+/// Maximum proposal age before it expires (7 days)
+pub const PROPOSAL_EXPIRY_SECS: i64 = 7 * 24 * 60 * 60;
+
 pub const MULTISIG_SEED: &[u8] = b"multisig";
 pub const MAX_AUTHORITIES: usize = 7;
 
@@ -107,6 +110,16 @@ pub fn handle_initialize_multisig(
     );
     require!(threshold >= 1, ClimaFiError::InvalidBps);
 
+    // Reject duplicate authorities — prevents single key from counting multiple times
+    for i in 0..authorities.len() {
+        for j in (i + 1)..authorities.len() {
+            require!(
+                authorities[i] != authorities[j],
+                ClimaFiError::InvalidBps
+            );
+        }
+    }
+
     multisig.threshold = threshold;
     multisig.num_authorities = authorities.len() as u8;
     multisig.proposal_nonce = 0;
@@ -174,7 +187,9 @@ pub fn handle_approve_proposal(
     Ok(())
 }
 
-/// Execute a proposal that has reached threshold
+/// Execute a proposal that has reached threshold.
+/// Anyone can call this (permissionless crank) once threshold is met and proposal
+/// has not expired. Expiry prevents stale proposals from executing after context changes.
 pub fn handle_execute_proposal(
     multisig: &MultisigConfig,
     proposal: &mut MultisigProposal,
@@ -184,6 +199,13 @@ pub fn handle_execute_proposal(
     require!(
         multisig.has_reached_threshold(&proposal.approvals),
         ClimaFiError::Unauthorized
+    );
+
+    // Proposal expiry: reject proposals older than 7 days
+    let now = Clock::get()?.unix_timestamp;
+    require!(
+        now - proposal.created_at <= PROPOSAL_EXPIRY_SECS,
+        ClimaFiError::TimelockNotReady
     );
 
     match &proposal.operation {

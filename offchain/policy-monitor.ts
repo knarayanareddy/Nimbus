@@ -17,6 +17,22 @@ import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
 import * as fs from 'fs';
 import { ClimaFiAlerting, AlertPayload } from './alerting';
 
+const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+/**
+ * Derives the associated token address for a given wallet and mint.
+ * Mirrors the SPL getAssociatedTokenAddress logic without requiring the
+ * @solana/spl-token dependency.
+ */
+function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
+  const [ata] = PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return ata;
+}
+
 const PROGRAM_ID = new PublicKey("CliMaFi1111111111111111111111111111111111111");
 const SETTLEMENT_COMPUTE_UNITS = 400_000;
 
@@ -250,11 +266,23 @@ export class PolicyMonitor {
       remainingAccounts.push({ pubkey: pda, isWritable: false, isSigner: false });
     }
 
-    // Get pool vault ATA
+    // Derive vault authority PDA and proper ATAs
     const [vaultAuth] = PublicKey.findProgramAddressSync(
       [Buffer.from("vault_auth"), new BN(policy.poolId).toArrayLike(Buffer, "le", 8)],
       PROGRAM_ID
     );
+
+    // Derive USDC ATAs for vault and policy owner
+    const configPda = PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID)[0];
+    const configAccount = await this.connection.getAccountInfo(configPda);
+    if (!configAccount) {
+      throw new Error('Config account not found');
+    }
+    // USDC mint is at offset 49 in GlobalConfig (disc:8 + admin:32 + paused:1 + usdc_mint starts at 41)
+    const usdcMint = new PublicKey(configAccount.data.subarray(41, 41 + 32));
+
+    const poolVaultUsdcAta = deriveAta(vaultAuth, usdcMint);
+    const policyOwnerUsdcAta = deriveAta(policy.owner, usdcMint);
 
     // Build transaction with compute budget
     const computeIx = ComputeBudgetProgram.setComputeUnitLimit({ units: SETTLEMENT_COMPUTE_UNITS });
@@ -262,20 +290,21 @@ export class PolicyMonitor {
     const settleIx = await this.program.methods
       .settlePolicy()
       .accounts({
-        config: PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID)[0],
+        config: configPda,
         pool: policy.pool,
         vaultAuth,
-        poolVaultUsdcAta: vaultAuth, // Simplified - in production derive ATA
+        poolVaultUsdcAta,
         policy: policy.pubkey,
         policyOwner: policy.owner,
-        policyOwnerUsdcAta: policy.owner, // Simplified - in production derive ATA
-        tokenProgram: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+        policyOwnerUsdcAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
       })
       .remainingAccounts(remainingAccounts)
       .instruction();
 
     const tx = new Transaction().add(computeIx, settleIx);
-    const sig = await this.program.provider.sendAndConfirm!(tx);
+    const provider = this.program.provider as import('@coral-xyz/anchor').AnchorProvider;
+    const sig = await provider.sendAndConfirm(tx);
 
     console.log(`[PolicyMonitor] Policy #${policy.policyId} settled: ${sig}`);
 

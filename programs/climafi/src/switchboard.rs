@@ -142,12 +142,18 @@ pub fn parse_switchboard_aggregator(
     // We want value * 100, so: (mantissa * 100) / 10^scale
     // Guard against unreasonable scale values (max 20 digits for i128 range)
     require!(scale <= 20, ClimaFiError::OracleUnauthorized);
-    let value_scaled = if scale == 0 {
-        (mantissa * 100) as i64
+    let result_i128 = if scale == 0 {
+        mantissa * 100
     } else {
         let divisor = 10i128.pow(scale);
-        ((mantissa * 100) / divisor) as i64
+        (mantissa * 100) / divisor
     };
+    // Reject values that would truncate on i64 cast (prevents oracle manipulation)
+    require!(
+        result_i128 >= i64::MIN as i128 && result_i128 <= i64::MAX as i128,
+        ClimaFiError::OracleUnauthorized
+    );
+    let value_scaled = result_i128 as i64;
 
     Ok(SwitchboardResult {
         value_scaled,
