@@ -3,7 +3,6 @@
 //! This ensures settlement logic is deterministic and correct across all inputs.
 
 use proptest::prelude::*;
-use climafi::state::{Peril, TriggerDirection, IndexMethod};
 
 proptest! {
     #[test]
