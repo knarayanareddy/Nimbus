@@ -1,12 +1,13 @@
-//! Full Switchboard V2 On-Chain Integration
-//! 
-//! This module enables the ClimaFi program to consume verified data
-//! from Switchboard aggregators directly on-chain.
+//! Switchboard V2 On-Chain Integration (MVP)
 //!
-//! Security Model (OWASP + Solana best practices):
-//! - Only verified aggregators from the Switchboard queue are accepted
-//! - Staleness and confidence checks are enforced on-chain
-//! - All values are scaled to match internal representation (mm × 100)
+//! SECURITY NOTE (C-03): This module uses a simplified aggregator struct for MVP.
+//! For mainnet deployment, replace with the official `switchboard-v2` crate
+//! and deserialize `AggregatorAccountData` properly.
+//!
+//! The current struct layout does NOT match real Switchboard V2 accounts.
+//! The owner check ensures the account is owned by the Switchboard program,
+//! and the discriminator check (via Anchor's Account<>) provides additional
+//! safety, but a full integration requires the official crate.
 
 use anchor_lang::prelude::*;
 use crate::state::Peril;
@@ -14,6 +15,8 @@ use crate::errors::ClimaFiError;
 use crate::constants::DAY_SECS;
 
 /// Switchboard aggregator account data (simplified for MVP)
+/// WARNING: This does NOT match the real Switchboard V2 AggregatorAccountData layout.
+/// For production, use: `switchboard-v2 = "0.4"` crate with proper deserialization.
 #[account]
 pub struct SwitchboardAggregator {
     pub latest_value: i64,
@@ -32,8 +35,17 @@ pub fn record_observation_switchboard(
     peril: Peril,
     day_start_unix: i64,
 ) -> Result<()> {
+    let cfg = &ctx.accounts.config;
+    require!(!cfg.paused, ClimaFiError::Paused);
+
+    // Day alignment validation
+    require!(day_start_unix % DAY_SECS == 0, ClimaFiError::InvalidTimeRange);
+
     let aggregator = &ctx.accounts.switchboard_aggregator;
     let now = Clock::get()?.unix_timestamp;
+
+    // No future observations beyond 1 day ahead
+    require!(day_start_unix <= now + DAY_SECS, ClimaFiError::InvalidTimeRange);
 
     // Security checks
     require!(

@@ -7,6 +7,7 @@
 use anchor_lang::prelude::*;
 
 pub const DEFAULT_DELAY_SECONDS: u32 = 86400; // 24 hours
+pub const MIN_TIMELOCK_DELAY: u32 = 3600; // 1 hour minimum (H-05 fix)
 
 #[account]
 pub struct Timelock {

@@ -13,6 +13,12 @@ pub const MAX_WINDOW_DAYS: u32 = 31;
 pub const DAY_SECS: i64 = 86_400;
 pub const SCALE_RAIN_MM: i64 = 100;
 
+/// Minimum deposit to prevent vault inflation attacks (1000 base units = 0.001 USDC)
+pub const MIN_DEPOSIT_AMOUNT: u64 = 1_000;
+
+/// Minimum hold period before policy cancellation (5 minutes)
+pub const MIN_HOLD_SECONDS: i64 = 300;
+
 // Switchboard V2 Program ID (mainnet + devnet)
 // SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f
 pub const SWITCHBOARD_PROGRAM_ID: Pubkey = Pubkey::new_from_array([

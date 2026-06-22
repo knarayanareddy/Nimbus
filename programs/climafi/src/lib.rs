@@ -14,7 +14,6 @@ pub mod timelock;
 pub mod nonce;
 pub mod reentrancy;
 pub mod economic_safety;
-pub mod withdraw;
 pub mod compute;
 
 use state::*;
@@ -23,7 +22,7 @@ use errors::ClimaFiError;
 use economic_safety::*;
 use reentrancy::assert_no_cpi_in_transaction;
 use nonce::{QuoteNonce, QUOTE_NONCE_SEED, validate_and_increment_nonce};
-use timelock::{Timelock, AdminOperation, PendingOperation};
+use timelock::{Timelock, AdminOperation, PendingOperation, MIN_TIMELOCK_DELAY};
 
 #[program]
 pub mod climafi {
@@ -100,6 +99,9 @@ pub mod climafi {
     pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<()> {
         let cfg = &ctx.accounts.config;
         require!(!cfg.paused, ClimaFiError::Paused);
+
+        // M-02 fix: minimum deposit to prevent inflation attacks
+        require!(amount >= MIN_DEPOSIT_AMOUNT, ClimaFiError::InvalidBps);
 
         let pool = &mut ctx.accounts.pool;
         let capital_before = pool.capital;
@@ -375,6 +377,12 @@ pub mod climafi {
         require!(ctx.accounts.owner.key() == policy.owner, ClimaFiError::Unauthorized);
         require!(now < policy.window_start_unix, ClimaFiError::PolicyCancellationNotAllowed);
 
+        // H-06 fix: minimum hold period (5 minutes) to prevent gaming
+        require!(
+            now >= policy.created_at_unix + MIN_HOLD_SECONDS,
+            ClimaFiError::PolicyCancellationNotAllowed
+        );
+
         // Unlock pool exposure
         let pool = &mut ctx.accounts.pool;
         pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
@@ -456,9 +464,16 @@ pub mod climafi {
 
         let signer = ctx.accounts.oracle.key();
         require!(
-            signer == cfg.oracle_authority || signer == cfg.admin,
+            signer == cfg.oracle_authority,
             ClimaFiError::OracleUnauthorized
         );
+
+        // Day alignment: day_start_unix must be midnight-aligned
+        require!(day_start_unix % DAY_SECS == 0, ClimaFiError::InvalidTimeRange);
+
+        // No future observations beyond 1 day ahead
+        let now = Clock::get()?.unix_timestamp;
+        require!(day_start_unix <= now + DAY_SECS, ClimaFiError::InvalidTimeRange);
 
         let obs = &mut ctx.accounts.observation;
         obs.region_id = region_id;
@@ -466,7 +481,7 @@ pub mod climafi {
         obs.day_start_unix = day_start_unix;
         obs.day_end_unix = day_start_unix + DAY_SECS;
         obs.value = value;
-        obs.published_at_unix = Clock::get()?.unix_timestamp;
+        obs.published_at_unix = now;
         obs.oracle_authority = signer;
         obs.sources_bitmap = sources_bitmap;
         obs.agg_method = 0;
@@ -506,7 +521,7 @@ pub mod climafi {
         let now = Clock::get()?.unix_timestamp;
         require!(now >= policy.window_end_unix, ClimaFiError::PolicyWindowNotEnded);
 
-        // Validate policy owner
+        // Validate policy owner is the signer (C-01 fix)
         require!(ctx.accounts.policy_owner.key() == policy.owner, ClimaFiError::Unauthorized);
 
         let pool = &mut ctx.accounts.pool;
@@ -519,6 +534,7 @@ pub mod climafi {
 
         let program_id = crate::ID;
         let mut sum: i64 = 0;
+        let mut max_val: i64 = i64::MIN;
 
         for (i, acc) in remaining.iter().enumerate() {
             // Account owner validation: must be owned by this program
@@ -541,9 +557,12 @@ pub mod climafi {
             require!(obs.published_at_unix <= staleness_limit, ClimaFiError::ObservationStale);
 
             sum = sum.checked_add(obs.value).ok_or(ClimaFiError::MathOverflow)?;
+            if obs.value > max_val {
+                max_val = obs.value;
+            }
         }
 
-        // Compute aggregate index based on method
+        // Compute aggregate index based on method (M-06 fix: single pass)
         let index_value = match policy.index_method {
             IndexMethod::Sum => sum,
             IndexMethod::Mean => {
@@ -553,16 +572,7 @@ pub mod climafi {
                     sum.checked_div(num_days as i64).ok_or(ClimaFiError::MathOverflow)?
                 }
             },
-            IndexMethod::Max => {
-                let mut max_val = i64::MIN;
-                for acc in remaining.iter() {
-                    let obs = ObservationSnapshot::try_deserialize(&mut &acc.data.borrow()[..])?;
-                    if obs.value > max_val {
-                        max_val = obs.value;
-                    }
-                }
-                max_val
-            },
+            IndexMethod::Max => max_val,
         };
 
         // Evaluate trigger
@@ -617,6 +627,12 @@ pub mod climafi {
     // ==================== TIMELOCK ====================
 
     pub fn init_timelock(ctx: Context<InitTimelockCtx>, delay_seconds: u32) -> Result<()> {
+        // H-05 fix: enforce minimum timelock delay
+        require!(delay_seconds >= MIN_TIMELOCK_DELAY, ClimaFiError::InvalidTimeRange);
+
+        let cfg = &ctx.accounts.config;
+        require!(ctx.accounts.admin.key() == cfg.admin, ClimaFiError::Unauthorized);
+
         let tl = &mut ctx.accounts.timelock;
         tl.admin = ctx.accounts.admin.key();
         tl.delay_seconds = delay_seconds;
@@ -754,9 +770,17 @@ fn verify_ed25519_ix(
     };
 
     let sig_offset = read_u16(header_start) as usize;
+    let sig_ix_idx = read_u16(header_start + 2);
     let pub_offset = read_u16(header_start + 4) as usize;
+    let pub_ix_idx = read_u16(header_start + 6);
     let msg_offset = read_u16(header_start + 8) as usize;
     let msg_size = read_u16(header_start + 10) as usize;
+    let msg_ix_idx = read_u16(header_start + 12);
+
+    // H-04 fix: validate all ix_idx fields point to same instruction (0xFFFF = embedded)
+    require!(sig_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
+    require!(pub_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
+    require!(msg_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
 
     require!(msg_size == message.len(), ClimaFiError::QuoteSigInvalid);
     require!(sig_offset + 64 <= data.len(), ClimaFiError::QuoteSigInvalid);
@@ -1003,7 +1027,8 @@ pub struct CancelPolicy<'info> {
     #[account(seeds = [CONFIG_SEED], bump)]
     pub config: Account<'info, GlobalConfig>,
 
-    #[account(mut)]
+    // H-03 fix: constrain pool matches policy.pool
+    #[account(mut, constraint = pool.key() == policy.pool @ ClimaFiError::PoolPerilMismatch)]
     pub pool: Account<'info, Pool>,
 
     /// CHECK: PDA
@@ -1055,7 +1080,8 @@ pub struct SettlePolicy<'info> {
     #[account(seeds = [CONFIG_SEED], bump)]
     pub config: Account<'info, GlobalConfig>,
 
-    #[account(mut)]
+    // M-01 fix: constrain pool matches policy.pool
+    #[account(mut, constraint = pool.key() == policy.pool @ ClimaFiError::PoolPerilMismatch)]
     pub pool: Account<'info, Pool>,
 
     /// CHECK: PDA
@@ -1068,10 +1094,11 @@ pub struct SettlePolicy<'info> {
     #[account(mut)]
     pub policy: Account<'info, Policy>,
 
-    /// CHECK: validated in handler against policy.owner
-    pub policy_owner: UncheckedAccount<'info>,
+    // C-01 fix: policy_owner must be a Signer to prevent unauthorized settlement
+    #[account(mut, constraint = policy_owner.key() == policy.owner @ ClimaFiError::Unauthorized)]
+    pub policy_owner: Signer<'info>,
 
-    #[account(mut)]
+    #[account(mut, constraint = policy_owner_usdc_ata.owner == policy.owner @ ClimaFiError::Unauthorized)]
     pub policy_owner_usdc_ata: Account<'info, TokenAccount>,
 
     /// CHECK: instructions sysvar
@@ -1087,6 +1114,10 @@ pub struct SettlePolicy<'info> {
 
 #[derive(Accounts)]
 pub struct InitTimelockCtx<'info> {
+    // H-01 fix: validate admin against config
+    #[account(seeds = [CONFIG_SEED], bump)]
+    pub config: Account<'info, GlobalConfig>,
+
     #[account(
         init,
         payer = admin,
@@ -1096,7 +1127,7 @@ pub struct InitTimelockCtx<'info> {
     )]
     pub timelock: Account<'info, Timelock>,
 
-    #[account(mut)]
+    #[account(mut, constraint = admin.key() == config.admin @ ClimaFiError::Unauthorized)]
     pub admin: Signer<'info>,
 
     pub system_program: Program<'info, System>,
