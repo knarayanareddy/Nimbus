@@ -48,11 +48,11 @@ pub fn should_trigger_circuit_breaker(pool: &Pool) -> bool {
     if pool.capital == 0 {
         return false;
     }
-    let utilization = pool.locked
-        .checked_mul(100)
-        .unwrap_or(0)
-        .checked_div(pool.capital)
-        .unwrap_or(0);
+    // If locked * 100 overflows u64, utilization is astronomically high — trigger breaker
+    let Some(locked_scaled) = pool.locked.checked_mul(100) else {
+        return true;
+    };
+    let utilization = locked_scaled / pool.capital;
 
     utilization > 90
 }

@@ -710,7 +710,10 @@ pub mod climafi {
         if let Some(admin) = new_tl_admin {
             tl.admin = admin;
         }
-        tl.pending_operation.as_mut().unwrap().executed = true;
+        tl.pending_operation
+            .as_mut()
+            .ok_or(error!(ClimaFiError::TimelockEmpty))?
+            .executed = true;
         Ok(())
     }
 
