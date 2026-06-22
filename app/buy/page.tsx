@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { createBuyPolicyTransaction, getConfigPda, PROGRAM_ID } from '../../lib/climafi'
+import { createBuyPolicyTransaction, getConfigPda, deserializeGlobalConfig, PROGRAM_ID } from '../../lib/climafi'
 import { PublicKey } from '@solana/web3.js'
 
 export default function BuyPolicy() {
@@ -61,11 +61,12 @@ export default function BuyPolicy() {
       const { quote: signedQuote, signature: sigBase64 } = await signRes.json()
       const signature = new Uint8Array(Buffer.from(sigBase64, 'base64'))
 
-      // 2. Fetch treasury ATA from on-chain config
+      // 2. Fetch treasury ATA from on-chain config using proper deserialization
       const configPda = getConfigPda()
       const configAccount = await connection.getAccountInfo(configPda)
-      // treasury_usdc_ata is at offset: 8(disc) + 32(admin) + 1(paused) + 32(usdc_mint) + 2(fee_bps) = 75
-      const treasuryUsdcAta = new PublicKey(configAccount!.data.slice(75, 75 + 32))
+      if (!configAccount) throw new Error('Config account not found on-chain')
+      const globalConfig = deserializeGlobalConfig(configAccount.data as Buffer)
+      const treasuryUsdcAta = globalConfig.treasuryUsdcAta
 
       // 3. Build and send real transaction
       const tx = await createBuyPolicyTransaction(

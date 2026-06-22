@@ -15,6 +15,7 @@ pub mod nonce;
 pub mod reentrancy;
 pub mod economic_safety;
 pub mod compute;
+pub mod governance;
 
 use state::*;
 use constants::*;
@@ -724,6 +725,51 @@ pub mod climafi {
         tl.pending_operation = None;
         Ok(())
     }
+
+    // ==================== MULTISIG GOVERNANCE ====================
+
+    pub fn initialize_multisig(
+        ctx: Context<InitializeMultisigCtx>,
+        threshold: u8,
+        authorities: Vec<Pubkey>,
+    ) -> Result<()> {
+        governance::handle_initialize_multisig(
+            &mut ctx.accounts.multisig,
+            ctx.accounts.admin.key(),
+            ctx.accounts.config.admin,
+            threshold,
+            authorities,
+            ctx.bumps.multisig,
+        )
+    }
+
+    pub fn create_governance_proposal(
+        ctx: Context<CreateProposalCtx>,
+        operation: governance::GovernanceOperation,
+    ) -> Result<()> {
+        governance::handle_create_proposal(
+            &mut ctx.accounts.multisig,
+            &mut ctx.accounts.proposal,
+            ctx.accounts.proposer.key(),
+            operation,
+        )
+    }
+
+    pub fn approve_governance_proposal(ctx: Context<ApproveProposalCtx>) -> Result<()> {
+        governance::handle_approve_proposal(
+            &ctx.accounts.multisig,
+            &mut ctx.accounts.proposal,
+            ctx.accounts.approver.key(),
+        )
+    }
+
+    pub fn execute_governance_proposal(ctx: Context<ExecuteProposalCtx>) -> Result<()> {
+        governance::handle_execute_proposal(
+            &ctx.accounts.multisig,
+            &mut ctx.accounts.proposal,
+            &mut ctx.accounts.config,
+        )
+    }
 }
 
 // ============================================================
@@ -1178,15 +1224,80 @@ pub struct RecordObservationSwitchboard<'info> {
     )]
     pub observation: Account<'info, ObservationSnapshot>,
 
-    #[account(constraint = switchboard_aggregator.to_account_info().owner == &SWITCHBOARD_PROGRAM_ID @ ClimaFiError::OracleUnauthorized)]
-    pub switchboard_aggregator: Account<'info, switchboard::SwitchboardAggregator>,
-
-    /// CHECK: Switchboard program ID
-    #[account(address = SWITCHBOARD_PROGRAM_ID)]
-    pub switchboard_program: UncheckedAccount<'info>,
+    /// CHECK: Validated in switchboard::parse_switchboard_aggregator (owner, size, discriminator, staleness)
+    #[account(constraint = switchboard_aggregator.owner == &SWITCHBOARD_PROGRAM_ID @ ClimaFiError::OracleUnauthorized)]
+    pub switchboard_aggregator: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub oracle: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+}
+
+// ============================================================
+// Multisig Governance Contexts
+// ============================================================
+#[derive(Accounts)]
+pub struct InitializeMultisigCtx<'info> {
+    #[account(seeds = [CONFIG_SEED], bump)]
+    pub config: Account<'info, GlobalConfig>,
+
+    #[account(
+        init,
+        payer = admin,
+        space = governance::MultisigConfig::LEN,
+        seeds = [governance::MULTISIG_SEED],
+        bump
+    )]
+    pub multisig: Account<'info, governance::MultisigConfig>,
+
+    #[account(mut, constraint = admin.key() == config.admin @ ClimaFiError::Unauthorized)]
+    pub admin: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CreateProposalCtx<'info> {
+    #[account(mut, seeds = [governance::MULTISIG_SEED], bump = multisig.bump)]
+    pub multisig: Account<'info, governance::MultisigConfig>,
+
+    #[account(
+        init,
+        payer = proposer,
+        space = governance::MultisigProposal::LEN,
+        seeds = [b"proposal", &multisig.proposal_nonce.to_le_bytes()],
+        bump
+    )]
+    pub proposal: Account<'info, governance::MultisigProposal>,
+
+    #[account(mut)]
+    pub proposer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ApproveProposalCtx<'info> {
+    #[account(seeds = [governance::MULTISIG_SEED], bump = multisig.bump)]
+    pub multisig: Account<'info, governance::MultisigConfig>,
+
+    #[account(mut)]
+    pub proposal: Account<'info, governance::MultisigProposal>,
+
+    pub approver: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ExecuteProposalCtx<'info> {
+    #[account(seeds = [governance::MULTISIG_SEED], bump = multisig.bump)]
+    pub multisig: Account<'info, governance::MultisigConfig>,
+
+    #[account(mut)]
+    pub proposal: Account<'info, governance::MultisigProposal>,
+
+    #[account(mut, seeds = [CONFIG_SEED], bump)]
+    pub config: Account<'info, GlobalConfig>,
+
+    pub executor: Signer<'info>,
 }

@@ -273,6 +273,91 @@ export async function createWithdrawTransaction(
     .transaction()
 }
 
+/**
+ * Deserialize GlobalConfig account data using proper struct layout.
+ * Layout (after 8-byte Anchor discriminator):
+ *   admin: Pubkey (32)
+ *   paused: bool (1)
+ *   usdc_mint: Pubkey (32)
+ *   protocol_fee_bps: u16 (2)
+ *   treasury_usdc_ata: Pubkey (32)
+ *   max_oracle_staleness_secs: u32 (4)
+ *   quote_signer: Pubkey (32)
+ *   oracle_authority: Pubkey (32)
+ *   min_policy_duration_secs: u32 (4)
+ *   max_policy_duration_secs: u32 (4)
+ *   version: u16 (2)
+ *   last_used_nonce: u64 (8)
+ */
+export interface GlobalConfigData {
+  admin: PublicKey
+  paused: boolean
+  usdcMint: PublicKey
+  protocolFeeBps: number
+  treasuryUsdcAta: PublicKey
+  maxOracleStaleness: number
+  quoteSigner: PublicKey
+  oracleAuthority: PublicKey
+  minPolicyDuration: number
+  maxPolicyDuration: number
+  version: number
+  lastUsedNonce: bigint
+}
+
+export function deserializeGlobalConfig(data: Buffer): GlobalConfigData {
+  let offset = 8 // Skip Anchor discriminator
+
+  const admin = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+
+  const paused = data[offset] !== 0
+  offset += 1
+
+  const usdcMint = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+
+  const protocolFeeBps = data.readUInt16LE(offset)
+  offset += 2
+
+  const treasuryUsdcAta = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+
+  const maxOracleStaleness = data.readUInt32LE(offset)
+  offset += 4
+
+  const quoteSigner = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+
+  const oracleAuthority = new PublicKey(data.subarray(offset, offset + 32))
+  offset += 32
+
+  const minPolicyDuration = data.readUInt32LE(offset)
+  offset += 4
+
+  const maxPolicyDuration = data.readUInt32LE(offset)
+  offset += 4
+
+  const version = data.readUInt16LE(offset)
+  offset += 2
+
+  const lastUsedNonce = data.readBigUInt64LE(offset)
+
+  return {
+    admin,
+    paused,
+    usdcMint,
+    protocolFeeBps,
+    treasuryUsdcAta,
+    maxOracleStaleness,
+    quoteSigner,
+    oracleAuthority,
+    minPolicyDuration,
+    maxPolicyDuration,
+    version,
+    lastUsedNonce,
+  }
+}
+
 export function getTimelockPda(): PublicKey {
   return PublicKey.findProgramAddressSync([Buffer.from('timelock')], PROGRAM_ID)[0]
 }
