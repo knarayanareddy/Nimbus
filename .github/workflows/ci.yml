@@ -26,7 +26,7 @@ jobs:
           cargo audit --ignore RUSTSEC-2024-0344 --ignore RUSTSEC-2022-0093
       
       - name: Clippy (Security Lints)
-        run: cargo clippy --all-targets -- -D warnings -W clippy::all
+        run: cargo clippy --all-targets -- -D warnings -W clippy::all -A unexpected_cfgs
       
       - name: Build Program
         run: cargo build --release

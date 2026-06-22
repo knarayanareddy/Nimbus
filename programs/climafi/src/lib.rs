@@ -3,7 +3,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Mint, Transfer, MintTo, Burn}
 use anchor_spl::associated_token::AssociatedToken;
 use solana_program::sysvar::instructions::load_instruction_at_checked;
 
-declare_id!("CliMaFi1111111111111111111111111111111111111");
+declare_id!("CLiMaFi1111111111111111111111111111111111111");
 
 pub mod state;
 pub mod constants;
@@ -24,7 +24,6 @@ use economic_safety::*;
 use reentrancy::assert_no_cpi_in_transaction;
 use nonce::{QuoteNonce, QUOTE_NONCE_SEED, validate_and_increment_nonce};
 use timelock::{Timelock, AdminOperation, PendingOperation};
-use switchboard::SwitchboardAggregator;
 
 #[program]
 pub mod climafi {

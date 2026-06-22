@@ -9,7 +9,7 @@
 //! - All values are scaled to match internal representation (mm × 100)
 
 use anchor_lang::prelude::*;
-use crate::state::{ObservationSnapshot, ObservationRecorded, Peril};
+use crate::state::{ObservationSnapshot, Peril};
 use crate::errors::ClimaFiError;
 use crate::constants::{DAY_SECS, SWITCHBOARD_PROGRAM_ID};
 

@@ -3,7 +3,7 @@
 //! within the same transaction.
 
 use anchor_lang::prelude::*;
-use solana_program::sysvar::instructions::{load_instruction_at_checked, ID as InstructionsID};
+use solana_program::sysvar::instructions::load_instruction_at_checked;
 
 pub fn assert_no_cpi_in_transaction(instructions_sysvar: &AccountInfo) -> Result<()> {
     let program_id = crate::ID;

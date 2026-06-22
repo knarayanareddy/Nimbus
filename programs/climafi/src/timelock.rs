@@ -5,9 +5,6 @@
 //! Supports: key rotation (quote_signer, oracle_authority), pause toggle.
 
 use anchor_lang::prelude::*;
-use crate::state::GlobalConfig;
-use crate::errors::ClimaFiError;
-use crate::constants::TIMELOCK_SEED;
 
 pub const DEFAULT_DELAY_SECONDS: u32 = 86400; // 24 hours
 

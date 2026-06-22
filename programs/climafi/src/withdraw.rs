@@ -1,7 +1,7 @@
 //! Production-grade withdraw_liquidity with economic safety
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Mint, Transfer, Burn};
+use anchor_spl::token::{self, Token, TokenAccount, Mint, Transfer};
 use crate::state::{Pool, GlobalConfig};
 use crate::errors::ClimaFiError;
 use crate::economic_safety::assert_capital_solvency;
