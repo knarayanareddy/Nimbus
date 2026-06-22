@@ -280,6 +280,8 @@ export {
   deserializePool,
   deserializePolicy,
   validateMultisigInvariants,
+  validatePoolInvariants,
+  validatePolicyInvariants,
   DeserializationError,
 } from './deserialize'
 

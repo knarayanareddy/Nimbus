@@ -1,4 +1,23 @@
 /** @type {import('next').NextConfig} */
+
+const isDev = process.env.NODE_ENV !== 'production'
+
+const cspDirectives = [
+  "default-src 'self'",
+  // 'wasm-unsafe-eval' required for Solana wallet adapter WASM modules (Phantom, etc.)
+  // 'unsafe-eval' allowed only in dev for Next.js hot module replacement
+  `script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''}`,
+  // 'unsafe-inline' required for Next.js inline style injection
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self'",
+  // Solana RPC endpoints + WebSocket connections
+  "connect-src 'self' https://*.solana.com https://api.mainnet-beta.solana.com https://api.devnet.solana.com wss://*.solana.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ')
+
 const nextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -18,10 +37,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          {
-            key: 'X-Content-Security-Policy-Disabled',
-            value: "disabled-for-dev",
-          },
+          { key: 'Content-Security-Policy', value: cspDirectives },
         ],
       },
     ];
