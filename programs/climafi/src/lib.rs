@@ -661,17 +661,20 @@ pub mod climafi {
             ClimaFiError::Unauthorized
         );
 
-        let pending = tl.pending_operation.as_mut().ok_or(ClimaFiError::TimelockEmpty)?;
+        let delay = tl.delay_seconds;
+        let pending = tl.pending_operation.as_ref().ok_or(ClimaFiError::TimelockEmpty)?;
         require!(!pending.executed, ClimaFiError::TimelockAlreadyExecuted);
 
         let now = Clock::get()?.unix_timestamp;
         require!(
-            now >= pending.scheduled_at + tl.delay_seconds as i64,
+            now >= pending.scheduled_at + delay as i64,
             ClimaFiError::TimelockNotReady
         );
 
+        let operation = pending.operation.clone();
         let cfg = &mut ctx.accounts.config;
-        match &pending.operation {
+        let mut new_tl_admin: Option<Pubkey> = None;
+        match &operation {
             AdminOperation::SetPaused { paused } => {
                 cfg.paused = *paused;
             }
@@ -683,11 +686,14 @@ pub mod climafi {
             }
             AdminOperation::UpdateAdmin { new_admin } => {
                 cfg.admin = *new_admin;
-                tl.admin = *new_admin;
+                new_tl_admin = Some(*new_admin);
             }
         }
 
-        pending.executed = true;
+        if let Some(admin) = new_tl_admin {
+            tl.admin = admin;
+        }
+        tl.pending_operation.as_mut().unwrap().executed = true;
         Ok(())
     }
 
@@ -1124,6 +1130,32 @@ pub struct CancelOperationCtx<'info> {
 }
 
 // ============================================================
-// Switchboard Oracle Context (re-exported)
+// Switchboard Oracle Context
 // ============================================================
-pub use switchboard::RecordObservationSwitchboard;
+#[derive(Accounts)]
+#[instruction(region_id: u64, peril: Peril, day_start_unix: i64)]
+pub struct RecordObservationSwitchboard<'info> {
+    #[account(seeds = [CONFIG_SEED], bump)]
+    pub config: Account<'info, GlobalConfig>,
+
+    #[account(
+        init,
+        payer = oracle,
+        space = ObservationSnapshot::LEN,
+        seeds = [OBS_SEED, &region_id.to_le_bytes(), &[peril as u8], &day_start_unix.to_le_bytes()],
+        bump
+    )]
+    pub observation: Account<'info, ObservationSnapshot>,
+
+    #[account(constraint = switchboard_aggregator.to_account_info().owner == &SWITCHBOARD_PROGRAM_ID @ ClimaFiError::OracleUnauthorized)]
+    pub switchboard_aggregator: Account<'info, switchboard::SwitchboardAggregator>,
+
+    /// CHECK: Switchboard program ID
+    #[account(address = SWITCHBOARD_PROGRAM_ID)]
+    pub switchboard_program: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub oracle: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}

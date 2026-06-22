@@ -9,9 +9,9 @@
 //! - All values are scaled to match internal representation (mm × 100)
 
 use anchor_lang::prelude::*;
-use crate::state::{ObservationSnapshot, Peril};
+use crate::state::Peril;
 use crate::errors::ClimaFiError;
-use crate::constants::{DAY_SECS, SWITCHBOARD_PROGRAM_ID};
+use crate::constants::DAY_SECS;
 
 /// Switchboard aggregator account data (simplified for MVP)
 #[account]
@@ -26,38 +26,8 @@ impl SwitchboardAggregator {
     pub const LEN: usize = 8 + 8 + 8 + 4 + 4;
 }
 
-/// Instruction to record observation using verified Switchboard data
-#[derive(Accounts)]
-#[instruction(region_id: u64, peril: Peril, day_start_unix: i64)]
-pub struct RecordObservationSwitchboard<'info> {
-    #[account(seeds = [b"config"], bump)]
-    pub config: Account<'info, crate::state::GlobalConfig>,
-
-    #[account(
-        init,
-        payer = oracle,
-        space = ObservationSnapshot::LEN,
-        seeds = [b"obs", &region_id.to_le_bytes(), &[peril as u8], &day_start_unix.to_le_bytes()],
-        bump
-    )]
-    pub observation: Account<'info, ObservationSnapshot>,
-
-    /// Switchboard aggregator account (must be verified and owned by Switchboard program)
-    #[account(constraint = switchboard_aggregator.to_account_info().owner == &SWITCHBOARD_PROGRAM_ID @ ClimaFiError::OracleUnauthorized)]
-    pub switchboard_aggregator: Account<'info, SwitchboardAggregator>,
-
-    /// CHECK: Switchboard program ID
-    #[account(address = SWITCHBOARD_PROGRAM_ID)]
-    pub switchboard_program: UncheckedAccount<'info>,
-
-    #[account(mut)]
-    pub oracle: Signer<'info>,
-
-    pub system_program: Program<'info, System>,
-}
-
 pub fn record_observation_switchboard(
-    ctx: Context<RecordObservationSwitchboard>,
+    ctx: Context<crate::RecordObservationSwitchboard>,
     region_id: u64,
     peril: Peril,
     day_start_unix: i64,
