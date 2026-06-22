@@ -2,18 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+@layer base {
+  body {
+    @apply bg-zinc-950 text-white antialiased;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Restore focus indicators for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
 }
 
-.card {
-  @apply bg-white rounded-2xl shadow-xl border border-gray-100 p-6;
+@layer components {
+  .card {
+    @apply bg-zinc-900/60 backdrop-blur border border-white/5 rounded-2xl p-6 shadow-lg;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-white/30
+           focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-colors;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400
+           text-white font-semibold py-3 px-8 rounded-xl
+           transition-all active:scale-[0.985] disabled:opacity-50 disabled:cursor-not-allowed
+           shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30;
+  }
+
+  .btn-secondary {
+    @apply border border-white/10 hover:border-white/20 hover:bg-white/5
+           text-white font-medium py-3 px-8 rounded-xl transition-all;
+  }
+
+  .label {
+    @apply text-sm font-medium text-white/70 mb-1.5 block;
+  }
+
+  /* Step indicator styles */
+  .step-active {
+    @apply bg-blue-500 text-white;
+  }
+  .step-complete {
+    @apply bg-emerald-500 text-white;
+  }
+  .step-pending {
+    @apply bg-white/10 text-white/40;
+  }
 }
 
-.input {
-  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500;
-}
-
-.btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-2xl transition-all active:scale-[0.985];
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }

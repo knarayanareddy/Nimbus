@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
+import Nav from '../../components/Nav'
+import ErrorBoundary from '../../components/ErrorBoundary'
+import TransactionStatus, { TxState } from '../../components/TransactionStatus'
+import { CardSkeleton } from '../../components/LoadingSkeleton'
 import {
   createDepositTransaction,
   createWithdrawTransaction,
   getPoolPda,
-  getVaultAuthPda,
   getLpMintPda,
   PROGRAM_ID,
   USDC_MINT,
@@ -41,8 +43,11 @@ export default function Pools() {
   const [pools, setPools] = useState<Map<number, PoolData>>(new Map())
   const [depositAmounts, setDepositAmounts] = useState<Record<number, string>>({})
   const [withdrawAmounts, setWithdrawAmounts] = useState<Record<number, string>>({})
-  const [loading, setLoading] = useState<number | null>(null)
-  const [txStatus, setTxStatus] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [txState, setTxState] = useState<TxState>('idle')
+  const [txMessage, setTxMessage] = useState('')
+  const [txSig, setTxSig] = useState('')
+  const [activePool, setActivePool] = useState<number | null>(null)
 
   const fetchPoolData = useCallback(async () => {
     const poolMap = new Map<number, PoolData>()
@@ -51,7 +56,6 @@ export default function Pools() {
       try {
         const poolPda = getPoolPda(poolId)
         const accountInfo = await connection.getAccountInfo(poolPda)
-
         if (!accountInfo) continue
 
         const data = accountInfo.data
@@ -89,6 +93,7 @@ export default function Pools() {
     }
 
     setPools(poolMap)
+    setLoading(false)
   }, [connection, publicKey])
 
   useEffect(() => {
@@ -99,43 +104,55 @@ export default function Pools() {
 
   const handleDeposit = async (poolId: number) => {
     const amount = depositAmounts[poolId]
-    if (!publicKey || !amount) return
+    if (!publicKey || !amount || Number(amount) <= 0) return
 
-    setLoading(poolId)
-    setTxStatus(null)
+    setActivePool(poolId)
+    setTxState('signing')
+    setTxMessage('Approve deposit in wallet')
     try {
       const amountBaseUnits = Math.floor(Number(amount) * 1_000_000)
       const tx = await createDepositTransaction(connection, { publicKey }, poolId, amountBaseUnits)
+      setTxState('confirming')
+      setTxMessage('Confirming deposit...')
       const sig = await sendTransaction(tx, connection)
       await connection.confirmTransaction(sig, 'confirmed')
-      setTxStatus(`Deposited ${amount} USDC to Pool #${poolId} (tx: ${sig.slice(0, 8)}...)`)
+      setTxSig(sig)
+      setTxState('success')
+      setTxMessage(`Deposited ${amount} USDC to Pool #${poolId}`)
       setDepositAmounts(prev => ({ ...prev, [poolId]: '' }))
       await fetchPoolData()
     } catch (err: any) {
-      setTxStatus(`Deposit failed: ${err.message}`)
+      setTxState('error')
+      setTxMessage(err.message || 'Deposit failed')
     } finally {
-      setLoading(null)
+      setActivePool(null)
     }
   }
 
   const handleWithdraw = async (poolId: number) => {
     const amount = withdrawAmounts[poolId]
-    if (!publicKey || !amount) return
+    if (!publicKey || !amount || Number(amount) <= 0) return
 
-    setLoading(poolId)
-    setTxStatus(null)
+    setActivePool(poolId)
+    setTxState('signing')
+    setTxMessage('Approve withdrawal in wallet')
     try {
       const lpBaseUnits = Math.floor(Number(amount) * 1_000_000)
       const tx = await createWithdrawTransaction(connection, { publicKey }, poolId, lpBaseUnits)
+      setTxState('confirming')
+      setTxMessage('Confirming withdrawal...')
       const sig = await sendTransaction(tx, connection)
       await connection.confirmTransaction(sig, 'confirmed')
-      setTxStatus(`Withdrew ${amount} LP from Pool #${poolId} (tx: ${sig.slice(0, 8)}...)`)
+      setTxSig(sig)
+      setTxState('success')
+      setTxMessage(`Withdrew ${amount} LP from Pool #${poolId}`)
       setWithdrawAmounts(prev => ({ ...prev, [poolId]: '' }))
       await fetchPoolData()
     } catch (err: any) {
-      setTxStatus(`Withdraw failed: ${err.message}`)
+      setTxState('error')
+      setTxMessage(err.message || 'Withdrawal failed')
     } finally {
-      setLoading(null)
+      setActivePool(null)
     }
   }
 
@@ -145,122 +162,158 @@ export default function Pools() {
   const poolEntries = Array.from(pools.entries()).sort((a, b) => a[0] - b[0])
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-4xl font-semibold">Underwriter Pools</h1>
-        <WalletMultiButton />
-      </div>
-
-      {txStatus && (
-        <div className={`mb-6 text-sm p-3 rounded-lg ${
-          txStatus.includes('failed') ? 'bg-red-500/10 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
-        }`}>
-          {txStatus}
-        </div>
-      )}
-
-      {poolEntries.length === 0 && (
-        <div className="text-center text-white/50 py-16">
-          No pools deployed on-chain yet. Pools will appear here once created by the admin.
-        </div>
-      )}
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {poolEntries.map(([id, pool]) => (
-          <div key={id} className="card">
-            <div className="flex justify-between mb-4">
-              <div>
-                <div className="font-semibold text-lg">{pool.peril} Pool #{id}</div>
-              </div>
-              <div className="text-emerald-400 text-xs font-medium px-3 py-1 bg-emerald-500/10 rounded-full">
-                LIVE
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 text-sm mb-6">
-              <div>
-                <div className="text-white/50 text-xs">Capital</div>
-                <div className="font-mono text-lg">${formatUsdc(pool.capital)}</div>
-              </div>
-              <div>
-                <div className="text-white/50 text-xs">Locked</div>
-                <div className="font-mono text-lg">${formatUsdc(pool.locked)}</div>
-              </div>
-              <div>
-                <div className="text-white/50 text-xs">Utilization</div>
-                <div className="font-mono text-lg">{pool.utilization}%</div>
-              </div>
-            </div>
-
-            <div className="text-xs text-white/40 mb-2">
-              LTV Limit: {pool.ltvLimitBps / 100}%
-            </div>
-
-            {connected && (
-              <div className="text-xs text-white/60 mb-4">
-                Your LP: <span className="font-mono text-white">{formatUsdc(pool.lpBalance)}</span>
-              </div>
-            )}
-
-            {connected ? (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    placeholder="USDC"
-                    value={depositAmounts[id] || ''}
-                    onChange={e => setDepositAmounts(prev => ({ ...prev, [id]: e.target.value }))}
-                    className="input flex-1 text-sm"
-                    min="0"
-                    step="0.01"
-                  />
-                  <button
-                    onClick={() => handleDeposit(id)}
-                    disabled={loading === id || !depositAmounts[id]}
-                    className="btn-primary px-4 text-sm"
-                  >
-                    {loading === id ? '...' : 'Deposit'}
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    placeholder="LP tokens"
-                    value={withdrawAmounts[id] || ''}
-                    onChange={e => setWithdrawAmounts(prev => ({ ...prev, [id]: e.target.value }))}
-                    className="input flex-1 text-sm"
-                    min="0"
-                    step="0.01"
-                  />
-                  <button
-                    onClick={() => handleWithdraw(id)}
-                    disabled={loading === id || !withdrawAmounts[id]}
-                    className="w-auto py-2 px-4 border border-white/20 rounded-xl text-sm"
-                  >
-                    {loading === id ? '...' : 'Withdraw'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-white/40 text-sm py-2">
-                Connect wallet to interact
-              </div>
-            )}
+    <div className="min-h-screen">
+      <Nav />
+      <ErrorBoundary>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl sm:text-4xl font-semibold">Underwriter Pools</h1>
+            <p className="text-white/50 text-sm mt-1">Deposit USDC to earn premiums from policyholders</p>
           </div>
-        ))}
-      </div>
 
-      <div className="mt-10 card text-sm text-white/70">
-        <div className="font-semibold mb-3 text-white">How it works</div>
-        <div className="space-y-2">
-          <p>1. <strong>Deposit USDC</strong> into a pool vault. You receive LP tokens proportional to your share.</p>
-          <p>2. <strong>Earn premiums</strong> from policyholders buying coverage against the pool.</p>
-          <p>3. <strong>Withdraw anytime</strong> by burning LP tokens (subject to locked capital constraints).</p>
+          <TransactionStatus state={txState} message={txMessage} txSignature={txSig} onDismiss={() => setTxState('idle')} />
+          {txState !== 'idle' && <div className="mb-6" />}
+
+          {loading && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          )}
+
+          {!loading && poolEntries.length === 0 && (
+            <div className="card text-center py-12">
+              <div className="text-white/40 text-lg mb-2">No pools deployed yet</div>
+              <p className="text-white/30 text-sm">Pools will appear once created by protocol admin.</p>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {poolEntries.map(([id, pool]) => (
+              <div key={id} className="card">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="font-semibold text-lg">{pool.peril}</div>
+                    <div className="text-xs text-white/40">Pool #{id}</div>
+                  </div>
+                  <div className="text-xs font-medium px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-full">
+                    LIVE
+                  </div>
+                </div>
+
+                {/* Utilization gauge */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-white/50">Utilization</span>
+                    <span className={`font-mono ${pool.utilization > 80 ? 'text-amber-400' : 'text-white'}`}>
+                      {pool.utilization}%
+                    </span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        pool.utilization > 90 ? 'bg-red-500' :
+                        pool.utilization > 80 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(pool.utilization, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                  <div>
+                    <div className="text-white/40 text-xs">Capital</div>
+                    <div className="font-mono">${formatUsdc(pool.capital)}</div>
+                  </div>
+                  <div>
+                    <div className="text-white/40 text-xs">Locked</div>
+                    <div className="font-mono">${formatUsdc(pool.locked)}</div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-white/30 mb-3">
+                  LTV Limit: {pool.ltvLimitBps / 100}%
+                  {connected && pool.lpBalance > 0 && (
+                    <span className="ml-2">| Your LP: <span className="font-mono text-white/60">{formatUsdc(pool.lpBalance)}</span></span>
+                  )}
+                </div>
+
+                {connected ? (
+                  <div className="space-y-2 border-t border-white/5 pt-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="USDC amount"
+                        value={depositAmounts[id] || ''}
+                        onChange={e => setDepositAmounts(prev => ({ ...prev, [id]: e.target.value }))}
+                        className="input flex-1 text-sm py-2"
+                        min="0"
+                        step="0.01"
+                        aria-label={`Deposit amount for pool ${id}`}
+                      />
+                      <button
+                        onClick={() => handleDeposit(id)}
+                        disabled={activePool === id || !depositAmounts[id] || Number(depositAmounts[id]) <= 0}
+                        className="btn-primary px-4 py-2 text-sm"
+                      >
+                        Deposit
+                      </button>
+                    </div>
+                    {pool.lpBalance > 0 && (
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          placeholder="LP amount"
+                          value={withdrawAmounts[id] || ''}
+                          onChange={e => setWithdrawAmounts(prev => ({ ...prev, [id]: e.target.value }))}
+                          className="input flex-1 text-sm py-2"
+                          min="0"
+                          step="0.01"
+                          aria-label={`Withdraw amount for pool ${id}`}
+                        />
+                        <button
+                          onClick={() => handleWithdraw(id)}
+                          disabled={activePool === id || !withdrawAmounts[id] || Number(withdrawAmounts[id]) <= 0}
+                          className="btn-secondary px-4 py-2 text-sm"
+                        >
+                          Withdraw
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center text-white/30 text-xs py-3 border-t border-white/5">
+                    Connect wallet to deposit
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Info section */}
+          <div className="mt-10 card">
+            <h2 className="font-semibold mb-3">How Underwriting Works</h2>
+            <div className="grid sm:grid-cols-3 gap-4 text-sm text-white/60">
+              <div>
+                <div className="font-medium text-white mb-1">1. Deposit</div>
+                <p>Deposit USDC into a pool vault. You receive LP tokens proportional to your share of the pool.</p>
+              </div>
+              <div>
+                <div className="font-medium text-white mb-1">2. Earn</div>
+                <p>Collect premiums from policyholders buying coverage. Returns scale with pool utilization.</p>
+              </div>
+              <div>
+                <div className="font-medium text-white mb-1">3. Withdraw</div>
+                <p>Burn LP tokens anytime to redeem USDC (subject to locked capital constraints).</p>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-white/30 border-t border-white/5 pt-3">
+              Circuit breaker activates at 90% utilization | LP tokens are 1:1 on first deposit, proportional thereafter
+            </div>
+          </div>
         </div>
-        <div className="mt-4 text-xs text-white/40">
-          Circuit Breaker: 90% utilization | LP tokens are 1:1 on first deposit, proportional thereafter
-        </div>
-      </div>
+      </ErrorBoundary>
     </div>
   )
 }
