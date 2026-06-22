@@ -3,32 +3,31 @@
 import { useState } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { Skeleton } from '../../components/LoadingSkeleton'
 import { PROGRAM_ID } from '../../lib/climafi'
+import {
+  deserializeMultisigConfig,
+  validateMultisigInvariants,
+  DeserializationError,
+  type MultisigConfigData,
+} from '../../lib/deserialize'
 
 const MULTISIG_SEED = 'multisig'
-const MAX_AUTHORITIES = 7
-
-interface MultisigState {
-  threshold: number
-  numAuthorities: number
-  authorities: string[]
-  proposalNonce: number
-}
 
 export default function GovernancePage() {
   const { publicKey, connected } = useWallet()
   const { connection } = useConnection()
-  const [multisig, setMultisig] = useState<MultisigState | null>(null)
+  const [multisig, setMultisig] = useState<MultisigConfigData | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const fetchMultisig = async () => {
     setLoading(true)
     setError('')
+    setWarnings([])
     try {
       const [multisigPda] = PublicKey.findProgramAddressSync(
         [Buffer.from(MULTISIG_SEED)],
@@ -41,29 +40,25 @@ export default function GovernancePage() {
         return
       }
 
-      const data = account.data
-      let offset = 8 // discriminator
-      const threshold = data[offset]; offset += 1
-      const numAuthorities = data[offset]; offset += 1
-      const authorities: string[] = []
-      for (let i = 0; i < MAX_AUTHORITIES; i++) {
-        const key = new PublicKey(data.slice(offset, offset + 32))
-        offset += 32
-        if (i < numAuthorities) {
-          authorities.push(key.toBase58())
-        }
-      }
-      const proposalNonce = new BN(data.slice(offset, offset + 8), 'le').toNumber()
+      const config = deserializeMultisigConfig(account.data, account.owner)
+      const invariantWarnings = validateMultisigInvariants(config)
 
-      setMultisig({ threshold, numAuthorities, authorities, proposalNonce })
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch multisig state')
+      setMultisig(config)
+      setWarnings(invariantWarnings)
+    } catch (err: unknown) {
+      if (err instanceof DeserializationError) {
+        setError(`Account validation failed: ${err.message}`)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch multisig state')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const isAuthority = multisig && publicKey ? multisig.authorities.includes(publicKey.toBase58()) : false
+  const isAuthority = multisig && publicKey
+    ? multisig.authorities.some(a => a.equals(publicKey))
+    : false
 
   return (
     <div className="min-h-screen">
@@ -97,6 +92,15 @@ export default function GovernancePage() {
             </div>
           )}
 
+          {warnings.length > 0 && (
+            <div className="card bg-red-500/5 border-red-500/20 text-red-300 text-sm mb-4" role="alert">
+              <div className="font-semibold mb-1">Governance Warnings</div>
+              <ul className="list-disc list-inside space-y-1">
+                {warnings.map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+            </div>
+          )}
+
           {multisig && (
             <div className="space-y-6 animate-in">
               {/* Config card */}
@@ -127,8 +131,8 @@ export default function GovernancePage() {
                         <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center text-white/50 font-mono">
                           {i + 1}
                         </div>
-                        <code className="font-mono text-white/70 flex-1 truncate">{auth}</code>
-                        {publicKey && auth === publicKey.toBase58() && (
+                        <code className="font-mono text-white/70 flex-1 truncate">{auth.toBase58()}</code>
+                        {publicKey && auth.equals(publicKey) && (
                           <span className="text-xs text-blue-400">(you)</span>
                         )}
                       </div>

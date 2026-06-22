@@ -3,11 +3,11 @@
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useEffect, useState, useCallback } from 'react'
 import { PublicKey } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { PolicySkeleton } from '../../components/LoadingSkeleton'
 import { PROGRAM_ID } from '../../lib/climafi'
+import { deserializePolicy, DeserializationError } from '../../lib/deserialize'
 import Link from 'next/link'
 
 const STATUSES: Record<number, { label: string; color: string }> = {
@@ -49,33 +49,27 @@ export default function Portfolio() {
       // Fetch all Policy accounts owned by this program where owner matches wallet
       const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
         filters: [
-          { dataSize: 8 + 8 + 32 + 8 + 32 + 8 + 1 + 8 + 8 + 1 + 1 + 8 + 8 + 8 + 1 + 8 + 1 + 8 }, // Policy account size
+          { dataSize: 197 },
           { memcmp: { offset: 16, bytes: publicKey.toBase58() } }, // owner field at offset 8(disc) + 8(policy_id)
         ],
       })
 
-      const parsed: PolicyData[] = accounts.map(({ pubkey, account }) => {
-        const data = account.data
-        let offset = 8 // skip discriminator
-        const policyId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        offset += 32 // owner
-        const poolId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        offset += 32 // pool pubkey
-        const regionId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const peril = data[offset]; offset += 1
-        const windowStartUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const windowEndUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        offset += 1 // indexMethod
-        const direction = data[offset]; offset += 1
-        const threshold = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const payoutAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const premiumAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const status = data[offset]; offset += 1
-        offset += 8 // observedValue
-        const triggered = data[offset] === 1
-
-        return { pubkey, policyId, poolId, regionId, peril, windowStartUnix, windowEndUnix, direction, threshold, payoutAmount, premiumAmount, status, triggered }
-      })
+      const parsed: PolicyData[] = []
+      for (const { pubkey, account } of accounts) {
+        try {
+          const p = deserializePolicy(account.data, account.owner)
+          parsed.push({
+            pubkey, policyId: p.policyId, poolId: p.poolId,
+            regionId: p.regionId, peril: p.peril,
+            windowStartUnix: p.windowStartUnix, windowEndUnix: p.windowEndUnix,
+            direction: p.direction, threshold: p.threshold,
+            payoutAmount: p.payoutAmount, premiumAmount: p.premiumAmount,
+            status: p.status, triggered: p.triggered,
+          })
+        } catch {
+          // Skip accounts that fail validation
+        }
+      }
 
       parsed.sort((a, b) => b.policyId - a.policyId) // newest first
       setPolicies(parsed)

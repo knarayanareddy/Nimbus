@@ -99,7 +99,7 @@ export default function BuyPolicy() {
       const configPda = getConfigPda()
       const configAccount = await connection.getAccountInfo(configPda)
       if (!configAccount) throw new Error('Config account not found on-chain')
-      const globalConfig = deserializeGlobalConfig(configAccount.data as Buffer)
+      const globalConfig = deserializeGlobalConfig(configAccount.data as Buffer, configAccount.owner)
       const treasuryUsdcAta = globalConfig.treasuryUsdcAta
 
       const tx = await createBuyPolicyTransaction(

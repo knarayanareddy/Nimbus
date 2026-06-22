@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import TransactionStatus, { TxState } from '../../components/TransactionStatus'
@@ -16,6 +15,7 @@ import {
   PROGRAM_ID,
   USDC_MINT,
 } from '../../lib/climafi'
+import { deserializePool, DeserializationError } from '../../lib/deserialize'
 import { getAssociatedTokenAddress } from '@solana/spl-token'
 
 interface PoolData {
@@ -58,12 +58,12 @@ export default function Pools() {
         const accountInfo = await connection.getAccountInfo(poolPda)
         if (!accountInfo) continue
 
-        const data = accountInfo.data
-        const id = new BN(data.slice(8, 16), 'le').toNumber()
-        const perilByte = data[16]
-        const ltvLimitBps = data.readUInt16LE(8 + 8 + 1 + 32 + 4)
-        const capital = new BN(data.slice(8 + 8 + 1 + 32 + 4 + 2, 8 + 8 + 1 + 32 + 4 + 2 + 8), 'le').toNumber()
-        const locked = new BN(data.slice(8 + 8 + 1 + 32 + 4 + 2 + 8, 8 + 8 + 1 + 32 + 4 + 2 + 8 + 8), 'le').toNumber()
+        const poolAccount = deserializePool(accountInfo.data, accountInfo.owner)
+        const id = poolAccount.poolId
+        const perilByte = poolAccount.peril
+        const ltvLimitBps = poolAccount.ltvLimitBps
+        const capital = poolAccount.capital
+        const locked = poolAccount.locked
         const utilization = capital > 0 ? Math.round((locked / capital) * 100) : 0
 
         let lpBalance = 0

@@ -1,20 +1,30 @@
 import { NextResponse } from 'next/server'
 import nacl from 'tweetnacl'
 import bs58 from 'bs58'
-import { PersistentRateLimiter } from '../../../offchain/rate-limiter'
+import { PersistentRateLimiter } from '../../../../offchain/rate-limiter'
 
-// Use environment variable - NEVER hardcode secrets
-const QUOTE_SIGNER_SECRET = process.env.QUOTE_SIGNER_SECRET_KEY
-if (!QUOTE_SIGNER_SECRET) {
-  throw new Error('QUOTE_SIGNER_SECRET_KEY environment variable is required')
+// Lazy initialization to avoid failing at build time
+let _quoteSigner: nacl.SignKeyPair | null = null
+function getQuoteSigner(): nacl.SignKeyPair {
+  if (!_quoteSigner) {
+    const secret = process.env.QUOTE_SIGNER_SECRET_KEY
+    if (!secret) {
+      throw new Error('QUOTE_SIGNER_SECRET_KEY environment variable is required')
+    }
+    _quoteSigner = nacl.sign.keyPair.fromSecretKey(bs58.decode(secret))
+  }
+  return _quoteSigner
 }
 
-const QUOTE_SIGNER = nacl.sign.keyPair.fromSecretKey(bs58.decode(QUOTE_SIGNER_SECRET))
-
-// Singleton rate limiter (M-09 fix: avoid creating per-request)
-const rateLimiter = new PersistentRateLimiter(
-  process.env.REDIS_URL || 'redis://localhost:6379'
-)
+let _rateLimiter: PersistentRateLimiter | null = null
+function getRateLimiter(): PersistentRateLimiter {
+  if (!_rateLimiter) {
+    _rateLimiter = new PersistentRateLimiter(
+      process.env.REDIS_URL || 'redis://localhost:6379'
+    )
+  }
+  return _rateLimiter
+}
 
 /**
  * Write a u64 as 8-byte little-endian buffer (matches Borsh serialization)
@@ -110,7 +120,7 @@ function getClientIp(request: Request): string {
 export async function POST(request: Request) {
   const ip = getClientIp(request)
 
-  const allowed = await rateLimiter.isAllowed(ip)
+  const allowed = await getRateLimiter().isAllowed(ip)
   if (!allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
@@ -162,7 +172,7 @@ export async function POST(request: Request) {
     writeU64LE(quote.nonce),
   ])
 
-  const signature = nacl.sign.detached(message, QUOTE_SIGNER.secretKey)
+  const signature = nacl.sign.detached(message, getQuoteSigner().secretKey)
 
   return NextResponse.json({
     quote: {
@@ -181,7 +191,7 @@ export async function POST(request: Request) {
       nonce: quote.nonce.toString(),
     },
     signature: Buffer.from(signature).toString('base64'),
-    quoteSignerPubkey: bs58.encode(QUOTE_SIGNER.publicKey),
+    quoteSignerPubkey: bs58.encode(getQuoteSigner().publicKey),
     expiresUnix: Number(quote.quote_expiry_unix),
   })
 }

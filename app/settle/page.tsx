@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useSearchParams } from 'next/navigation'
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js'
@@ -20,6 +20,7 @@ import {
   getPolicyPda,
   buildObservationAccountKeys,
 } from '../../lib/climafi'
+import { deserializePolicy, DeserializationError, type PolicyData as PolicyAccountData } from '../../lib/deserialize'
 
 const INDEX_METHODS: Record<number, string> = { 0: 'Sum', 1: 'Mean', 2: 'Max' }
 const DIRECTIONS: Record<number, string> = { 0: 'Drought (<=)', 1: 'Flood (>=)' }
@@ -49,6 +50,14 @@ interface PolicyInfo {
 }
 
 export default function SettlePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <SettlePageInner />
+    </Suspense>
+  )
+}
+
+function SettlePageInner() {
   const { publicKey, sendTransaction, connected } = useWallet()
   const { connection } = useConnection()
   const searchParams = useSearchParams()
@@ -70,7 +79,7 @@ export default function SettlePage() {
     try {
       const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
         filters: [
-          { dataSize: 8 + 8 + 32 + 8 + 32 + 8 + 1 + 8 + 8 + 1 + 1 + 8 + 8 + 8 + 1 + 8 + 1 + 8 },
+          { dataSize: 197 },
           { memcmp: { offset: 16, bytes: publicKey.toBase58() } },
         ],
       })
@@ -79,28 +88,21 @@ export default function SettlePage() {
       const settleable: PolicyInfo[] = []
 
       for (const { account } of accounts) {
-        const data = account.data
-        let offset = 8
-        const policyId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        offset += 32 // owner
-        const poolId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        offset += 32 // pool pubkey
-        const regionId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const peril = data[offset]; offset += 1
-        const windowStartUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const windowEndUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const indexMethod = data[offset]; offset += 1
-        const direction = data[offset]; offset += 1
-        const threshold = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const payoutAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const premiumAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const status = data[offset]; offset += 1
-        const observedValue = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-        const triggered = data[offset] === 1; offset += 1
-        const settledAtUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber()
-
-        if (status === 0 && now >= windowEndUnix) {
-          settleable.push({ policyId, poolId, regionId, peril, windowStartUnix, windowEndUnix, indexMethod, direction, threshold, payoutAmount, premiumAmount, status, observedValue, triggered, settledAtUnix })
+        try {
+          const p = deserializePolicy(account.data, account.owner)
+          if (p.status === 0 && now >= p.windowEndUnix) {
+            settleable.push({
+              policyId: p.policyId, poolId: p.poolId, regionId: p.regionId,
+              peril: p.peril, windowStartUnix: p.windowStartUnix,
+              windowEndUnix: p.windowEndUnix, indexMethod: p.indexMethod,
+              direction: p.direction, threshold: p.threshold,
+              payoutAmount: p.payoutAmount, premiumAmount: p.premiumAmount,
+              status: p.status, observedValue: p.observedValue,
+              triggered: p.triggered, settledAtUnix: p.settledAtUnix,
+            })
+          }
+        } catch {
+          // Skip accounts that fail validation
         }
       }
 
@@ -142,27 +144,16 @@ export default function SettlePage() {
         return
       }
 
-      const data = accountInfo.data
-      let offset = 8
-      const pid = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      offset += 32
-      const poolId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      offset += 32
-      const regionId = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const peril = data[offset]; offset += 1
-      const windowStartUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const windowEndUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const indexMethod = data[offset]; offset += 1
-      const direction = data[offset]; offset += 1
-      const threshold = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const payoutAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const premiumAmount = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const status = data[offset]; offset += 1
-      const observedValue = new BN(data.slice(offset, offset + 8), 'le').toNumber(); offset += 8
-      const triggered = data[offset] === 1; offset += 1
-      const settledAtUnix = new BN(data.slice(offset, offset + 8), 'le').toNumber()
-
-      setPolicy({ policyId: pid, poolId, regionId, peril, windowStartUnix, windowEndUnix, indexMethod, direction, threshold, payoutAmount, premiumAmount, status, observedValue, triggered, settledAtUnix })
+      const p = deserializePolicy(accountInfo.data, accountInfo.owner)
+      setPolicy({
+        policyId: p.policyId, poolId: p.poolId, regionId: p.regionId,
+        peril: p.peril, windowStartUnix: p.windowStartUnix,
+        windowEndUnix: p.windowEndUnix, indexMethod: p.indexMethod,
+        direction: p.direction, threshold: p.threshold,
+        payoutAmount: p.payoutAmount, premiumAmount: p.premiumAmount,
+        status: p.status, observedValue: p.observedValue,
+        triggered: p.triggered, settledAtUnix: p.settledAtUnix,
+      })
     } catch (err: any) {
       setTxState('error')
       setTxMessage(err.message || 'Failed to fetch policy')
