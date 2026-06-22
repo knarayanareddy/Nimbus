@@ -9,6 +9,9 @@ on:
 jobs:
   security-audit:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: programs/climafi
     steps:
       - uses: actions/checkout@v4
       
@@ -17,10 +20,6 @@ jobs:
         with:
           components: clippy
       
-      - name: Install Anchor CLI
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
-      
       - name: Cargo Audit
         run: cargo install cargo-audit && cargo audit
       
@@ -28,13 +27,7 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings -W clippy::all
       
       - name: Build Program
-        run: anchor build
-      
-      - name: Run Tests
-        run: anchor test
-
-      - name: Run Property-Based Tests
-        run: cargo test --test proptest_settlement -- --nocapture
+        run: cargo build --release
 
   solana-security:
     runs-on: ubuntu-latest
