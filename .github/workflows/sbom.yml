@@ -10,7 +10,7 @@ jobs:
       - name: Generate SBOM
         run: |
           cargo install cargo-sbom
-          cargo sbom --manifest-path programs/climafi/Cargo.toml --output-format spdx_json_2_3 > sbom.json
+          cd programs/climafi && cargo sbom --output-format spdx_json_2_3 > ../../sbom.json
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
         with:
