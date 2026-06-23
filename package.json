@@ -33,6 +33,7 @@
     "@types/react": "^18"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
     "@types/bs58": "^4.0.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20",

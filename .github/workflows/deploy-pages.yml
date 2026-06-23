@@ -1,0 +1,42 @@
+name: Deploy Nimbus to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Swap merged-app to app
+        run: |
+          mv app app-original
+          mv merged-app app
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Next.js Static Site
+        env:
+          EXPORT_STATIC: "true"
+          NEXT_PUBLIC_RPC_URL: "https://api.devnet.solana.com"
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
