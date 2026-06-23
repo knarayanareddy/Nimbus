@@ -2,6 +2,7 @@
 
 import { useConnection } from '@solana/wallet-adapter-react'
 import { useEffect, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 
 export default function NetworkStatus() {
   const { connection } = useConnection()
@@ -27,9 +28,9 @@ export default function NetworkStatus() {
   if (!isDown) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] bg-red-600/95 backdrop-blur text-white text-center py-2 px-4 text-sm font-medium shadow-lg" role="alert" aria-live="assertive">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-status-danger/95 backdrop-blur-xl text-white text-center py-2.5 px-4 text-sm font-medium shadow-lg" role="alert" aria-live="assertive">
       <div className="flex items-center justify-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+        <AlertTriangle className="w-4 h-4" />
         <span>Network connection issue — Solana RPC is unreachable</span>
         {retryCount > 2 && <span className="text-white/70 text-xs ml-2">(retrying...)</span>}
       </div>

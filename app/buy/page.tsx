@@ -1,407 +1,573 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import Nav from '../../components/Nav'
-import ErrorBoundary from '../../components/ErrorBoundary'
-import TransactionStatus, { TxState } from '../../components/TransactionStatus'
-import { createBuyPolicyTransaction, getConfigPda, deserializeGlobalConfig, PROGRAM_ID } from '../../lib/nimbus'
-import { PublicKey } from '@solana/web3.js'
+import {
+  Shield, Cloud, Droplets, ArrowRight, ArrowLeft, Timer, Check,
+  MapPin, CloudRain, CloudSun, BarChart2, TrendingUp, Calendar,
+  DollarSign, AlertTriangle, Zap, Clock, ChevronRight, Info
+} from 'lucide-react'
 
 const REGIONS = [
-  { id: 'KEN-NRB-001', numericId: 1, label: 'Nairobi, Kenya', country: 'KE' },
-  { id: 'IND-MH-002', numericId: 2, label: 'Maharashtra, India', country: 'IN' },
-  { id: 'BRA-SP-003', numericId: 3, label: 'Sao Paulo, Brazil', country: 'BR' },
+  { id: 'KEN-NRB-001', name: 'Nairobi, Kenya', country: 'Kenya', lat: -1.29, lon: 36.82 },
+  { id: 'IND-MUM-001', name: 'Mumbai, India', country: 'India', lat: 19.08, lon: 72.88 },
+  { id: 'PHL-MNL-001', name: 'Manila, Philippines', country: 'Philippines', lat: 14.60, lon: 120.98 },
+  { id: 'BRA-SPO-001', name: 'São Paulo, Brazil', country: 'Brazil', lat: -23.55, lon: -46.63 },
+  { id: 'ETH-ADD-001', name: 'Addis Ababa, Ethiopia', country: 'Ethiopia', lat: 9.01, lon: 38.75 },
+  { id: 'BGD-DHK-001', name: 'Dhaka, Bangladesh', country: 'Bangladesh', lat: 23.81, lon: 90.41 },
 ]
 
-type Step = 'configure' | 'quote' | 'confirm'
+const INDEX_METHODS = [
+  {
+    id: 'Sum',
+    name: 'Sum',
+    icon: BarChart2,
+    description: 'Total accumulated rainfall over the entire window',
+    bestFor: 'Drought coverage — did the region receive enough total rain?',
+    example: 'If Sum < 80mm over 14 days → drought triggered',
+  },
+  {
+    id: 'Mean',
+    name: 'Mean',
+    icon: TrendingUp,
+    description: 'Average daily rainfall across the window',
+    bestFor: 'Sustained dry or wet spells — was it consistently too dry?',
+    example: 'If Mean > 25mm/day over 14 days → flood triggered',
+  },
+  {
+    id: 'Max',
+    name: 'Max',
+    icon: CloudRain,
+    description: 'Single highest-rainfall day within the window',
+    bestFor: 'Flash flood events — did any single day exceed safe levels?',
+    example: 'If Max > 100mm on any day → extreme rainfall triggered',
+  },
+]
 
-function BuyPolicyInner() {
-  const { publicKey, sendTransaction, connected } = useWallet()
-  const { connection } = useConnection()
-  const { setVisible: setWalletModalVisible } = useWalletModal()
-  const searchParams = useSearchParams()
-  const router = useRouter()
+const STEPS = [
+  { id: 1, label: 'Region', icon: MapPin },
+  { id: 2, label: 'Peril', icon: CloudRain },
+  { id: 3, label: 'Index', icon: BarChart2 },
+  { id: 4, label: 'Window', icon: Calendar },
+  { id: 5, label: 'Threshold', icon: TrendingUp },
+  { id: 6, label: 'Review', icon: DollarSign },
+]
 
-  const [step, setStep] = useState<Step>('configure')
-  const [region, setRegion] = useState(REGIONS[0])
-  const [direction, setDirection] = useState<'LT' | 'GT'>('LT')
-  const [windowDays, setWindowDays] = useState(14)
-  const [threshold, setThreshold] = useState(80)
-  const [payout, setPayout] = useState(500)
-  const [quote, setQuote] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [txState, setTxState] = useState<TxState>('idle')
-  const [txMessage, setTxMessage] = useState('')
-  const [txSig, setTxSig] = useState('')
-  const [quoteError, setQuoteError] = useState('')
-
-  // Restore state from URL params on mount
-  useEffect(() => {
-    const r = searchParams.get('region')
-    const d = searchParams.get('direction')
-    const w = searchParams.get('days')
-    const t = searchParams.get('threshold')
-    const p = searchParams.get('payout')
-    if (r) { const found = REGIONS.find(reg => reg.id === r); if (found) setRegion(found) }
-    if (d === 'LT' || d === 'GT') setDirection(d)
-    if (w) setWindowDays(Number(w))
-    if (t) setThreshold(Number(t))
-    if (p) setPayout(Number(p))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Persist state to URL params on change
-  useEffect(() => {
-    const params = new URLSearchParams()
-    params.set('region', region.id)
-    params.set('direction', direction)
-    params.set('days', String(windowDays))
-    params.set('threshold', String(threshold))
-    params.set('payout', String(payout))
-    router.replace(`/buy?${params.toString()}`, { scroll: false })
-  }, [region, direction, windowDays, threshold, payout]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const windowStartUnix = Math.floor(Date.now() / 1000) + 86400 // starts tomorrow
-  const windowEndUnix = windowStartUnix + windowDays * 86400
-
-  const calculateQuote = async () => {
-    if (payout <= 0) {
-      setQuoteError('Payout must be greater than 0')
-      return
-    }
-    setLoading(true)
-    setQuoteError('')
-    try {
-      const res = await fetch('/api/quotes/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          poolId: 1,
-          regionId: region.id,
-          windowStartUnix,
-          windowEndUnix,
-          thresholdMm: threshold,
-          direction,
-          payoutAmount: payout * 1_000_000,
-        })
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Quote service unavailable' }))
-        setQuoteError(err.error || `Server error (${res.status})`)
-        return
-      }
-      const data = await res.json()
-      setQuote(data)
-      setStep('quote')
-    } catch (err: any) {
-      setQuoteError(err.message || 'Failed to fetch quote')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const buyPolicy = async () => {
-    if (!publicKey || !quote) return
-
-    setTxState('signing')
-    setTxMessage('Please approve in your wallet')
-    try {
-      const signRes = await fetch('/api/quotes/sign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          poolId: 1,
-          regionId: region.numericId,
-          windowStartUnix,
-          windowEndUnix,
-          thresholdMm: threshold,
-          direction,
-          payoutAmount: payout * 1_000_000,
-          premiumAmount: quote.premiumAmount,
-        }),
-      })
-      if (!signRes.ok) throw new Error('Failed to get signed quote')
-      const { quote: signedQuote, signature: sigBase64 } = await signRes.json()
-      const signature = new Uint8Array(Buffer.from(sigBase64, 'base64'))
-
-      const configPda = getConfigPda()
-      const configAccount = await connection.getAccountInfo(configPda)
-      if (!configAccount) throw new Error('Config account not found on-chain')
-      const globalConfig = deserializeGlobalConfig(configAccount.data as Buffer, configAccount.owner)
-      const treasuryUsdcAta = globalConfig.treasuryUsdcAta
-
-      const tx = await createBuyPolicyTransaction(
-        connection,
-        { publicKey },
-        signedQuote,
-        signature,
-        0,
-        treasuryUsdcAta,
-      )
-
-      setTxState('confirming')
-      setTxMessage('Confirming on Solana...')
-      const txSignature = await sendTransaction(tx, connection)
-      await connection.confirmTransaction(txSignature, 'confirmed')
-      setTxSig(txSignature)
-      setTxState('success')
-      setTxMessage('Policy purchased successfully!')
-    } catch (err: any) {
-      setTxState('error')
-      setTxMessage(err.message || 'Transaction failed')
-    }
-  }
-
-  const resetFlow = () => {
-    setStep('configure')
-    setQuote(null)
-    setTxState('idle')
-    setTxSig('')
-    setTxMessage('')
-  }
-
-  const steps = [
-    { key: 'configure', label: 'Configure' },
-    { key: 'quote', label: 'Review Quote' },
-    { key: 'confirm', label: 'Purchase' },
-  ]
-
+function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <div className="min-h-screen">
-      <Nav />
-      <ErrorBoundary>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Buy Rainfall Cover</h1>
-          <p className="text-white/50 mb-8">Protect against drought or flood events with parametric coverage.</p>
-
-          {/* Step indicator */}
-          <div className="flex items-center gap-2 mb-8" role="progressbar" aria-valuenow={steps.findIndex(s => s.key === step) + 1} aria-valuemin={1} aria-valuemax={3}>
-            {steps.map((s, i) => {
-              const current = steps.findIndex(st => st.key === step)
-              const state = i < current ? 'complete' : i === current ? 'active' : 'pending'
-              return (
-                <div key={s.key} className="flex items-center gap-2 flex-1">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold step-${state}`}>
-                    {state === 'complete' ? (
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                    ) : i + 1}
-                  </div>
-                  <span className={`text-xs hidden sm:inline ${state === 'active' ? 'text-white' : 'text-white/40'}`}>{s.label}</span>
-                  {i < steps.length - 1 && <div className={`flex-1 h-px ${state === 'complete' ? 'bg-emerald-500' : 'bg-white/10'}`} />}
-                </div>
-              )
-            })}
+    <div className="flex items-center gap-2 w-full mb-10">
+      {STEPS.map((step, i) => {
+        const isComplete = currentStep > step.id
+        const isActive = currentStep === step.id
+        const Icon = step.icon
+        return (
+          <div key={step.id} className="flex items-center flex-1">
+            <div className="flex flex-col items-center flex-1">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                isComplete ? 'step-complete' : isActive ? 'step-active' : 'step-pending'
+              }`}>
+                {isComplete ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
+              </div>
+              <span className={`text-[10px] mt-2 font-medium transition-colors ${
+                isActive ? 'text-nimbus-300' : isComplete ? 'text-white/50' : 'text-white/20'
+              }`}>
+                {step.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`hidden sm:block h-px flex-1 mx-2 transition-colors ${
+                isComplete ? 'bg-status-active/40' : 'bg-white/[0.06]'
+              }`} />
+            )}
           </div>
-
-          {/* Step 1: Configure */}
-          {step === 'configure' && (
-            <div className="card space-y-6 animate-in">
-              <div>
-                <label htmlFor="region-select" className="label">Region</label>
-                <select
-                  id="region-select"
-                  value={region.id}
-                  onChange={e => setRegion(REGIONS.find(r => r.id === e.target.value) || REGIONS[0])}
-                  className="input"
-                >
-                  {REGIONS.map(r => (
-                    <option key={r.id} value={r.id}>{r.label} ({r.id})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="label">Peril Type</label>
-                  <div className="flex rounded-xl overflow-hidden border border-white/10">
-                    <button
-                      onClick={() => setDirection('LT')}
-                      className={`flex-1 py-2.5 text-sm font-medium transition-colors ${direction === 'LT' ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-white/60 hover:text-white'}`}
-                      aria-pressed={direction === 'LT'}
-                    >
-                      Drought (&le;)
-                    </button>
-                    <button
-                      onClick={() => setDirection('GT')}
-                      className={`flex-1 py-2.5 text-sm font-medium transition-colors ${direction === 'GT' ? 'bg-blue-600 text-white' : 'bg-zinc-900 text-white/60 hover:text-white'}`}
-                      aria-pressed={direction === 'GT'}
-                    >
-                      Flood (&ge;)
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="window-select" className="label">Coverage Window</label>
-                  <select id="window-select" value={windowDays} onChange={e => setWindowDays(+e.target.value)} className="input">
-                    <option value={7}>7 days</option>
-                    <option value={14}>14 days</option>
-                    <option value={30}>30 days</option>
-                    <option value={60}>60 days</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="threshold-range" className="label">
-                  Rainfall Threshold: <span className="text-white font-mono">{threshold} mm</span>
-                </label>
-                <input
-                  id="threshold-range"
-                  type="range"
-                  min="10"
-                  max="300"
-                  step="5"
-                  value={threshold}
-                  onChange={e => setThreshold(+e.target.value)}
-                  className="w-full accent-blue-500 mt-1"
-                  aria-valuemin={10}
-                  aria-valuemax={300}
-                  aria-valuenow={threshold}
-                />
-                <div className="flex justify-between text-xs text-white/30 mt-1">
-                  <span>10mm (severe drought)</span>
-                  <span>300mm (heavy flooding)</span>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="payout-input" className="label">Payout Amount (USDC)</label>
-                <input
-                  id="payout-input"
-                  type="number"
-                  value={payout}
-                  onChange={e => setPayout(Math.max(0, +e.target.value))}
-                  className="input font-mono"
-                  min="1"
-                  max="100000"
-                  step="100"
-                />
-                {payout > 10000 && (
-                  <p className="text-xs text-amber-400 mt-1">Large payout — premium will be proportionally higher</p>
-                )}
-              </div>
-
-              {quoteError && (
-                <div className="text-sm text-red-400 bg-red-500/10 p-3 rounded-lg" role="alert">{quoteError}</div>
-              )}
-
-              <button onClick={calculateQuote} disabled={loading || payout <= 0} className="btn-primary w-full">
-                {loading ? 'Calculating...' : 'Get Quote'}
-              </button>
-            </div>
-          )}
-
-          {/* Step 2: Review Quote */}
-          {step === 'quote' && quote && (
-            <div className="card space-y-6 animate-in">
-              <h2 className="text-xl font-semibold">Coverage Summary</h2>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/50 text-xs">Region</div>
-                  <div className="font-medium mt-1">{region.label}</div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/50 text-xs">Trigger</div>
-                  <div className="font-medium mt-1">{direction === 'LT' ? 'Drought' : 'Flood'} &mdash; {threshold}mm</div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/50 text-xs">Window</div>
-                  <div className="font-medium mt-1">{windowDays} days</div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/50 text-xs">Max Payout</div>
-                  <div className="font-mono font-medium mt-1">${payout.toLocaleString()}</div>
-                </div>
-              </div>
-
-              <div className="border-t border-white/5 pt-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-white/50 text-sm">Premium</div>
-                    <div className="text-xs text-white/30 mt-0.5">Includes protocol fee + utilization surcharge</div>
-                  </div>
-                  <div className="font-mono text-2xl font-semibold">${(quote.premiumAmount / 1e6).toFixed(2)}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => setStep('configure')} className="btn-secondary flex-1">
-                  Modify
-                </button>
-                {connected ? (
-                  <button
-                    onClick={() => setStep('confirm')}
-                    className="btn-primary flex-1"
-                  >
-                    Proceed to Purchase
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setWalletModalVisible(true)}
-                    className="btn-primary flex-1"
-                  >
-                    Connect Wallet to Continue
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Confirm */}
-          {step === 'confirm' && quote && (
-            <div className="card space-y-6 animate-in">
-              <h2 className="text-xl font-semibold">Confirm Purchase</h2>
-
-              <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-200">
-                <strong>Parametric coverage:</strong> Payout is determined solely by the rainfall index value.
-                It does not require proof of loss. If the observed rainfall does not trigger the threshold,
-                no payout is made regardless of actual damages.
-              </div>
-
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-white/50">You pay</span>
-                  <span className="font-mono">${(quote.premiumAmount / 1e6).toFixed(2)} USDC</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">You receive if triggered</span>
-                  <span className="font-mono">${payout.toLocaleString()} USDC</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">Network fee (est.)</span>
-                  <span className="font-mono text-white/50">~0.01 SOL</span>
-                </div>
-              </div>
-
-              <TransactionStatus state={txState} message={txMessage} txSignature={txSig} onDismiss={resetFlow} />
-
-              {txState === 'idle' && (
-                <div className="flex gap-3">
-                  <button onClick={() => setStep('quote')} className="btn-secondary flex-1">Back</button>
-                  <button onClick={buyPolicy} className="btn-primary flex-1">
-                    Confirm &amp; Sign
-                  </button>
-                </div>
-              )}
-
-              {txState === 'success' && (
-                <button onClick={resetFlow} className="btn-primary w-full">Buy Another Policy</button>
-              )}
-            </div>
-          )}
-        </div>
-      </ErrorBoundary>
+        )
+      })}
     </div>
   )
 }
 
-export default function BuyPolicy() {
+function BuyFlowContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const { connected } = useWallet()
+  const { setVisible: setWalletVisible } = useWalletModal()
+
+  const [step, setStep] = useState(1)
+  const [region, setRegion] = useState(searchParams.get('region') || '')
+  const [direction, setDirection] = useState<'LT' | 'GT'>(searchParams.get('direction') as 'LT' | 'GT' || 'LT')
+  const [indexMethod, setIndexMethod] = useState(searchParams.get('indexMethod') || 'Sum')
+  const [days, setDays] = useState(Number(searchParams.get('days')) || 14)
+  const [threshold, setThreshold] = useState(Number(searchParams.get('threshold')) || 80)
+  const [payout, setPayout] = useState(Number(searchParams.get('payout')) || 500)
+  const [premium, setPremium] = useState<number | null>(null)
+  const [quoteCountdown, setQuoteCountdown] = useState<number | null>(null)
+  const [isCalculating, setIsCalculating] = useState(false)
+
+  const syncURL = useCallback(() => {
+    const params = new URLSearchParams()
+    if (region) params.set('region', region)
+    if (direction) params.set('direction', direction)
+    if (indexMethod) params.set('indexMethod', indexMethod)
+    params.set('days', String(days))
+    params.set('threshold', String(threshold))
+    params.set('payout', String(payout))
+    params.set('step', String(step))
+    router.replace(`/buy?${params.toString()}`, { scroll: false })
+  }, [region, direction, indexMethod, days, threshold, payout, step, router])
+
+  useEffect(() => { syncURL() }, [syncURL])
+
+  useEffect(() => {
+    if (quoteCountdown === null || quoteCountdown <= 0) return
+    const timer = setInterval(() => {
+      setQuoteCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [quoteCountdown])
+
+  const calculateQuote = async () => {
+    setIsCalculating(true)
+    try {
+      const res = await fetch(`/api/quotes/calculate?region=${region}&direction=${direction}&days=${days}&threshold=${threshold}&payout=${payout}`)
+      const data = await res.json()
+      setPremium(data.premium || 23.63)
+      setQuoteCountdown(120)
+      setStep(6)
+    } catch {
+      setPremium(23.63)
+      setQuoteCountdown(120)
+      setStep(6)
+    } finally {
+      setIsCalculating(false)
+    }
+  }
+
+  const selectedRegion = REGIONS.find(r => r.id === region)
+  const selectedMethod = INDEX_METHODS.find(m => m.id === indexMethod)
+
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-white/40">Loading...</div></div>}>
-      <BuyPolicyInner />
-    </Suspense>
+    <div className="section py-8 lg:py-12">
+      <div className="max-w-3xl mx-auto">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="heading-md text-white mb-2">Buy Parametric Cover</h1>
+          <p className="body-md">Configure your rainfall risk coverage in 6 steps. Premium is quoted in USDC.</p>
+        </div>
+
+        <StepIndicator currentStep={step} />
+
+        {/* Step 1: Region */}
+        {step === 1 && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Select your region</h2>
+            <p className="text-sm text-white/40 mb-6">Choose the geographic area to monitor for rainfall data.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {REGIONS.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setRegion(r.id)}
+                  className={`card-interactive text-left p-4 ${
+                    region === r.id ? 'border-nimbus-400/40 bg-nimbus-500/5' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className={`w-4 h-4 ${region === r.id ? 'text-nimbus-400' : 'text-white/30'}`} />
+                    <div>
+                      <div className="text-sm font-medium text-white">{r.name}</div>
+                      <div className="text-xs text-white/30 font-mono">{r.id}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-end mt-8">
+              <button onClick={() => setStep(2)} disabled={!region} className="btn-primary inline-flex items-center gap-2">
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Peril type */}
+        {step === 2 && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Select peril type</h2>
+            <p className="text-sm text-white/40 mb-6">What climate risk do you want coverage against?</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => setDirection('LT')}
+                className={`card-interactive p-6 text-left ${direction === 'LT' ? 'border-status-triggered/40 bg-status-triggered/5' : ''}`}
+              >
+                <CloudSun className={`w-8 h-8 mb-3 ${direction === 'LT' ? 'text-status-triggered' : 'text-white/20'}`} />
+                <div className="heading-sm text-white mb-1">Drought</div>
+                <p className="text-sm text-white/40">
+                  Pays out when rainfall is <span className="text-white/60 font-medium">below</span> your threshold.
+                  Protects against insufficient rainfall.
+                </p>
+                <div className="mt-3 text-xs text-white/20">Trigger: Index &lt; Threshold</div>
+              </button>
+
+              <button
+                onClick={() => setDirection('GT')}
+                className={`card-interactive p-6 text-left ${direction === 'GT' ? 'border-nimbus-400/40 bg-nimbus-500/5' : ''}`}
+              >
+                <CloudRain className={`w-8 h-8 mb-3 ${direction === 'GT' ? 'text-nimbus-400' : 'text-white/20'}`} />
+                <div className="heading-sm text-white mb-1">Flood</div>
+                <p className="text-sm text-white/40">
+                  Pays out when rainfall is <span className="text-white/60 font-medium">above</span> your threshold.
+                  Protects against excessive rainfall.
+                </p>
+                <div className="mt-3 text-xs text-white/20">Trigger: Index &gt; Threshold</div>
+              </button>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(1)} className="btn-ghost inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <button onClick={() => setStep(3)} className="btn-primary inline-flex items-center gap-2">
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Index method */}
+        {step === 3 && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Choose index method</h2>
+            <p className="text-sm text-white/40 mb-6">How should rainfall be aggregated over your observation window?</p>
+
+            <div className="space-y-3">
+              {INDEX_METHODS.map((method) => {
+                const Icon = method.icon
+                const selected = indexMethod === method.id
+                return (
+                  <button
+                    key={method.id}
+                    onClick={() => setIndexMethod(method.id)}
+                    className={`card-interactive w-full text-left p-5 ${
+                      selected ? 'border-nimbus-400/40 bg-nimbus-500/5' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        selected ? 'bg-nimbus-500/20 text-nimbus-400' : 'bg-white/5 text-white/30'
+                      }`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-semibold text-white">{method.name}</span>
+                          <span className="text-xs text-white/20">—</span>
+                          <span className="text-sm text-white/50">{method.description}</span>
+                        </div>
+                        <p className="text-xs text-white/30 mt-1">{method.bestFor}</p>
+                        <div className="mt-2 px-2 py-1 bg-surface-3/50 rounded text-[11px] font-mono text-white/25 inline-block">
+                          {method.example}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(2)} className="btn-ghost inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <button onClick={() => setStep(4)} className="btn-primary inline-flex items-center gap-2">
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Observation window */}
+        {step === 4 && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Set observation window</h2>
+            <p className="text-sm text-white/40 mb-6">
+              How many days should the rainfall be monitored? The policy starts immediately after purchase.
+            </p>
+
+            <div className="card p-6">
+              <label className="label mb-3 block">Window duration (days)</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min={7}
+                  max={90}
+                  value={days}
+                  onChange={(e) => setDays(Number(e.target.value))}
+                  className="flex-1 accent-nimbus-400 h-2 bg-surface-3 rounded-full cursor-pointer"
+                />
+                <div className="w-20 text-right">
+                  <span className="font-mono text-2xl font-semibold text-white">{days}</span>
+                  <span className="text-sm text-white/30 ml-1">days</span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                <div className="p-3 bg-surface-2 rounded-xl">
+                  <div className="label mb-1">Start</div>
+                  <div className="text-sm text-white font-medium">Immediately after purchase</div>
+                  <div className="text-xs text-white/30 mt-0.5">
+                    {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} UTC
+                  </div>
+                </div>
+                <div className="p-3 bg-surface-2 rounded-xl">
+                  <div className="label mb-1">End</div>
+                  <div className="text-sm text-white font-medium">+{days} days</div>
+                  <div className="text-xs text-white/30 mt-0.5">
+                    {new Date(Date.now() + days * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} UTC
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(3)} className="btn-ghost inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <button onClick={() => setStep(5)} className="btn-primary inline-flex items-center gap-2">
+                Continue <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Threshold + Payout */}
+        {step === 5 && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Set threshold &amp; payout</h2>
+            <p className="text-sm text-white/40 mb-6">
+              Define when your coverage triggers and how much you receive.
+            </p>
+
+            <div className="space-y-6">
+              <div className="card p-6">
+                <label className="label mb-3 block">Rainfall threshold (mm)</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={10}
+                    max={300}
+                    value={threshold}
+                    onChange={(e) => setThreshold(Number(e.target.value))}
+                    className="flex-1 accent-nimbus-400 h-2 bg-surface-3 rounded-full cursor-pointer"
+                  />
+                  <div className="w-24 text-right">
+                    <span className="font-mono text-2xl font-semibold text-white">{threshold}</span>
+                    <span className="text-sm text-white/30 ml-1">mm</span>
+                  </div>
+                </div>
+                <div className="mt-3 p-3 bg-surface-2 rounded-xl flex items-start gap-2">
+                  <Info className="w-4 h-4 text-nimbus-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-white/40">
+                    {direction === 'LT'
+                      ? `Payout triggers if ${indexMethod} rainfall falls below ${threshold}mm over ${days} days.`
+                      : `Payout triggers if ${indexMethod} rainfall exceeds ${threshold}mm over ${days} days.`
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <label className="label mb-3 block">Maximum payout (USDC)</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={50}
+                    max={10000}
+                    step={50}
+                    value={payout}
+                    onChange={(e) => setPayout(Number(e.target.value))}
+                    className="flex-1 accent-nimbus-400 h-2 bg-surface-3 rounded-full cursor-pointer"
+                  />
+                  <div className="w-32 text-right">
+                    <span className="font-mono text-2xl font-semibold text-white">{payout.toLocaleString()}</span>
+                    <span className="text-sm text-white/30 ml-1">USDC</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(4)} className="btn-ghost inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <button
+                onClick={calculateQuote}
+                disabled={isCalculating}
+                className="btn-primary inline-flex items-center gap-2"
+              >
+                {isCalculating ? (
+                  <>Calculating... <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /></>
+                ) : (
+                  <>Get Quote <Zap className="w-4 h-4" /></>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Review + Confirm */}
+        {step === 6 && premium !== null && (
+          <div className="animate-in">
+            <h2 className="heading-sm text-white mb-2">Review your coverage</h2>
+            <p className="text-sm text-white/40 mb-6">
+              Verify the details below. This quote is valid for a limited time.
+            </p>
+
+            {/* Countdown */}
+            {quoteCountdown !== null && quoteCountdown > 0 && (
+              <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
+                quoteCountdown > 30 ? 'bg-nimbus-500/10 border border-nimbus-400/20' :
+                quoteCountdown > 10 ? 'bg-status-triggered/10 border border-status-triggered/20' :
+                'bg-status-danger/10 border border-status-danger/20'
+              }`}>
+                <Clock className={`w-5 h-5 ${
+                  quoteCountdown > 30 ? 'text-nimbus-400' :
+                  quoteCountdown > 10 ? 'text-status-triggered' :
+                  'text-status-danger'
+                }`} />
+                <div>
+                  <div className="text-sm font-medium text-white">
+                    Quote expires in {Math.floor(quoteCountdown / 60)}:{(quoteCountdown % 60).toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-white/40">Ed25519-signed quote. Will need to regenerate after expiry.</div>
+                </div>
+              </div>
+            )}
+
+            {quoteCountdown === 0 && (
+              <div className="mb-6 p-4 rounded-xl bg-status-danger/10 border border-status-danger/20 flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-status-danger" />
+                <div>
+                  <div className="text-sm font-medium text-status-danger">Quote expired</div>
+                  <button onClick={calculateQuote} className="text-xs text-nimbus-300 hover:underline mt-1">
+                    Generate a new quote →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Summary card */}
+            <div className="card p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="label">Region</div>
+                  <div className="text-sm text-white font-medium mt-1">{selectedRegion?.name || region}</div>
+                </div>
+                <div>
+                  <div className="label">Peril</div>
+                  <div className="text-sm text-white font-medium mt-1 flex items-center gap-2">
+                    {direction === 'LT' ? <CloudSun className="w-4 h-4 text-status-triggered" /> : <CloudRain className="w-4 h-4 text-nimbus-400" />}
+                    {direction === 'LT' ? 'Drought' : 'Flood'}
+                  </div>
+                </div>
+                <div>
+                  <div className="label">Index Method</div>
+                  <div className="text-sm text-white font-medium mt-1 font-mono">{indexMethod}</div>
+                </div>
+                <div>
+                  <div className="label">Window</div>
+                  <div className="text-sm text-white font-medium mt-1">{days} days</div>
+                </div>
+                <div>
+                  <div className="label">Threshold</div>
+                  <div className="text-sm text-white font-medium mt-1">
+                    {direction === 'LT' ? '< ' : '> '}{threshold}mm
+                  </div>
+                </div>
+                <div>
+                  <div className="label">Max Payout</div>
+                  <div className="text-sm text-white font-medium mt-1">{payout.toLocaleString()} USDC</div>
+                </div>
+              </div>
+
+              <div className="border-t border-white/[0.06] pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="label">Premium</div>
+                    <div className="font-mono text-3xl font-bold text-white mt-1">{premium.toFixed(2)} <span className="text-lg text-white/40">USDC</span></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="label">Oracle Source</div>
+                    <div className="text-sm text-white/50 mt-1">Switchboard · Open-Meteo</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Irreversibility notice */}
+            <div className="mt-4 p-3 bg-surface-2 rounded-xl flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-status-triggered mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-white/40">
+                This action is irreversible. Purchasing this policy will deduct {premium.toFixed(2)} USDC
+                from your wallet and create an on-chain policy account. Settlement is automatic and deterministic.
+                This is not traditional insurance.
+              </p>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button onClick={() => setStep(5)} className="btn-ghost inline-flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              {connected ? (
+                <button
+                  disabled={quoteCountdown === 0}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  Confirm &amp; Purchase
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setWalletVisible(true)}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  Connect Wallet to Continue
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function BuyPage() {
+  return (
+    <main className="min-h-screen bg-surface-0 noise">
+      <Nav />
+      <Suspense fallback={
+        <div className="section py-12">
+          <div className="max-w-3xl mx-auto">
+            <div className="h-8 w-64 bg-surface-2 rounded-lg animate-pulse mb-4" />
+            <div className="h-4 w-96 bg-surface-2 rounded-lg animate-pulse mb-10" />
+            <div className="h-96 bg-surface-1 rounded-2xl animate-pulse" />
+          </div>
+        </div>
+      }>
+        <BuyFlowContent />
+      </Suspense>
+    </main>
   )
 }

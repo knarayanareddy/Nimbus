@@ -2,180 +2,375 @@
 
 import Link from 'next/link'
 import Nav from '../components/Nav'
+import { Cloud, Zap, Shield, BarChart3, Droplets, ArrowRight, CheckCircle2, Database, Lock, Timer, Vote } from 'lucide-react'
 
-export default function Home() {
+function RainParticles() {
   return (
-    <div className="min-h-screen">
-      <Nav />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {Array.from({ length: 40 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-px bg-gradient-to-b from-transparent via-nimbus-400/20 to-transparent"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            height: `${20 + Math.random() * 40}px`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${1.5 + Math.random() * 2}s`,
+            animation: `rain ${1.5 + Math.random() * 2}s linear infinite`,
+            opacity: 0.3 + Math.random() * 0.4,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
-      {/* Hero */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
-        <div className="max-w-4xl mx-auto px-6 pt-24 pb-28 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs tracking-[1.5px] text-white/70 mb-7">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            LIVE ON SOLANA DEVNET
+function HeroSection() {
+  return (
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      {/* Atmospheric background */}
+      <div className="absolute inset-0 bg-gradient-nimbus" />
+      <div className="absolute inset-0 bg-gradient-radial from-nimbus-500/[0.07] via-transparent to-transparent" />
+      <RainParticles />
+
+      {/* Glow orb */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-nimbus-500/[0.04] rounded-full blur-[120px]" />
+
+      <div className="section relative z-10 py-24 lg:py-32">
+        <div className="max-w-4xl">
+          {/* Eyebrow */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-nimbus-500/10 border border-nimbus-400/20 rounded-full mb-8 animate-fade-in">
+            <div className="w-1.5 h-1.5 bg-nimbus-400 rounded-full animate-pulse-soft" />
+            <span className="text-xs font-medium text-nimbus-300">Live on Solana Devnet</span>
           </div>
-          <h1 className="text-5xl sm:text-7xl font-semibold tracking-tighter leading-[0.9] mb-6">
-            Instant climate cover.<br />No paperwork.
+
+          {/* Headline */}
+          <h1 className="heading-xl text-white mb-6 animate-slide-up">
+            Weather data crosses threshold.{' '}
+            <span className="text-gradient">USDC hits your wallet.</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-white/50 max-w-lg mx-auto leading-relaxed">
-            Buy drought or flood protection on rainfall.
-            Automatic payout when the index triggers.
+
+          {/* Subheadline */}
+          <p className="body-lg max-w-2xl mb-10 animate-slide-up" style={{ animationDelay: '100ms' }}>
+            Nimbus is deterministic parametric climate coverage on Solana.
+            Oracle-verified rainfall indices trigger automatic payouts.
+            No claims process. No adjusters. No waiting.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
-            <Link href="/buy" className="btn-primary text-lg px-10 py-4">
-              Get Protected
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
+            <Link href="/buy" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
+              <Shield className="w-4 h-4" />
+              Buy Cover
+              <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/pools" className="btn-secondary text-lg px-8 py-4">
+            <Link href="/pools" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
+              <Droplets className="w-4 h-4" />
               Provide Liquidity
             </Link>
           </div>
-        </div>
-      </div>
 
-      {/* Trust signals */}
-      <div className="border-t border-white/5 py-12">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center animate-stagger">
-            <div className="card-hover p-5">
-              <div className="text-2xl sm:text-3xl font-semibold text-white mb-1">55</div>
-              <div className="text-xs text-white/40">On-chain Security Checks</div>
+          {/* Trust line */}
+          <div className="flex flex-wrap items-center gap-6 mt-12 animate-slide-up" style={{ animationDelay: '300ms' }}>
+            <div className="flex items-center gap-2 text-sm text-white/40">
+              <CheckCircle2 className="w-4 h-4 text-nimbus-400" />
+              USDC settlements
             </div>
-            <div className="card-hover p-5">
-              <div className="text-2xl sm:text-3xl font-semibold text-white mb-1">Ed25519</div>
-              <div className="text-xs text-white/40">Signed Quotes</div>
+            <div className="flex items-center gap-2 text-sm text-white/40">
+              <CheckCircle2 className="w-4 h-4 text-nimbus-400" />
+              Sub-second finality
             </div>
-            <div className="card-hover p-5">
-              <div className="text-2xl sm:text-3xl font-semibold text-white mb-1">M-of-N</div>
-              <div className="text-xs text-white/40">Multisig Governance</div>
-            </div>
-            <div className="card-hover p-5">
-              <div className="text-2xl sm:text-3xl font-semibold text-white mb-1">Auto</div>
-              <div className="text-xs text-white/40">Oracle Settlement</div>
+            <div className="flex items-center gap-2 text-sm text-white/40">
+              <CheckCircle2 className="w-4 h-4 text-nimbus-400" />
+              Switchboard oracles
             </div>
           </div>
         </div>
       </div>
+    </section>
+  )
+}
 
-      {/* Security badges */}
-      <div className="py-8 px-6">
-        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/5 border border-emerald-500/20 text-xs text-emerald-300">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            OWASP 9.0 Security Score
+function HowItWorksSection() {
+  const steps = [
+    {
+      number: '01',
+      title: 'Choose your coverage',
+      description: 'Select a region, peril type (drought or flood), observation window, and payout amount.',
+      icon: Shield,
+    },
+    {
+      number: '02',
+      title: 'Get a signed quote',
+      description: 'Our oracle system calculates your premium based on historical risk data. Quote is Ed25519-signed and valid for 120 seconds.',
+      icon: Timer,
+    },
+    {
+      number: '03',
+      title: 'Policy mints on-chain',
+      description: 'Your premium is paid in USDC. A policy account is created on Solana with your exact trigger conditions.',
+      icon: Database,
+    },
+    {
+      number: '04',
+      title: 'Automatic settlement',
+      description: 'When the observation window ends, the oracle index is checked against your threshold. If triggered, USDC is sent to your wallet automatically.',
+      icon: Zap,
+    },
+  ]
+
+  return (
+    <section className="relative py-24 lg:py-32">
+      <div className="section">
+        <div className="text-center mb-16">
+          <h2 className="heading-lg text-white mb-4">
+            How Nimbus works
+          </h2>
+          <p className="body-lg max-w-2xl mx-auto">
+            Four steps from coverage selection to automatic payout.
+            No claims. No human decision. Pure data.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {steps.map((step, i) => (
+            <div key={step.number} className="card group" style={{ animationDelay: `${i * 100}ms` }}>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-xs font-mono text-nimbus-400/60">{step.number}</span>
+                <div className="w-10 h-10 bg-nimbus-500/10 border border-nimbus-400/20 rounded-xl flex items-center justify-center group-hover:bg-nimbus-500/20 transition-colors">
+                  <step.icon className="w-5 h-5 text-nimbus-400" />
+                </div>
+              </div>
+              <h3 className="heading-sm text-white mb-2">{step.title}</h3>
+              <p className="text-sm text-white/40 leading-relaxed">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function MechanicsVisualization() {
+  return (
+    <section className="relative py-24 lg:py-32 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-nimbus-950/30 to-transparent" />
+      <div className="section relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Explanation */}
+          <div>
+            <span className="label text-nimbus-400 mb-4 block">Parametric Mechanics</span>
+            <h2 className="heading-lg text-white mb-6">
+              Index crosses threshold.<br />
+              <span className="text-gradient">Payout is automatic.</span>
+            </h2>
+            <p className="body-md mb-8">
+              Unlike traditional insurance, Nimbus uses objective weather data indices.
+              Choose how rainfall is measured over your observation window:
+            </p>
+
+            <div className="space-y-4">
+              {[
+                { method: 'Sum', desc: 'Total accumulated rainfall over the entire window', example: 'Best for drought — did the region receive enough total rain?' },
+                { method: 'Mean', desc: 'Average daily rainfall across the window', example: 'Best for sustained dry/wet spells — was it consistently too dry?' },
+                { method: 'Max', desc: 'Single highest-rainfall day within the window', example: 'Best for flash floods — did any single day exceed safe levels?' },
+              ].map((item) => (
+                <div key={item.method} className="card-glass p-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-mono text-sm font-semibold text-nimbus-300">{item.method}</span>
+                    <span className="text-xs text-white/30">—</span>
+                    <span className="text-sm text-white/60">{item.desc}</span>
+                  </div>
+                  <p className="text-xs text-white/30 ml-0">{item.example}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/5 border border-blue-500/20 text-xs text-blue-300">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            Built on Solana
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/5 border border-purple-500/20 text-xs text-purple-300">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            USDC Settlements
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/5 border border-amber-500/20 text-xs text-amber-300">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-            Switchboard Oracles
+
+          {/* Visual: Threshold chart mockup */}
+          <div className="card p-8">
+            <div className="flex items-center justify-between mb-6">
+              <span className="label">Rainfall Index — Nairobi (KEN-NRB-001)</span>
+              <span className="badge-active">
+                <span className="w-1.5 h-1.5 bg-status-active rounded-full" />
+                Live
+              </span>
+            </div>
+
+            {/* Chart visualization */}
+            <div className="relative h-48 mb-6">
+              {/* Threshold line */}
+              <div className="absolute left-0 right-0 top-[40%] border-t border-dashed border-status-triggered/40">
+                <span className="absolute -top-5 right-0 text-[10px] font-mono text-status-triggered/70">Threshold: 80mm</span>
+              </div>
+
+              {/* Simulated bar chart */}
+              <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-1.5 h-full pt-8">
+                {[35, 42, 28, 55, 62, 48, 72, 88, 95, 78, 65, 52, 45, 38].map((val, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 rounded-t transition-all duration-300 ${
+                      val > 80 ? 'bg-status-triggered/60 border border-status-triggered/30' : 'bg-nimbus-500/30 border border-nimbus-400/10'
+                    }`}
+                    style={{ height: `${(val / 100) * 100}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-white/30">
+              <span>Day 1</span>
+              <span>Day 14</span>
+            </div>
+
+            <div className="mt-4 p-3 bg-status-triggered/5 border border-status-triggered/20 rounded-xl">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-status-triggered" />
+                <span className="text-sm text-status-triggered font-medium">Trigger detected</span>
+              </div>
+              <p className="text-xs text-white/40 mt-1">Max index (95mm) exceeded threshold (80mm) on Day 9. Payout: 500 USDC</p>
+            </div>
           </div>
         </div>
       </div>
+    </section>
+  )
+}
 
-      {/* How it works */}
-      <div className="border-t border-white/5 py-16">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-3">How It Works</h2>
-          <p className="text-center text-white/40 text-sm mb-10 max-w-lg mx-auto">Three steps from vulnerability to coverage. No middlemen, no paperwork.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-stagger">
-            <div className="card-hover text-center">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-              </div>
-              <h3 className="font-semibold mb-2">Choose Coverage</h3>
-              <p className="text-sm text-white/50">Select region, peril type, rainfall threshold, and coverage window.</p>
-            </div>
-            <div className="card-hover text-center">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
-                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <h3 className="font-semibold mb-2">Pay Premium</h3>
-              <p className="text-sm text-white/50">Get an instant quote. Pay premium in USDC. Policy activates immediately.</p>
-            </div>
-            <div className="card-hover text-center">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              </div>
-              <h3 className="font-semibold mb-2">Automatic Payout</h3>
-              <p className="text-sm text-white/50">Oracle records daily rainfall. If index triggers, payout is instant. No claims process.</p>
-            </div>
-          </div>
+function TrustSection() {
+  const stats = [
+    { value: '55', label: 'On-chain require! checks', icon: Lock },
+    { value: 'Ed25519', label: 'Quote signature verification', icon: Shield },
+    { value: 'M-of-N', label: 'Multisig governance', icon: Vote },
+    { value: '<400ms', label: 'Settlement finality', icon: Zap },
+  ]
+
+  const features = [
+    { name: 'Switchboard Oracles', desc: 'Decentralized weather data from multiple sources' },
+    { name: 'OWASP Hardened', desc: 'Full security audit with validated deserialization' },
+    { name: 'USDC Native', desc: 'All premiums and payouts in stablecoin' },
+    { name: 'Open Source', desc: 'Fully verifiable on-chain program code' },
+  ]
+
+  return (
+    <section className="relative py-24 lg:py-32">
+      <div className="section">
+        <div className="text-center mb-16">
+          <h2 className="heading-lg text-white mb-4">
+            Built for trust
+          </h2>
+          <p className="body-lg max-w-2xl mx-auto">
+            Every design decision prioritizes verifiability.
+            Every data point is traceable to its oracle source.
+          </p>
         </div>
-      </div>
 
-      {/* Protocol features */}
-      <div className="border-t border-white/5 py-16">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-10">Protocol Security</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-stagger">
-            <div className="flex items-start gap-4 card-hover">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              </div>
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {stats.map((stat) => (
+            <div key={stat.label} className="card text-center py-8">
+              <stat.icon className="w-5 h-5 text-nimbus-400 mx-auto mb-3" />
+              <div className="data-value text-nimbus-300">{stat.value}</div>
+              <div className="data-label">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Features */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((feature) => (
+            <div key={feature.name} className="flex items-start gap-3 p-4 rounded-xl bg-surface-1/50 border border-white/[0.03]">
+              <CheckCircle2 className="w-4 h-4 text-nimbus-400 mt-0.5 flex-shrink-0" />
               <div>
-                <div className="font-medium text-sm mb-0.5">Checked Arithmetic</div>
-                <div className="text-xs text-white/40">No integer overflows. All math uses checked operations.</div>
+                <div className="text-sm font-medium text-white">{feature.name}</div>
+                <div className="text-xs text-white/40 mt-0.5">{feature.desc}</div>
               </div>
             </div>
-            <div className="flex items-start gap-4 card-hover">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <div>
-                <div className="font-medium text-sm mb-0.5">Reentrancy Guard</div>
-                <div className="text-xs text-white/40">Prevents flash loan attacks via instruction introspection.</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 card-hover">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <div>
-                <div className="font-medium text-sm mb-0.5">Circuit Breaker</div>
-                <div className="text-xs text-white/40">Auto-halts at 90% pool utilization to protect LPs.</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 card-hover">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              </div>
-              <div>
-                <div className="font-medium text-sm mb-0.5">7-Day Timelock</div>
-                <div className="text-xs text-white/40">Admin actions require multisig + timelock delay.</div>
-              </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CTASection() {
+  return (
+    <section className="relative py-24 lg:py-32">
+      <div className="section">
+        <div className="card p-12 lg:p-16 text-center relative overflow-hidden">
+          {/* Background glow */}
+          <div className="absolute inset-0 bg-gradient-radial from-nimbus-500/[0.05] via-transparent to-transparent" />
+
+          <div className="relative z-10">
+            <Cloud className="w-12 h-12 text-nimbus-400 mx-auto mb-6 animate-float" />
+            <h2 className="heading-lg text-white mb-4">
+              Ready to protect against climate risk?
+            </h2>
+            <p className="body-lg max-w-xl mx-auto mb-8">
+              Coverage from as little as 5 USDC. Payouts within seconds of trigger.
+              Connect your Phantom, Backpack, or Solflare wallet to begin.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/buy" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
+                Get Coverage Now
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link href="/pools" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
+                Earn Yield as LP
+              </Link>
             </div>
           </div>
         </div>
       </div>
+    </section>
+  )
+}
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-10">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-                <span className="font-bold text-xs text-white">N</span>
-              </div>
-              <span className="font-semibold text-sm text-white/60">Nimbus Protocol</span>
+function Footer() {
+  return (
+    <footer className="border-t border-white/[0.04] py-12">
+      <div className="section">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-nimbus-400 to-accent-cyan rounded-xl flex items-center justify-center">
+              <Cloud className="w-4 h-4 text-white" />
             </div>
-            <div className="flex items-center gap-6 text-xs text-white/30">
-              <span>Built on Solana</span>
-              <span>OWASP Audited</span>
-              <span>Open Source</span>
-            </div>
+            <span className="font-display font-semibold text-white/60">Nimbus Protocol</span>
           </div>
+
+          {/* Links */}
+          <div className="flex items-center gap-6 text-sm text-white/30">
+            <a href="https://github.com/knarayanareddy/Nimbus" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors">
+              GitHub
+            </a>
+            <Link href="/governance" className="hover:text-white/60 transition-colors">
+              Governance
+            </Link>
+            <span>Solana Devnet</span>
+          </div>
+
+          {/* Legal */}
+          <p className="text-xs text-white/20">
+            Nimbus provides parametric risk coverage, not traditional insurance.
+          </p>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <main className="relative noise">
+      <Nav />
+      <HeroSection />
+      <HowItWorksSection />
+      <MechanicsVisualization />
+      <TrustSection />
+      <CTASection />
+      <Footer />
+    </main>
   )
 }

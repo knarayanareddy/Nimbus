@@ -1,8 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import { WalletContextProvider } from '../components/WalletProvider'
-import NetworkStatus from '../components/NetworkStatus'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -10,9 +9,21 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
+})
+
 export const metadata: Metadata = {
   title: 'Nimbus | Parametric Climate Cover on Solana',
-  description: 'Buy parametric rainfall insurance on Solana. Automatic payouts when weather triggers hit. No paperwork, no claims process.',
+  description: 'Deterministic weather risk coverage on Solana. Oracle-verified rainfall indices trigger automatic USDC payouts. No claims. No adjusters. Just data.',
+  keywords: ['parametric', 'climate', 'solana', 'USDC', 'rainfall', 'coverage', 'defi'],
+  openGraph: {
+    title: 'Nimbus Protocol',
+    description: 'Deterministic weather risk coverage on Solana',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
@@ -21,10 +32,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`dark ${inter.variable}`}>
-      <body className={`min-h-screen ${inter.className}`}>
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
+      <body className={`min-h-screen font-sans`}>
         <WalletContextProvider>
-          <NetworkStatus />
           {children}
         </WalletContextProvider>
       </body>
