@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@types/bs58": "^4.0.4",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20",
     "@types/react": "^18",
     "autoprefixer": "^10.5.0",

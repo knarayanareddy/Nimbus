@@ -15,7 +15,7 @@ import {
   PROGRAM_ID,
   USDC_MINT,
 } from '../../lib/climafi'
-import { deserializePool, DeserializationError } from '../../lib/deserialize'
+import { deserializePool, validatePoolInvariants, DeserializationError } from '../../lib/deserialize'
 import { getAssociatedTokenAddress } from '@solana/spl-token'
 
 interface PoolData {
@@ -26,6 +26,7 @@ interface PoolData {
   utilization: number
   ltvLimitBps: number
   lpBalance: number
+  warnings: string[]
 }
 
 const PERIL_NAMES: Record<number, string> = {
@@ -78,6 +79,7 @@ export default function Pools() {
           }
         }
 
+        const warnings = validatePoolInvariants(poolAccount)
         poolMap.set(poolId, {
           poolId: id,
           peril: PERIL_NAMES[perilByte] || `Unknown (${perilByte})`,
@@ -86,6 +88,7 @@ export default function Pools() {
           utilization,
           ltvLimitBps,
           lpBalance,
+          warnings,
         })
       } catch {
         // Pool doesn't exist on-chain
@@ -201,6 +204,12 @@ export default function Pools() {
                     LIVE
                   </div>
                 </div>
+
+                {pool.warnings.length > 0 && (
+                  <div className="mb-3 text-xs bg-amber-500/5 border border-amber-500/20 text-amber-300 rounded-lg p-2.5" role="alert">
+                    {pool.warnings.map((w, i) => <div key={i}>{w}</div>)}
+                  </div>
+                )}
 
                 {/* Utilization gauge */}
                 <div className="mb-4">

@@ -248,6 +248,65 @@ export function deserializePool(
   }
 }
 
+/**
+ * Validate pool invariants client-side.
+ * Returns a list of warning strings (empty if clean).
+ */
+export function validatePoolInvariants(pool: PoolData): string[] {
+  const warnings: string[] = []
+
+  if (pool.locked > pool.capital) {
+    warnings.push(`Locked capital (${pool.locked}) exceeds total capital (${pool.capital}) — pool may be insolvent`)
+  }
+
+  if (pool.capital > 0) {
+    const utilization = (pool.locked / pool.capital) * 100
+    if (utilization >= 90) {
+      warnings.push(`Pool utilization at ${utilization.toFixed(1)}% — approaching capacity`)
+    }
+  }
+
+  if (pool.ltvLimitBps === 0) {
+    warnings.push('LTV limit is 0 — no policies can be written against this pool')
+  }
+
+  if (pool.ltvLimitBps > 10000) {
+    warnings.push(`LTV limit (${pool.ltvLimitBps} bps) exceeds 100% — pool is over-leverageable`)
+  }
+
+  return warnings
+}
+
+/**
+ * Validate policy invariants client-side.
+ * Returns a list of warning strings (empty if clean).
+ */
+export function validatePolicyInvariants(policy: PolicyData): string[] {
+  const warnings: string[] = []
+
+  if (policy.windowEndUnix <= policy.windowStartUnix) {
+    warnings.push('Policy window end is before or equal to start — invalid time range')
+  }
+
+  if (policy.payoutAmount === 0) {
+    warnings.push('Payout amount is 0 — policy has no value')
+  }
+
+  if (policy.premiumAmount > policy.payoutAmount) {
+    warnings.push(`Premium (${policy.premiumAmount}) exceeds payout (${policy.payoutAmount}) — unfavorable for policyholder`)
+  }
+
+  if (policy.peril > 2) {
+    warnings.push(`Unknown peril type: ${policy.peril}`)
+  }
+
+  if (policy.status > 3) {
+    warnings.push(`Unknown policy status: ${policy.status}`)
+  }
+
+  return warnings
+}
+
 // ── Policy ──
 
 // disc(8) + policy_id(8) + owner(32) + pool_id(8) + pool(32) + region_id(8) + peril(1)
