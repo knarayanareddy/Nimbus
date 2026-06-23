@@ -460,7 +460,7 @@ function BuyFlowContent() {
                 ))}
               </div>
               <p className="text-xs text-white/25 mt-4">
-                Coverage is geographically tied to the selected region's oracle weather data. Not your specific location.
+                Coverage is geographically tied to the selected region&apos;s oracle weather data. Not your specific location.
               </p>
             </div>
 
@@ -881,7 +881,7 @@ function BuyFlowContent() {
                   Signed quote expires in <span style={{ color: countdownColor }} className="font-mono">{quoteCountdown} seconds</span>
                 </div>
                 <div className="text-xs text-white/40">
-                  Your premium is locked at {premium.toLocaleString()} USDC. After expiry, you'll need to generate a new quote.
+                  Your premium is locked at {premium.toLocaleString()} USDC. After expiry, you&apos;ll need to generate a new quote.
                 </div>
               </div>
             </div>

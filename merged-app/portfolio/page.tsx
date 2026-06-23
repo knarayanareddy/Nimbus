@@ -444,7 +444,7 @@ export default function PortfolioPage() {
               <div className="card text-center py-16 bg-surface-1/30">
                 <CloudRain className="w-12 h-12 text-white/10 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-1">No policies found</h3>
-                <p className="text-white/40 text-sm mb-6">You don't have any policies matching the filter.</p>
+                <p className="text-white/40 text-sm mb-6">You don&apos;t have any policies matching the filter.</p>
                 <Link href="/buy" className="btn-primary inline-flex items-center gap-2 text-sm font-semibold">
                   Configure Coverage <ChevronRight size={14} />
                 </Link>
