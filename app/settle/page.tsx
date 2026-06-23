@@ -1,359 +1,270 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
-import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { useSearchParams } from 'next/navigation'
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js'
-import { BN, Program, AnchorProvider } from '@coral-xyz/anchor'
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token'
+import { useState } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import Nav from '../../components/Nav'
-import ErrorBoundary from '../../components/ErrorBoundary'
-import TransactionStatus, { TxState } from '../../components/TransactionStatus'
-import { PolicySkeleton } from '../../components/LoadingSkeleton'
 import {
-  PROGRAM_ID,
-  USDC_MINT,
-  IDL,
-  getConfigPda,
-  getPoolPda,
-  getVaultAuthPda,
-  getPolicyPda,
-  buildObservationAccountKeys,
-} from '../../lib/nimbus'
-import { deserializePolicy, DeserializationError, type PolicyData as PolicyAccountData } from '../../lib/deserialize'
+  Scale, Search, CheckCircle2, XCircle, AlertTriangle,
+  Zap, Database, ExternalLink, CloudRain, CloudSun,
+  ArrowRight, Wallet, Clock, Shield
+} from 'lucide-react'
 
-const INDEX_METHODS: Record<number, string> = { 0: 'Sum', 1: 'Mean', 2: 'Max' }
-const DIRECTIONS: Record<number, string> = { 0: 'Drought (<=)', 1: 'Flood (>=)' }
-const STATUSES: Record<number, { label: string; color: string }> = {
-  0: { label: 'Active', color: 'bg-blue-500/10 text-blue-400' },
-  1: { label: 'Cancelled', color: 'bg-zinc-500/10 text-zinc-400' },
-  2: { label: 'Settled (Paid)', color: 'bg-emerald-500/10 text-emerald-400' },
-  3: { label: 'Settled (Expired)', color: 'bg-amber-500/10 text-amber-400' },
-}
-
-interface PolicyInfo {
-  policyId: number
-  poolId: number
-  regionId: number
-  peril: number
-  windowStartUnix: number
-  windowEndUnix: number
-  indexMethod: number
-  direction: number
+interface SettlementResult {
+  policyId: string
+  region: string
+  regionName: string
+  peril: string
+  indexMethod: string
   threshold: number
-  payoutAmount: number
-  premiumAmount: number
-  status: number
+  direction: string
   observedValue: number
   triggered: boolean
-  settledAtUnix: number
+  oracleSource: string
+  snapshotTimestamp: string
+  payoutAmount: number
+  status: 'eligible' | 'settled' | 'not-triggered'
 }
 
-export default function SettlePage() {
+const DEMO_ELIGIBLE: SettlementResult[] = [
+  {
+    policyId: 'PLcy...3fRw',
+    region: 'IND-MUM-001',
+    regionName: 'Mumbai, India',
+    peril: 'Flood',
+    indexMethod: 'Max',
+    threshold: 150,
+    direction: 'GT',
+    observedValue: 187.5,
+    triggered: true,
+    oracleSource: 'Switchboard · NOAA',
+    snapshotTimestamp: '2026-06-19T23:59:00Z',
+    payoutAmount: 2000,
+    status: 'eligible',
+  },
+  {
+    policyId: 'PLcy...7kNp',
+    region: 'KEN-NRB-001',
+    regionName: 'Nairobi, Kenya',
+    peril: 'Drought',
+    indexMethod: 'Sum',
+    threshold: 80,
+    direction: 'LT',
+    observedValue: 92.1,
+    triggered: false,
+    oracleSource: 'Switchboard · Open-Meteo',
+    snapshotTimestamp: '2026-06-22T00:00:00Z',
+    payoutAmount: 0,
+    status: 'not-triggered',
+  },
+]
+
+function OracleProof({ result }: { result: SettlementResult }) {
+  const dirLabel = result.direction === 'LT' ? 'Below' : 'Above'
+  const dirSymbol = result.direction === 'LT' ? '<' : '>'
+
   return (
-    <Suspense fallback={<div className="min-h-screen" />}>
-      <SettlePageInner />
-    </Suspense>
+    <div className="card p-0 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between p-5">
+        <div className="flex items-center gap-3">
+          {result.peril === 'Drought' ? (
+            <CloudSun className="w-5 h-5 text-status-triggered" />
+          ) : (
+            <CloudRain className="w-5 h-5 text-nimbus-400" />
+          )}
+          <div>
+            <div className="text-sm font-medium text-white">{result.regionName}</div>
+            <div className="text-xs text-white/30 font-mono">{result.policyId}</div>
+          </div>
+        </div>
+        {result.triggered ? (
+          <div className="badge bg-status-triggered/10 text-status-triggered border border-status-triggered/20">
+            <Zap className="w-3 h-3" />
+            Triggered — Payout Due
+          </div>
+        ) : (
+          <div className="badge bg-surface-3 text-white/40 border border-white/[0.06]">
+            <XCircle className="w-3 h-3" />
+            Not Triggered
+          </div>
+        )}
+      </div>
+
+      {/* Oracle proof data */}
+      <div className="border-t border-white/[0.04] p-5">
+        <div className="label mb-4">Oracle Settlement Proof</div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div>
+            <div className="text-[10px] text-white/30 uppercase tracking-wider">Index Method</div>
+            <div className="text-sm font-mono text-white mt-1">{result.indexMethod}</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 uppercase tracking-wider">Trigger Condition</div>
+            <div className="text-sm font-mono text-white mt-1">{dirSymbol} {result.threshold}mm</div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 uppercase tracking-wider">Observed Value</div>
+            <div className={`text-sm font-mono mt-1 font-semibold ${result.triggered ? 'text-status-triggered' : 'text-status-active'}`}>
+              {result.observedValue}mm
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] text-white/30 uppercase tracking-wider">Oracle Source</div>
+            <div className="text-sm text-white/60 mt-1">{result.oracleSource}</div>
+          </div>
+        </div>
+
+        {/* Threshold visualization */}
+        <div className="relative p-4 bg-surface-2 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-white/30">Threshold Comparison</span>
+            <span className="text-[10px] text-white/20 font-mono">
+              Snapshot: {new Date(result.snapshotTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} UTC
+            </span>
+          </div>
+
+          <div className="relative h-10 bg-surface-3 rounded-lg overflow-hidden">
+            {/* Threshold marker */}
+            <div
+              className="absolute top-0 w-0.5 h-full bg-white/40 z-10"
+              style={{ left: `${Math.min(90, (result.threshold / Math.max(result.threshold, result.observedValue) / 1.2) * 100)}%` }}
+            >
+              <div className="absolute -top-5 -translate-x-1/2 text-[9px] font-mono text-white/40 whitespace-nowrap">
+                {result.threshold}mm
+              </div>
+            </div>
+
+            {/* Observed value bar */}
+            <div
+              className={`absolute left-0 top-0 h-full rounded-lg transition-all duration-700 ${
+                result.triggered ? 'bg-status-triggered/60' : 'bg-status-active/40'
+              }`}
+              style={{ width: `${Math.min(95, (result.observedValue / Math.max(result.threshold, result.observedValue) / 1.2) * 100)}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-white/20">0mm</span>
+            <span className={`text-xs font-mono font-medium ${result.triggered ? 'text-status-triggered' : 'text-status-active'}`}>
+              Observed: {result.observedValue}mm {result.triggered ? `${dirSymbol} ${result.threshold}mm` : ''}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payout + action */}
+      {result.triggered && (
+        <div className="border-t border-white/[0.04] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="label">Payout Amount</div>
+              <div className="font-mono text-2xl font-bold text-white mt-1">
+                {result.payoutAmount.toLocaleString()} <span className="text-sm text-white/30">USDC</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Irreversibility notice */}
+          <div className="p-3 bg-surface-2 rounded-xl flex items-start gap-2 mb-4">
+            <AlertTriangle className="w-4 h-4 text-status-triggered mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-white/40">
+              Settlement is an irreversible on-chain transaction. The oracle proof above confirms the trigger condition.
+              This is a deterministic outcome — not a claim decision.
+            </p>
+          </div>
+
+          <button className="btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5">
+            <Zap className="w-4 h-4" />
+            Settle — Claim {result.payoutAmount.toLocaleString()} USDC
+          </button>
+        </div>
+      )}
+
+      {!result.triggered && (
+        <div className="border-t border-white/[0.04] p-5">
+          <div className="p-3 bg-surface-2 rounded-xl flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-status-active mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-white/40">
+              The observed index ({result.observedValue}mm) did not cross the trigger threshold ({result.direction === 'LT' ? '<' : '>'} {result.threshold}mm).
+              No payout is due. This policy has been settled with no claim.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
-function SettlePageInner() {
-  const { publicKey, sendTransaction, connected } = useWallet()
-  const { connection } = useConnection()
-  const searchParams = useSearchParams()
-
-  const [policyIdInput, setPolicyIdInput] = useState(searchParams.get('id') || '')
-  const [policy, setPolicy] = useState<PolicyInfo | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [txState, setTxState] = useState<TxState>('idle')
-  const [txMessage, setTxMessage] = useState('')
-  const [txSig, setTxSig] = useState('')
-
-  // Auto-discovery: find user's settleable policies
-  const [settleablePolicies, setSettleablePolicies] = useState<PolicyInfo[]>([])
-  const [discovering, setDiscovering] = useState(false)
-
-  const discoverSettleable = useCallback(async () => {
-    if (!publicKey) return
-    setDiscovering(true)
-    try {
-      const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
-        filters: [
-          { dataSize: 197 },
-          { memcmp: { offset: 16, bytes: publicKey.toBase58() } },
-        ],
-      })
-
-      const now = Date.now() / 1000
-      const settleable: PolicyInfo[] = []
-
-      for (const { account } of accounts) {
-        try {
-          const p = deserializePolicy(account.data, account.owner)
-          if (p.status === 0 && now >= p.windowEndUnix) {
-            settleable.push({
-              policyId: p.policyId, poolId: p.poolId, regionId: p.regionId,
-              peril: p.peril, windowStartUnix: p.windowStartUnix,
-              windowEndUnix: p.windowEndUnix, indexMethod: p.indexMethod,
-              direction: p.direction, threshold: p.threshold,
-              payoutAmount: p.payoutAmount, premiumAmount: p.premiumAmount,
-              status: p.status, observedValue: p.observedValue,
-              triggered: p.triggered, settledAtUnix: p.settledAtUnix,
-            })
-          }
-        } catch {
-          // Skip accounts that fail validation
-        }
-      }
-
-      settleable.sort((a, b) => a.windowEndUnix - b.windowEndUnix)
-      setSettleablePolicies(settleable)
-    } catch (err) {
-      console.error('Discovery error:', err)
-    } finally {
-      setDiscovering(false)
-    }
-  }, [publicKey, connection])
-
-  useEffect(() => {
-    discoverSettleable()
-  }, [discoverSettleable])
-
-  // Auto-lookup if ID in URL
-  useEffect(() => {
-    if (searchParams.get('id')) {
-      fetchPolicy()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchPolicy = async () => {
-    if (!policyIdInput) return
-    setLoading(true)
-    setTxState('idle')
-    setPolicy(null)
-
-    try {
-      const policyId = parseInt(policyIdInput, 10)
-      const policyPda = getPolicyPda(policyId)
-      const accountInfo = await connection.getAccountInfo(policyPda)
-
-      if (!accountInfo) {
-        setTxState('error')
-        setTxMessage('Policy not found on-chain')
-        setLoading(false)
-        return
-      }
-
-      const p = deserializePolicy(accountInfo.data, accountInfo.owner)
-      setPolicy({
-        policyId: p.policyId, poolId: p.poolId, regionId: p.regionId,
-        peril: p.peril, windowStartUnix: p.windowStartUnix,
-        windowEndUnix: p.windowEndUnix, indexMethod: p.indexMethod,
-        direction: p.direction, threshold: p.threshold,
-        payoutAmount: p.payoutAmount, premiumAmount: p.premiumAmount,
-        status: p.status, observedValue: p.observedValue,
-        triggered: p.triggered, settledAtUnix: p.settledAtUnix,
-      })
-    } catch (err: any) {
-      setTxState('error')
-      setTxMessage(err.message || 'Failed to fetch policy')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const settlePolicy = async () => {
-    if (!publicKey || !policy) return
-
-    setTxState('signing')
-    setTxMessage('Approve settlement in wallet')
-    try {
-      const provider = new AnchorProvider(connection, { publicKey } as any, {})
-      const program = new Program(IDL as any, PROGRAM_ID, provider)
-
-      const policyPda = getPolicyPda(policy.policyId)
-      const configPda = getConfigPda()
-      const poolPda = getPoolPda(policy.poolId)
-      const vaultAuthPda = getVaultAuthPda(policy.poolId)
-      const poolVaultUsdcAta = await getAssociatedTokenAddress(USDC_MINT, vaultAuthPda, true)
-      const policyOwnerUsdcAta = await getAssociatedTokenAddress(USDC_MINT, publicKey)
-
-      const obsKeys = buildObservationAccountKeys(
-        policy.regionId,
-        policy.peril,
-        policy.windowStartUnix,
-        policy.windowEndUnix,
-      )
-
-      const computeBudgetIx = new TransactionInstruction({
-        programId: new PublicKey('ComputeBudget111111111111111111111111111111'),
-        data: Buffer.from([2, ...new BN(400000).toArray('le', 4)]),
-        keys: [],
-      })
-
-      const tx = new Transaction().add(computeBudgetIx)
-
-      const settleTx = await program.methods
-        .settlePolicy()
-        .accounts({
-          config: configPda,
-          pool: poolPda,
-          vaultAuth: vaultAuthPda,
-          poolVaultUsdcAta,
-          policy: policyPda,
-          policyOwner: publicKey,
-          policyOwnerUsdcAta,
-          instructionsSysvar: new PublicKey('Sysvar1nstructions1111111111111111111111111'),
-          tokenProgram: TOKEN_PROGRAM_ID,
-        })
-        .remainingAccounts(
-          obsKeys.map(key => ({ pubkey: key, isSigner: false, isWritable: false }))
-        )
-        .transaction()
-
-      tx.add(...settleTx.instructions)
-
-      setTxState('confirming')
-      setTxMessage('Confirming settlement...')
-      const sig = await sendTransaction(tx, connection)
-      await connection.confirmTransaction(sig, 'confirmed')
-      setTxSig(sig)
-      setTxState('success')
-      setTxMessage('Policy settled successfully!')
-      await fetchPolicy()
-      await discoverSettleable()
-    } catch (err: any) {
-      setTxState('error')
-      setTxMessage(err.message || 'Settlement failed')
-    }
-  }
-
-  const formatUsdc = (u: number) => (u / 1_000_000).toFixed(2)
-  const formatDate = (unix: number) => unix > 0 ? new Date(unix * 1000).toLocaleDateString() : '\u2014'
-  const isSettleable = policy && policy.status === 0 && Date.now() / 1000 >= policy.windowEndUnix
+export default function SettlePage() {
+  const { connected } = useWallet()
+  const { setVisible } = useWalletModal()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showResults, setShowResults] = useState(true)
 
   return (
-    <div className="min-h-screen">
+    <main className="min-h-screen bg-surface-0 noise">
       <Nav />
-      <ErrorBoundary>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Settle Policy</h1>
-          <p className="text-white/50 text-sm mb-8">Trigger settlement for matured policies to receive payouts.</p>
-
-          {/* Auto-discovered settleable policies */}
-          {connected && settleablePolicies.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm font-medium text-white/70 mb-3">Your Settleable Policies</h2>
-              <div className="space-y-2">
-                {settleablePolicies.map(p => (
-                  <button
-                    key={p.policyId}
-                    onClick={() => { setPolicyIdInput(String(p.policyId)); setPolicy(p) }}
-                    className="w-full card flex justify-between items-center py-3 hover:border-blue-500/30 transition-colors cursor-pointer"
-                  >
-                    <div className="text-left">
-                      <span className="font-mono text-sm">#{p.policyId}</span>
-                      <span className="text-white/50 text-xs ml-3">Window ended {formatDate(p.windowEndUnix)}</span>
-                    </div>
-                    <div className="font-mono text-sm">${formatUsdc(p.payoutAmount)}</div>
-                  </button>
-                ))}
-              </div>
+      <div className="section py-8 lg:py-12">
+        <div className="max-w-3xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="w-14 h-14 bg-surface-2 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Scale className="w-7 h-7 text-white/40" />
             </div>
-          )}
+            <h1 className="heading-md text-white mb-2">Settle Policies</h1>
+            <p className="body-md max-w-lg mx-auto">
+              Oracle-verified settlement. Every data point is traceable.
+              No claims process. No human decision.
+            </p>
+          </div>
 
-          {connected && discovering && <PolicySkeleton />}
-
-          {/* Manual lookup */}
-          <div className="card mb-6">
-            <label htmlFor="policy-id-input" className="label">Lookup by Policy ID</label>
-            <div className="flex gap-2">
+          {/* Search */}
+          <div className="card p-5 mb-8">
+            <div className="flex items-center gap-3">
+              <Search className="w-5 h-5 text-white/20" />
               <input
-                id="policy-id-input"
-                type="number"
-                value={policyIdInput}
-                onChange={e => setPolicyIdInput(e.target.value)}
-                placeholder="Enter policy ID"
-                className="input flex-1 font-mono"
-                min="0"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Enter policy ID or wallet address..."
+                className="flex-1 bg-transparent text-white placeholder:text-white/20 text-sm focus:outline-none"
               />
-              <button onClick={fetchPolicy} disabled={loading || !policyIdInput} className="btn-primary px-6">
-                {loading ? '...' : 'Lookup'}
+              <button
+                onClick={() => setShowResults(true)}
+                className="btn-primary py-2 px-4 text-sm"
+              >
+                Lookup
               </button>
             </div>
           </div>
 
-          {/* Policy detail */}
-          {policy && (
-            <div className="card animate-in">
-              <div className="flex justify-between items-start mb-4">
-                <div className="font-semibold text-xl">Policy #{policy.policyId}</div>
-                <div className={`text-xs font-medium px-2.5 py-1 rounded-full ${(STATUSES[policy.status] || STATUSES[0]).color}`}>
-                  {(STATUSES[policy.status] || STATUSES[0]).label}
-                </div>
+          {/* Results */}
+          {showResults && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="label">{DEMO_ELIGIBLE.length} policies found</span>
+                <span className="text-xs text-white/20">Showing all eligible for settlement</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm mb-6">
-                <div>
-                  <div className="text-white/40 text-xs">Pool</div>
-                  <div className="font-mono">#{policy.poolId}</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Index Method</div>
-                  <div>{INDEX_METHODS[policy.indexMethod] || 'Unknown'}</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Direction</div>
-                  <div>{DIRECTIONS[policy.direction] || 'Unknown'}</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Threshold</div>
-                  <div className="font-mono">{policy.threshold} mm</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Window</div>
-                  <div>{formatDate(policy.windowStartUnix)} &mdash; {formatDate(policy.windowEndUnix)}</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Payout</div>
-                  <div className="font-mono">${formatUsdc(policy.payoutAmount)}</div>
-                </div>
-                <div>
-                  <div className="text-white/40 text-xs">Premium Paid</div>
-                  <div className="font-mono">${formatUsdc(policy.premiumAmount)}</div>
-                </div>
-                {policy.status >= 2 && (
-                  <div>
-                    <div className="text-white/40 text-xs">Observed Value</div>
-                    <div className="font-mono">{policy.observedValue}</div>
-                  </div>
-                )}
-              </div>
-
-              {isSettleable && connected && txState === 'idle' && (
-                <button onClick={settlePolicy} className="btn-primary w-full">
-                  Settle Policy
-                </button>
-              )}
-
-              {policy.status === 0 && Date.now() / 1000 < policy.windowEndUnix && (
-                <div className="text-sm text-white/40 text-center py-2">
-                  Window ends {formatDate(policy.windowEndUnix)} &mdash; not yet settleable
-                </div>
-              )}
-
-              {policy.status >= 1 && (
-                <div className="text-sm text-white/40 text-center py-2">
-                  {policy.triggered ? `Triggered \u2014 $${formatUsdc(policy.payoutAmount)} paid out` : 'Not triggered \u2014 no payout'}
-                  {policy.settledAtUnix > 0 && ` (settled ${formatDate(policy.settledAtUnix)})`}
-                </div>
-              )}
+              {DEMO_ELIGIBLE.map((result) => (
+                <OracleProof key={result.policyId} result={result} />
+              ))}
             </div>
           )}
 
-          <TransactionStatus state={txState} message={txMessage} txSignature={txSig} onDismiss={() => setTxState('idle')} />
+          {!connected && (
+            <div className="card p-10 text-center mt-8">
+              <Shield className="w-10 h-10 text-white/20 mx-auto mb-4" />
+              <p className="body-md mb-4">Connect your wallet to see your eligible policies.</p>
+              <button onClick={() => setVisible(true)} className="btn-primary inline-flex items-center gap-2">
+                <Wallet className="w-4 h-4" />
+                Connect Wallet
+              </button>
+            </div>
+          )}
         </div>
-      </ErrorBoundary>
-    </div>
+      </div>
+    </main>
   )
 }

@@ -5,14 +5,14 @@ import { usePathname } from 'next/navigation'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useEffect, useState } from 'react'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { Cloud, Menu, X, Droplets, Shield, BarChart3, Scale, Vote } from 'lucide-react'
 
 const NAV_LINKS = [
-  { href: '/buy', label: 'Buy Cover' },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/pools', label: 'Underwrite' },
-  { href: '/settle', label: 'Settle' },
-  { href: '/governance', label: 'Governance' },
+  { href: '/buy', label: 'Buy Cover', icon: Shield },
+  { href: '/portfolio', label: 'Portfolio', icon: BarChart3 },
+  { href: '/pools', label: 'Underwrite', icon: Droplets },
+  { href: '/settle', label: 'Settle', icon: Scale },
+  { href: '/governance', label: 'Governance', icon: Vote },
 ]
 
 export default function Nav() {
@@ -30,11 +30,9 @@ export default function Nav() {
 
     const fetchBalance = async () => {
       try {
-        // Fetch USDC token accounts for this wallet
         const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
           programId: new (await import('@solana/web3.js')).PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
         })
-        // Find USDC (6 decimals, well-known mint on devnet)
         const usdcAccount = tokenAccounts.value.find(
           (ta) => ta.account.data.parsed.info.mint === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' ||
                   ta.account.data.parsed.info.tokenAmount.decimals === 6
@@ -55,32 +53,31 @@ export default function Nav() {
   }, [publicKey, connected, connection])
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl" role="navigation" aria-label="Main navigation">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 border-b border-white/[0.04] bg-surface-0/80 backdrop-blur-2xl" role="navigation" aria-label="Main navigation">
+      <div className="section py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group" aria-label="Nimbus Home">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all duration-200 group-hover:scale-105">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            </svg>
+        <Link href="/" className="flex items-center gap-3 group" aria-label="Nimbus Home">
+          <div className="relative w-9 h-9 bg-gradient-to-br from-nimbus-400 to-accent-cyan rounded-xl flex items-center justify-center shadow-glow-sm group-hover:shadow-glow transition-all duration-300 group-hover:scale-105">
+            <Cloud className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          <div>
-            <div className="font-semibold text-lg tracking-tight text-white">Nimbus</div>
-          </div>
+          <span className="font-display font-bold text-xl tracking-tight text-white">
+            Nimbus
+          </span>
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
                   active
-                    ? 'bg-white/10 text-white font-medium'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
+                    ? 'bg-nimbus-500/10 text-nimbus-300 font-medium border border-nimbus-400/20'
+                    : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
                 }`}
                 aria-current={active ? 'page' : undefined}
               >
@@ -93,45 +90,45 @@ export default function Nav() {
         {/* Wallet area */}
         <div className="flex items-center gap-3">
           {connected && usdcBalance !== null && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-lg" aria-label={`USDC balance: ${usdcBalance.toFixed(2)}`}>
-              <span className="text-xs text-white/50">USDC</span>
-              <span className="text-sm font-mono text-white">{usdcBalance.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-surface-2 border border-white/[0.06] rounded-xl" aria-label={`USDC balance: ${usdcBalance.toFixed(2)}`}>
+              <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">USDC</span>
+              <span className="text-sm font-mono font-medium text-white tabular-nums">
+                {usdcBalance.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+              </span>
             </div>
           )}
           <WalletMultiButton />
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-white/60 hover:text-white"
+            className="lg:hidden p-2 text-white/50 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {mobileOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-white/5 px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t border-white/[0.04] px-4 py-4 space-y-1 animate-in bg-surface-0/95 backdrop-blur-2xl">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href
+            const Icon = link.icon
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`block px-4 py-2.5 rounded-lg text-sm ${
-                  active ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5'
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all ${
+                  active
+                    ? 'bg-nimbus-500/10 text-nimbus-300 border border-nimbus-400/20'
+                    : 'text-white/50 hover:bg-white/[0.04] hover:text-white'
                 }`}
               >
+                <Icon className="w-4 h-4" />
                 {link.label}
               </Link>
             )
