@@ -3,20 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-zinc-950 text-white antialiased;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   /* Restore focus indicators for accessibility */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-blue-500;
   }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
   .card {
-    @apply bg-zinc-900/60 backdrop-blur border border-white/5 rounded-2xl p-6 shadow-lg;
+    @apply bg-zinc-900/60 backdrop-blur border border-white/5 rounded-2xl p-6 shadow-lg
+           transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:border-white/10 hover:shadow-xl hover:shadow-blue-900/5
+           hover:-translate-y-0.5 transition-all duration-200;
   }
 
   .input {
@@ -27,13 +47,13 @@
   .btn-primary {
     @apply bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400
            text-white font-semibold py-3 px-8 rounded-xl
-           transition-all active:scale-[0.985] disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150 active:scale-[0.985] disabled:opacity-50 disabled:cursor-not-allowed
            shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30;
   }
 
   .btn-secondary {
     @apply border border-white/10 hover:border-white/20 hover:bg-white/5
-           text-white font-medium py-3 px-8 rounded-xl transition-all;
+           text-white font-medium py-3 px-8 rounded-xl transition-all duration-150;
   }
 
   .label {
@@ -42,7 +62,7 @@
 
   /* Step indicator styles */
   .step-active {
-    @apply bg-blue-500 text-white;
+    @apply bg-blue-500 text-white shadow-md shadow-blue-500/30;
   }
   .step-complete {
     @apply bg-emerald-500 text-white;
@@ -50,14 +70,68 @@
   .step-pending {
     @apply bg-white/10 text-white/40;
   }
+
+  /* Wallet adapter button theme override */
+  .wallet-adapter-button {
+    @apply !bg-gradient-to-r !from-blue-600 !to-blue-500 !rounded-xl !font-semibold !text-sm
+           !shadow-lg !shadow-blue-600/20 hover:!from-blue-500 hover:!to-blue-400
+           !transition-all !duration-150 !h-auto !py-2.5 !px-5 !leading-normal;
+  }
+  .wallet-adapter-button:not([disabled]):hover {
+    @apply !shadow-blue-500/30;
+  }
+  .wallet-adapter-button-trigger {
+    @apply !bg-gradient-to-r !from-blue-600 !to-blue-500;
+  }
+  .wallet-adapter-modal-wrapper {
+    @apply !bg-zinc-900 !border !border-white/10 !rounded-2xl;
+  }
+  .wallet-adapter-modal-title {
+    @apply !text-white;
+  }
+  .wallet-adapter-modal-list .wallet-adapter-button {
+    @apply !bg-white/5 hover:!bg-white/10 !rounded-xl !border !border-white/5;
+  }
 }
 
 @layer utilities {
   .animate-in {
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeIn 0.25s ease-out;
   }
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-stagger > * {
+    animation: fadeIn 0.3s ease-out backwards;
+  }
+  .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .animate-stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .animate-stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .animate-stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .animate-stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+  .glass {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06];
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
 }

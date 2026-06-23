@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
 import Nav from '../../components/Nav'
@@ -24,7 +24,7 @@ export default function GovernancePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const fetchMultisig = async () => {
+  const fetchMultisig = useCallback(async () => {
     setLoading(true)
     setError('')
     setWarnings([])
@@ -54,7 +54,12 @@ export default function GovernancePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [connection])
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchMultisig()
+  }, [fetchMultisig])
 
   const isAuthority = multisig && publicKey
     ? multisig.authorities.some(a => a.equals(publicKey))
@@ -68,7 +73,7 @@ export default function GovernancePage() {
           <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Governance</h1>
           <p className="text-white/50 text-sm mb-8">Multisig-controlled protocol administration with M-of-N approval.</p>
 
-          {!multisig && !loading && (
+          {!multisig && !loading && !error && (
             <div className="card text-center py-8">
               <p className="text-white/50 mb-4">Load on-chain governance state to view configuration and proposals.</p>
               <button onClick={fetchMultisig} className="btn-primary px-6 py-2.5 text-sm">

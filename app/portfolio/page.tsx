@@ -104,8 +104,13 @@ export default function Portfolio() {
           </div>
 
           {!connected && (
-            <div className="card text-center py-12">
-              <div className="text-white/40 text-lg mb-2">Connect your wallet</div>
+            <div className="card text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-500/5 border border-blue-500/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
+                </svg>
+              </div>
+              <div className="text-white/60 text-lg font-medium mb-2">Connect your wallet</div>
               <p className="text-white/30 text-sm">to view your insurance policies</p>
             </div>
           )}
@@ -119,9 +124,14 @@ export default function Portfolio() {
           )}
 
           {connected && !loading && policies.length === 0 && (
-            <div className="card text-center py-12">
-              <div className="text-white/40 text-lg mb-2">No policies found</div>
-              <p className="text-white/30 text-sm mb-4">You haven&apos;t purchased any coverage yet.</p>
+            <div className="card text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-emerald-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <div className="text-white/60 text-lg font-medium mb-2">No policies found</div>
+              <p className="text-white/30 text-sm mb-6">You haven&apos;t purchased any coverage yet.</p>
               <Link href="/buy" className="btn-primary text-sm px-6 py-2.5 inline-block">
                 Get Your First Policy
               </Link>
@@ -133,7 +143,7 @@ export default function Portfolio() {
               {policies.map((p) => {
                 const statusInfo = STATUSES[p.status] || { label: 'Unknown', color: 'bg-zinc-500/10 text-zinc-400' }
                 return (
-                  <div key={p.pubkey.toBase58()} className="card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div key={p.pubkey.toBase58()} className="card-hover flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <span className="font-mono text-sm text-white/50">#{p.policyId}</span>

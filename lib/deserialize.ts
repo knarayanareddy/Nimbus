@@ -208,6 +208,55 @@ export function validateMultisigInvariants(config: MultisigConfigData): string[]
 
 // ── Pool ──
 
+/**
+ * Validate pool invariants client-side.
+ * Returns a list of warning strings (empty if clean).
+ */
+export function validatePoolInvariants(pool: PoolData): string[] {
+  const warnings: string[] = []
+
+  if (pool.locked > pool.capital) {
+    warnings.push(`Locked amount (${pool.locked}) exceeds total capital (${pool.capital}) — potential insolvency`)
+  }
+
+  const utilization = pool.capital > 0 ? (pool.locked / pool.capital) * 100 : 0
+  if (utilization > 90) {
+    warnings.push(`Utilization at ${utilization.toFixed(1)}% — pool near capacity`)
+  }
+
+  if (pool.ltvLimitBps > 10000) {
+    warnings.push(`LTV limit (${pool.ltvLimitBps} bps) exceeds 100% — invalid configuration`)
+  }
+
+  return warnings
+}
+
+/**
+ * Validate policy invariants client-side.
+ * Returns a list of warning strings (empty if clean).
+ */
+export function validatePolicyInvariants(policy: PolicyData): string[] {
+  const warnings: string[] = []
+
+  if (policy.windowEndUnix <= policy.windowStartUnix) {
+    warnings.push('Window end is before or equal to window start — invalid time range')
+  }
+
+  if (policy.payoutAmount <= 0) {
+    warnings.push('Payout amount is zero or negative')
+  }
+
+  if (policy.premiumAmount <= 0) {
+    warnings.push('Premium amount is zero or negative')
+  }
+
+  if (policy.peril > 2) {
+    warnings.push(`Unknown peril type: ${policy.peril}`)
+  }
+
+  return warnings
+}
+
 // disc(8) + pool_id(8) + peril(1) + region_set_hash(32) + max_tenor_secs(4) + ltv_limit_bps(2) + capital(8) + locked(8) + lp_mint(32) + vault_usdc_ata(32) + created_at_unix(8)
 export const POOL_MIN_LEN = 8 + 8 + 1 + 32 + 4 + 2 + 8 + 8 + 32 + 32 + 8 // 143
 
