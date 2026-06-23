@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js'
 import { BN } from '@coral-xyz/anchor'
-import { PROGRAM_ID } from './climafi'
+import { PROGRAM_ID } from './nimbus'
 
 // Anchor discriminators: sha256("account:<Name>")[0..8]
 const DISCRIMINATORS = {

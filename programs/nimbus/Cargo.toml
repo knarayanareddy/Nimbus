@@ -1,7 +1,7 @@
 [package]
-name = "climafi"
+name = "nimbus"
 version = "0.1.0"
-description = "ClimaFi - Parametric Climate Risk Protocol on Solana"
+description = "Nimbus - Parametric Climate Risk Protocol on Solana"
 edition = "2021"
 
 [lib]

@@ -12,11 +12,11 @@ import {
 import { expect } from 'chai';
 import nacl from 'tweetnacl';
 
-describe('ClimaFi - Full Integration Tests', () => {
+describe('Nimbus - Full Integration Tests', () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.Climafi as Program;
+  const program = anchor.workspace.Nimbus as Program;
 
   let admin: Keypair;
   let buyer: Keypair;

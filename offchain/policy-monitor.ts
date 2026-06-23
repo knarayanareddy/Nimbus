@@ -15,7 +15,7 @@
 import { Connection, Keypair, PublicKey, ComputeBudgetProgram, Transaction } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
 import * as fs from 'fs';
-import { ClimaFiAlerting, AlertPayload } from './alerting';
+import { NimbusAlerting, AlertPayload } from './alerting';
 
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
@@ -57,7 +57,7 @@ export class PolicyMonitor {
   private connection: Connection;
   private wallet: Wallet;
   private program: Program;
-  private alerting: ClimaFiAlerting;
+  private alerting: NimbusAlerting;
   private pollIntervalMs: number;
   private running: boolean = false;
 
@@ -77,7 +77,7 @@ export class PolicyMonitor {
       preflightCommitment: 'confirmed',
     });
     this.program = new Program({} as any, PROGRAM_ID, provider);
-    this.alerting = new ClimaFiAlerting(options?.slackWebhook, options?.pagerDutyKey);
+    this.alerting = new NimbusAlerting(options?.slackWebhook, options?.pagerDutyKey);
   }
 
   /**

@@ -1,5 +1,5 @@
 /**
- * ClimaFi Security Audit Test Suite
+ * Nimbus Security Audit Test Suite
  * OWASP-inspired + Solana Security Best Practices
  *
  * Run with: anchor test
@@ -19,10 +19,10 @@ import {
 } from '@solana/spl-token';
 import { expect } from 'chai';
 
-describe('ClimaFi Security Audit Suite', () => {
+describe('Nimbus Security Audit Suite', () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-  const program = anchor.workspace.Climafi as Program;
+  const program = anchor.workspace.Nimbus as Program;
 
   let admin: Keypair;
   let attacker: Keypair;

@@ -6,7 +6,7 @@ const cspDirectives = [
   "default-src 'self'",
   // 'wasm-unsafe-eval' required for Solana wallet adapter WASM modules (Phantom, etc.)
   // 'unsafe-eval' allowed only in dev for Next.js hot module replacement
-  `script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''}`,
   // 'unsafe-inline' required for Next.js inline style injection
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",

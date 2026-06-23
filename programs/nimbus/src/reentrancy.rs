@@ -18,7 +18,7 @@ pub fn assert_no_cpi_in_transaction(instructions_sysvar: &AccountInfo) -> Result
     }
 
     // Only one invocation of this program per transaction is allowed
-    require!(count <= 1, crate::errors::ClimaFiError::Unauthorized);
+    require!(count <= 1, crate::errors::NimbusError::Unauthorized);
 
     Ok(())
 }

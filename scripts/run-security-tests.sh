@@ -1,10 +1,10 @@
 #!/bin/bash
-# ClimaFi Security Test Runner
+# Nimbus Security Test Runner
 # Run this before any professional audit
 
 set -e
 
-echo "🔒 Starting ClimaFi Security Test Suite..."
+echo "🔒 Starting Nimbus Security Test Suite..."
 
 # 1. Static Analysis
 echo "→ Running cargo audit..."

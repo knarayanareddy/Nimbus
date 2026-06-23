@@ -19,14 +19,14 @@ pub mod governance;
 
 use state::*;
 use constants::*;
-use errors::ClimaFiError;
+use errors::NimbusError;
 use economic_safety::*;
 use reentrancy::assert_no_cpi_in_transaction;
 use nonce::{QuoteNonce, QUOTE_NONCE_SEED, validate_and_increment_nonce};
 use timelock::{Timelock, AdminOperation, PendingOperation, MIN_TIMELOCK_DELAY};
 
 #[program]
-pub mod climafi {
+pub mod nimbus {
     use super::*;
 
     // ==================== ADMIN ====================
@@ -40,7 +40,7 @@ pub mod climafi {
         quote_signer: Pubkey,
         oracle_authority: Pubkey,
     ) -> Result<()> {
-        require!(protocol_fee_bps <= 500, ClimaFiError::InvalidBps);
+        require!(protocol_fee_bps <= 500, NimbusError::InvalidBps);
 
         let cfg = &mut ctx.accounts.config;
         cfg.admin = ctx.accounts.admin.key();
@@ -61,7 +61,7 @@ pub mod climafi {
 
     pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
         let config = &mut ctx.accounts.config;
-        require!(ctx.accounts.admin.key() == config.admin, ClimaFiError::Unauthorized);
+        require!(ctx.accounts.admin.key() == config.admin, NimbusError::Unauthorized);
         config.paused = paused;
         Ok(())
     }
@@ -77,9 +77,9 @@ pub mod climafi {
         ltv_limit_bps: u16,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
-        require!(ctx.accounts.admin.key() == cfg.admin, ClimaFiError::Unauthorized);
-        require!(ltv_limit_bps <= BPS_DENOMINATOR, ClimaFiError::InvalidBps);
+        require!(!cfg.paused, NimbusError::Paused);
+        require!(ctx.accounts.admin.key() == cfg.admin, NimbusError::Unauthorized);
+        require!(ltv_limit_bps <= BPS_DENOMINATOR, NimbusError::InvalidBps);
 
         let pool = &mut ctx.accounts.pool;
         pool.pool_id = pool_id;
@@ -99,10 +99,10 @@ pub mod climafi {
 
     pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         // M-02 fix: minimum deposit to prevent inflation attacks
-        require!(amount >= MIN_DEPOSIT_AMOUNT, ClimaFiError::InvalidBps);
+        require!(amount >= MIN_DEPOSIT_AMOUNT, NimbusError::InvalidBps);
 
         let pool = &mut ctx.accounts.pool;
         let capital_before = pool.capital;
@@ -123,9 +123,9 @@ pub mod climafi {
         } else {
             (amount as u128)
                 .checked_mul(lp_supply_before as u128)
-                .ok_or(ClimaFiError::MathOverflow)?
+                .ok_or(NimbusError::MathOverflow)?
                 .checked_div(capital_before as u128)
-                .ok_or(ClimaFiError::MathOverflow)? as u64
+                .ok_or(NimbusError::MathOverflow)? as u64
         };
 
         // Mint LP tokens to depositor via vault_auth PDA
@@ -148,7 +148,7 @@ pub mod climafi {
             lp_minted,
         )?;
 
-        pool.capital = pool.capital.checked_add(amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.capital = pool.capital.checked_add(amount).ok_or(NimbusError::MathOverflow)?;
 
         emit!(LiquidityDeposited {
             pool_id: pool.pool_id,
@@ -163,21 +163,21 @@ pub mod climafi {
 
     pub fn withdraw_liquidity(ctx: Context<WithdrawLiquidity>, lp_amount: u64) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         let pool = &mut ctx.accounts.pool;
         let lp_supply = ctx.accounts.lp_mint.supply;
-        require!(lp_supply > 0, ClimaFiError::MathOverflow);
+        require!(lp_supply > 0, NimbusError::MathOverflow);
 
         // amount_out = lp_amount * pool.capital / lp_supply
         let amount_out = (lp_amount as u128)
             .checked_mul(pool.capital as u128)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(lp_supply as u128)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
 
-        let unlocked = pool.capital.checked_sub(pool.locked).ok_or(ClimaFiError::MathOverflow)?;
-        require!(unlocked >= amount_out, ClimaFiError::InsufficientUnlockedCapital);
+        let unlocked = pool.capital.checked_sub(pool.locked).ok_or(NimbusError::MathOverflow)?;
+        require!(unlocked >= amount_out, NimbusError::InsufficientUnlockedCapital);
 
         // Burn LP tokens
         token::burn(
@@ -212,7 +212,7 @@ pub mod climafi {
             amount_out,
         )?;
 
-        pool.capital = pool.capital.checked_sub(amount_out).ok_or(ClimaFiError::MathOverflow)?;
+        pool.capital = pool.capital.checked_sub(amount_out).ok_or(NimbusError::MathOverflow)?;
         assert_capital_solvency(pool)?;
 
         emit!(LiquidityWithdrawn {
@@ -244,11 +244,11 @@ pub mod climafi {
         ed25519_ix_index: u8,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         let now = Clock::get()?.unix_timestamp;
-        require!(quote.quote_expiry_unix >= now, ClimaFiError::QuoteExpired);
-        require!(quote.premium_amount > 0, ClimaFiError::InvalidBps);
+        require!(quote.quote_expiry_unix >= now, NimbusError::QuoteExpired);
+        require!(quote.premium_amount > 0, NimbusError::InvalidBps);
 
         // Per-signer nonce replay protection (prevents DoS via global nonce griefing)
         validate_and_increment_nonce(
@@ -273,12 +273,12 @@ pub mod climafi {
         // Protocol fee split: fee goes to treasury, remainder to pool
         let protocol_fee = (quote.premium_amount as u128)
             .checked_mul(cfg.protocol_fee_bps as u128)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(BPS_DENOMINATOR as u128)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
         let pool_premium = quote.premium_amount
             .checked_sub(protocol_fee)
-            .ok_or(ClimaFiError::MathOverflow)?;
+            .ok_or(NimbusError::MathOverflow)?;
 
         // Transfer pool's share to vault
         token::transfer(
@@ -310,27 +310,27 @@ pub mod climafi {
 
         // Pool exposure checks
         let pool = &mut ctx.accounts.pool;
-        require!(pool.peril as u8 == quote.peril as u8, ClimaFiError::PoolPerilMismatch);
+        require!(pool.peril as u8 == quote.peril as u8, NimbusError::PoolPerilMismatch);
 
         let new_capital = pool.capital
             .checked_add(pool_premium)
-            .ok_or(ClimaFiError::MathOverflow)?;
+            .ok_or(NimbusError::MathOverflow)?;
         let new_locked = pool.locked
             .checked_add(quote.payout_amount)
-            .ok_or(ClimaFiError::MathOverflow)?;
+            .ok_or(NimbusError::MathOverflow)?;
 
         // LTV compliance: new_locked <= new_capital * ltv_limit_bps / 10_000
         let max_locked = (new_capital as u128)
             .checked_mul(pool.ltv_limit_bps as u128)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(BPS_DENOMINATOR as u128)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
 
-        require!(new_locked <= max_locked, ClimaFiError::LtvExceeded);
+        require!(new_locked <= max_locked, NimbusError::LtvExceeded);
 
         // Circuit breaker
         if should_trigger_circuit_breaker(pool) {
-            return Err(ClimaFiError::LtvExceeded.into());
+            return Err(NimbusError::LtvExceeded.into());
         }
 
         pool.capital = new_capital;
@@ -374,45 +374,45 @@ pub mod climafi {
     pub fn cancel_policy(ctx: Context<CancelPolicy>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let policy = &mut ctx.accounts.policy;
-        require!(policy.status == PolicyStatus::Active, ClimaFiError::PolicyNotActive);
-        require!(ctx.accounts.owner.key() == policy.owner, ClimaFiError::Unauthorized);
-        require!(now < policy.window_start_unix, ClimaFiError::PolicyCancellationNotAllowed);
+        require!(policy.status == PolicyStatus::Active, NimbusError::PolicyNotActive);
+        require!(ctx.accounts.owner.key() == policy.owner, NimbusError::Unauthorized);
+        require!(now < policy.window_start_unix, NimbusError::PolicyCancellationNotAllowed);
 
         // H-06 fix: minimum hold period (5 minutes) to prevent gaming
         require!(
             now >= policy.created_at_unix + MIN_HOLD_SECONDS,
-            ClimaFiError::PolicyCancellationNotAllowed
+            NimbusError::PolicyCancellationNotAllowed
         );
 
         // Unlock pool exposure
         let pool = &mut ctx.accounts.pool;
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         // Pro-rata premium refund: refund based on unused time proportion
         // refund = premium * (window_start - now) / (window_end - window_start) 
         // If cancel is before window start, full premium refund minus protocol fee
         let total_window = policy.window_end_unix
             .checked_sub(policy.window_start_unix)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
         let unused_time = policy.window_start_unix
             .checked_sub(now)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
 
         // Refund proportional to unused time (cancel before window = full refund of pool portion)
         let pool_premium = (policy.premium_amount as u128)
             .checked_mul((BPS_DENOMINATOR - ctx.accounts.config.protocol_fee_bps) as u128)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(BPS_DENOMINATOR as u128)
-            .ok_or(ClimaFiError::MathOverflow)? as u64;
+            .ok_or(NimbusError::MathOverflow)? as u64;
 
         let refund_amount = if unused_time >= total_window {
             pool_premium
         } else {
             (pool_premium as u128)
                 .checked_mul(unused_time as u128)
-                .ok_or(ClimaFiError::MathOverflow)?
+                .ok_or(NimbusError::MathOverflow)?
                 .checked_div(total_window as u128)
-                .ok_or(ClimaFiError::MathOverflow)? as u64
+                .ok_or(NimbusError::MathOverflow)? as u64
         };
 
         if refund_amount > 0 {
@@ -435,7 +435,7 @@ pub mod climafi {
                 refund_amount,
             )?;
 
-            pool.capital = pool.capital.checked_sub(refund_amount).ok_or(ClimaFiError::MathOverflow)?;
+            pool.capital = pool.capital.checked_sub(refund_amount).ok_or(NimbusError::MathOverflow)?;
         }
 
         policy.status = PolicyStatus::Cancelled;
@@ -461,20 +461,20 @@ pub mod climafi {
         sources_bitmap: u16,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         let signer = ctx.accounts.oracle.key();
         require!(
             signer == cfg.oracle_authority,
-            ClimaFiError::OracleUnauthorized
+            NimbusError::OracleUnauthorized
         );
 
         // Day alignment: day_start_unix must be midnight-aligned
-        require!(day_start_unix % DAY_SECS == 0, ClimaFiError::InvalidTimeRange);
+        require!(day_start_unix % DAY_SECS == 0, NimbusError::InvalidTimeRange);
 
         // No future observations beyond 1 day ahead
         let now = Clock::get()?.unix_timestamp;
-        require!(day_start_unix <= now + DAY_SECS, ClimaFiError::InvalidTimeRange);
+        require!(day_start_unix <= now + DAY_SECS, NimbusError::InvalidTimeRange);
 
         let obs = &mut ctx.accounts.observation;
         obs.region_id = region_id;
@@ -512,18 +512,18 @@ pub mod climafi {
 
     pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         assert_no_cpi_in_transaction(&ctx.accounts.instructions_sysvar)?;
 
         let policy = &mut ctx.accounts.policy;
-        require!(policy.status == PolicyStatus::Active, ClimaFiError::PolicyNotActive);
+        require!(policy.status == PolicyStatus::Active, NimbusError::PolicyNotActive);
 
         let now = Clock::get()?.unix_timestamp;
-        require!(now >= policy.window_end_unix, ClimaFiError::PolicyWindowNotEnded);
+        require!(now >= policy.window_end_unix, NimbusError::PolicyWindowNotEnded);
 
         // Validate policy owner is the signer (C-01 fix)
-        require!(ctx.accounts.policy_owner.key() == policy.owner, ClimaFiError::Unauthorized);
+        require!(ctx.accounts.policy_owner.key() == policy.owner, NimbusError::Unauthorized);
 
         let pool = &mut ctx.accounts.pool;
         assert_capital_solvency(pool)?;
@@ -531,7 +531,7 @@ pub mod climafi {
         // Read and validate remaining accounts (daily observation snapshots)
         let remaining = ctx.remaining_accounts;
         let num_days = ((policy.window_end_unix - policy.window_start_unix) / DAY_SECS) as usize;
-        require!(remaining.len() == num_days, ClimaFiError::InvalidObservationCount);
+        require!(remaining.len() == num_days, NimbusError::InvalidObservationCount);
 
         let program_id = crate::ID;
         let mut sum: i64 = 0;
@@ -539,25 +539,25 @@ pub mod climafi {
 
         for (i, acc) in remaining.iter().enumerate() {
             // Account owner validation: must be owned by this program
-            require!(acc.owner == &program_id, ClimaFiError::AccountOwnershipMismatch);
+            require!(acc.owner == &program_id, NimbusError::AccountOwnershipMismatch);
 
             let obs = ObservationSnapshot::try_deserialize(&mut &acc.data.borrow()[..])?;
 
             // Region and peril must match
             require!(
                 obs.region_id == policy.region_id && obs.peril == policy.peril,
-                ClimaFiError::ObservationMismatch
+                NimbusError::ObservationMismatch
             );
 
             // Day alignment: each account must correspond to the correct day
             let expected_day = policy.window_start_unix + (i as i64 * DAY_SECS);
-            require!(obs.day_start_unix == expected_day, ClimaFiError::ObservationMismatch);
+            require!(obs.day_start_unix == expected_day, NimbusError::ObservationMismatch);
 
             // Staleness check
             let staleness_limit = obs.day_end_unix + cfg.max_oracle_staleness_secs as i64;
-            require!(obs.published_at_unix <= staleness_limit, ClimaFiError::ObservationStale);
+            require!(obs.published_at_unix <= staleness_limit, NimbusError::ObservationStale);
 
-            sum = sum.checked_add(obs.value).ok_or(ClimaFiError::MathOverflow)?;
+            sum = sum.checked_add(obs.value).ok_or(NimbusError::MathOverflow)?;
             if obs.value > max_val {
                 max_val = obs.value;
             }
@@ -570,7 +570,7 @@ pub mod climafi {
                 if num_days == 0 {
                     0
                 } else {
-                    sum.checked_div(num_days as i64).ok_or(ClimaFiError::MathOverflow)?
+                    sum.checked_div(num_days as i64).ok_or(NimbusError::MathOverflow)?
                 }
             },
             IndexMethod::Max => max_val,
@@ -610,7 +610,7 @@ pub mod climafi {
         }
 
         // Unlock pool exposure regardless of trigger outcome
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         emit!(PolicySettled {
             policy_id: policy.policy_id,
@@ -629,10 +629,10 @@ pub mod climafi {
 
     pub fn init_timelock(ctx: Context<InitTimelockCtx>, delay_seconds: u32) -> Result<()> {
         // H-05 fix: enforce minimum timelock delay
-        require!(delay_seconds >= MIN_TIMELOCK_DELAY, ClimaFiError::InvalidTimeRange);
+        require!(delay_seconds >= MIN_TIMELOCK_DELAY, NimbusError::InvalidTimeRange);
 
         let cfg = &ctx.accounts.config;
-        require!(ctx.accounts.admin.key() == cfg.admin, ClimaFiError::Unauthorized);
+        require!(ctx.accounts.admin.key() == cfg.admin, NimbusError::Unauthorized);
 
         let tl = &mut ctx.accounts.timelock;
         tl.admin = ctx.accounts.admin.key();
@@ -648,9 +648,9 @@ pub mod climafi {
         let tl = &mut ctx.accounts.timelock;
         require!(
             ctx.accounts.admin.key() == tl.admin,
-            ClimaFiError::Unauthorized
+            NimbusError::Unauthorized
         );
-        require!(tl.pending_operation.is_none(), ClimaFiError::TimelockBusy);
+        require!(tl.pending_operation.is_none(), NimbusError::TimelockBusy);
 
         let now = Clock::get()?.unix_timestamp;
         let desc = operation.description().to_string();
@@ -675,17 +675,17 @@ pub mod climafi {
         let tl = &mut ctx.accounts.timelock;
         require!(
             ctx.accounts.admin.key() == tl.admin,
-            ClimaFiError::Unauthorized
+            NimbusError::Unauthorized
         );
 
         let delay = tl.delay_seconds;
-        let pending = tl.pending_operation.as_ref().ok_or(ClimaFiError::TimelockEmpty)?;
-        require!(!pending.executed, ClimaFiError::TimelockAlreadyExecuted);
+        let pending = tl.pending_operation.as_ref().ok_or(NimbusError::TimelockEmpty)?;
+        require!(!pending.executed, NimbusError::TimelockAlreadyExecuted);
 
         let now = Clock::get()?.unix_timestamp;
         require!(
             now >= pending.scheduled_at + delay as i64,
-            ClimaFiError::TimelockNotReady
+            NimbusError::TimelockNotReady
         );
 
         let operation = pending.operation.clone();
@@ -712,7 +712,7 @@ pub mod climafi {
         }
         tl.pending_operation
             .as_mut()
-            .ok_or(error!(ClimaFiError::TimelockEmpty))?
+            .ok_or(error!(NimbusError::TimelockEmpty))?
             .executed = true;
         Ok(())
     }
@@ -721,9 +721,9 @@ pub mod climafi {
         let tl = &mut ctx.accounts.timelock;
         require!(
             ctx.accounts.admin.key() == tl.admin,
-            ClimaFiError::Unauthorized
+            NimbusError::Unauthorized
         );
-        require!(tl.pending_operation.is_some(), ClimaFiError::TimelockEmpty);
+        require!(tl.pending_operation.is_some(), NimbusError::TimelockEmpty);
 
         tl.pending_operation = None;
         Ok(())
@@ -797,22 +797,22 @@ fn verify_ed25519_ix(
     signature: &[u8; 64],
 ) -> Result<()> {
     let ix = load_instruction_at_checked(ix_index as usize, instructions_sysvar)
-        .map_err(|_| error!(ClimaFiError::QuoteSigMissing))?;
+        .map_err(|_| error!(NimbusError::QuoteSigMissing))?;
 
     require!(
         ix.program_id == solana_program::ed25519_program::ID,
-        ClimaFiError::QuoteSigMissing
+        NimbusError::QuoteSigMissing
     );
 
     let data = &ix.data;
-    require!(data.len() >= 2, ClimaFiError::QuoteSigInvalid);
+    require!(data.len() >= 2, NimbusError::QuoteSigInvalid);
 
     let n = data[0] as usize;
-    require!(n == 1, ClimaFiError::QuoteSigInvalid);
+    require!(n == 1, NimbusError::QuoteSigInvalid);
 
     let header_start = 2usize;
     let header_len = 14usize;
-    require!(data.len() >= header_start + header_len, ClimaFiError::QuoteSigInvalid);
+    require!(data.len() >= header_start + header_len, NimbusError::QuoteSigInvalid);
 
     let read_u16 = |i: usize| -> u16 {
         u16::from_le_bytes([data[i], data[i + 1]])
@@ -827,18 +827,18 @@ fn verify_ed25519_ix(
     let msg_ix_idx = read_u16(header_start + 12);
 
     // H-04 fix: validate all ix_idx fields point to same instruction (0xFFFF = embedded)
-    require!(sig_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
-    require!(pub_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
-    require!(msg_ix_idx == 0xFFFF, ClimaFiError::QuoteSigInvalid);
+    require!(sig_ix_idx == 0xFFFF, NimbusError::QuoteSigInvalid);
+    require!(pub_ix_idx == 0xFFFF, NimbusError::QuoteSigInvalid);
+    require!(msg_ix_idx == 0xFFFF, NimbusError::QuoteSigInvalid);
 
-    require!(msg_size == message.len(), ClimaFiError::QuoteSigInvalid);
-    require!(sig_offset + 64 <= data.len(), ClimaFiError::QuoteSigInvalid);
-    require!(pub_offset + 32 <= data.len(), ClimaFiError::QuoteSigInvalid);
-    require!(msg_offset + msg_size <= data.len(), ClimaFiError::QuoteSigInvalid);
+    require!(msg_size == message.len(), NimbusError::QuoteSigInvalid);
+    require!(sig_offset + 64 <= data.len(), NimbusError::QuoteSigInvalid);
+    require!(pub_offset + 32 <= data.len(), NimbusError::QuoteSigInvalid);
+    require!(msg_offset + msg_size <= data.len(), NimbusError::QuoteSigInvalid);
 
-    require!(&data[sig_offset..sig_offset + 64] == signature, ClimaFiError::QuoteSigInvalid);
-    require!(&data[pub_offset..pub_offset + 32] == pubkey, ClimaFiError::QuoteSigInvalid);
-    require!(&data[msg_offset..msg_offset + msg_size] == message, ClimaFiError::QuoteSigInvalid);
+    require!(&data[sig_offset..sig_offset + 64] == signature, NimbusError::QuoteSigInvalid);
+    require!(&data[pub_offset..pub_offset + 32] == pubkey, NimbusError::QuoteSigInvalid);
+    require!(&data[msg_offset..msg_offset + msg_size] == message, NimbusError::QuoteSigInvalid);
 
     Ok(())
 }
@@ -944,8 +944,8 @@ pub struct DepositLiquidity<'info> {
 
     #[account(
         mut,
-        constraint = depositor_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = depositor_usdc_ata.owner == depositor.key() @ ClimaFiError::Unauthorized
+        constraint = depositor_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = depositor_usdc_ata.owner == depositor.key() @ NimbusError::Unauthorized
     )]
     pub depositor_usdc_ata: Account<'info, TokenAccount>,
 
@@ -986,8 +986,8 @@ pub struct WithdrawLiquidity<'info> {
 
     #[account(
         mut,
-        constraint = withdrawer_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = withdrawer_usdc_ata.owner == withdrawer.key() @ ClimaFiError::Unauthorized
+        constraint = withdrawer_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = withdrawer_usdc_ata.owner == withdrawer.key() @ NimbusError::Unauthorized
     )]
     pub withdrawer_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1052,14 +1052,14 @@ pub struct BuyPolicy<'info> {
         mut,
         seeds = [QUOTE_NONCE_SEED, buyer.key().as_ref()],
         bump,
-        constraint = buyer_nonce.signer == buyer.key() @ ClimaFiError::Unauthorized
+        constraint = buyer_nonce.signer == buyer.key() @ NimbusError::Unauthorized
     )]
     pub buyer_nonce: Account<'info, QuoteNonce>,
 
     #[account(
         mut,
-        constraint = buyer_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = buyer_usdc_ata.owner == buyer.key() @ ClimaFiError::Unauthorized
+        constraint = buyer_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = buyer_usdc_ata.owner == buyer.key() @ NimbusError::Unauthorized
     )]
     pub buyer_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1077,7 +1077,7 @@ pub struct CancelPolicy<'info> {
     pub config: Account<'info, GlobalConfig>,
 
     // H-03 fix: constrain pool matches policy.pool
-    #[account(mut, constraint = pool.key() == policy.pool @ ClimaFiError::PoolPerilMismatch)]
+    #[account(mut, constraint = pool.key() == policy.pool @ NimbusError::PoolPerilMismatch)]
     pub pool: Account<'info, Pool>,
 
     /// CHECK: PDA
@@ -1095,8 +1095,8 @@ pub struct CancelPolicy<'info> {
 
     #[account(
         mut,
-        constraint = owner_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = owner_usdc_ata.owner == owner.key() @ ClimaFiError::Unauthorized
+        constraint = owner_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = owner_usdc_ata.owner == owner.key() @ NimbusError::Unauthorized
     )]
     pub owner_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1130,7 +1130,7 @@ pub struct SettlePolicy<'info> {
     pub config: Account<'info, GlobalConfig>,
 
     // M-01 fix: constrain pool matches policy.pool
-    #[account(mut, constraint = pool.key() == policy.pool @ ClimaFiError::PoolPerilMismatch)]
+    #[account(mut, constraint = pool.key() == policy.pool @ NimbusError::PoolPerilMismatch)]
     pub pool: Account<'info, Pool>,
 
     /// CHECK: PDA
@@ -1144,10 +1144,10 @@ pub struct SettlePolicy<'info> {
     pub policy: Account<'info, Policy>,
 
     // C-01 fix: policy_owner must be a Signer to prevent unauthorized settlement
-    #[account(mut, constraint = policy_owner.key() == policy.owner @ ClimaFiError::Unauthorized)]
+    #[account(mut, constraint = policy_owner.key() == policy.owner @ NimbusError::Unauthorized)]
     pub policy_owner: Signer<'info>,
 
-    #[account(mut, constraint = policy_owner_usdc_ata.owner == policy.owner @ ClimaFiError::Unauthorized)]
+    #[account(mut, constraint = policy_owner_usdc_ata.owner == policy.owner @ NimbusError::Unauthorized)]
     pub policy_owner_usdc_ata: Account<'info, TokenAccount>,
 
     /// CHECK: instructions sysvar
@@ -1176,7 +1176,7 @@ pub struct InitTimelockCtx<'info> {
     )]
     pub timelock: Account<'info, Timelock>,
 
-    #[account(mut, constraint = admin.key() == config.admin @ ClimaFiError::Unauthorized)]
+    #[account(mut, constraint = admin.key() == config.admin @ NimbusError::Unauthorized)]
     pub admin: Signer<'info>,
 
     pub system_program: Program<'info, System>,
@@ -1228,7 +1228,7 @@ pub struct RecordObservationSwitchboard<'info> {
     pub observation: Account<'info, ObservationSnapshot>,
 
     /// CHECK: Validated in switchboard::parse_switchboard_aggregator (owner, size, discriminator, staleness)
-    #[account(constraint = switchboard_aggregator.owner == &SWITCHBOARD_PROGRAM_ID @ ClimaFiError::OracleUnauthorized)]
+    #[account(constraint = switchboard_aggregator.owner == &SWITCHBOARD_PROGRAM_ID @ NimbusError::OracleUnauthorized)]
     pub switchboard_aggregator: UncheckedAccount<'info>,
 
     #[account(mut)]
@@ -1254,7 +1254,7 @@ pub struct InitializeMultisigCtx<'info> {
     )]
     pub multisig: Account<'info, governance::MultisigConfig>,
 
-    #[account(mut, constraint = admin.key() == config.admin @ ClimaFiError::Unauthorized)]
+    #[account(mut, constraint = admin.key() == config.admin @ NimbusError::Unauthorized)]
     pub admin: Signer<'info>,
 
     pub system_program: Program<'info, System>,

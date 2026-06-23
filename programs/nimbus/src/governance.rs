@@ -19,7 +19,7 @@
 //! - All subsequent upgrades require M-of-N approval + timelock delay
 
 use anchor_lang::prelude::*;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 use crate::state::GlobalConfig;
 
 /// Maximum proposal age before it expires (7 days)
@@ -99,23 +99,23 @@ pub fn handle_initialize_multisig(
     authorities: Vec<Pubkey>,
     bump: u8,
 ) -> Result<()> {
-    require!(admin_key == config_admin, ClimaFiError::Unauthorized);
+    require!(admin_key == config_admin, NimbusError::Unauthorized);
     require!(
         authorities.len() >= threshold as usize,
-        ClimaFiError::InvalidBps
+        NimbusError::InvalidBps
     );
     require!(
         authorities.len() <= MAX_AUTHORITIES,
-        ClimaFiError::InvalidBps
+        NimbusError::InvalidBps
     );
-    require!(threshold >= 1, ClimaFiError::InvalidBps);
+    require!(threshold >= 1, NimbusError::InvalidBps);
 
     // Reject duplicate authorities — prevents single key from counting multiple times
     for i in 0..authorities.len() {
         for j in (i + 1)..authorities.len() {
             require!(
                 authorities[i] != authorities[j],
-                ClimaFiError::InvalidBps
+                NimbusError::InvalidBps
             );
         }
     }
@@ -143,7 +143,7 @@ pub fn handle_create_proposal(
 ) -> Result<()> {
     require!(
         multisig.is_authority(&proposer),
-        ClimaFiError::Unauthorized
+        NimbusError::Unauthorized
     );
 
     proposal.proposal_id = multisig.proposal_nonce;
@@ -156,7 +156,7 @@ pub fn handle_create_proposal(
     let proposer_idx = multisig.authorities[..multisig.num_authorities as usize]
         .iter()
         .position(|a| *a == proposer)
-        .ok_or(error!(ClimaFiError::Unauthorized))?;
+        .ok_or(error!(NimbusError::Unauthorized))?;
     proposal.approvals = [false; MAX_AUTHORITIES];
     proposal.approvals[proposer_idx] = true;
 
@@ -171,16 +171,16 @@ pub fn handle_approve_proposal(
     proposal: &mut MultisigProposal,
     approver: Pubkey,
 ) -> Result<()> {
-    require!(!proposal.executed, ClimaFiError::TimelockAlreadyExecuted);
+    require!(!proposal.executed, NimbusError::TimelockAlreadyExecuted);
     require!(
         multisig.is_authority(&approver),
-        ClimaFiError::Unauthorized
+        NimbusError::Unauthorized
     );
 
     let approver_idx = multisig.authorities[..multisig.num_authorities as usize]
         .iter()
         .position(|a| *a == approver)
-        .ok_or(error!(ClimaFiError::Unauthorized))?;
+        .ok_or(error!(NimbusError::Unauthorized))?;
 
     proposal.approvals[approver_idx] = true;
 
@@ -195,17 +195,17 @@ pub fn handle_execute_proposal(
     proposal: &mut MultisigProposal,
     config: &mut GlobalConfig,
 ) -> Result<()> {
-    require!(!proposal.executed, ClimaFiError::TimelockAlreadyExecuted);
+    require!(!proposal.executed, NimbusError::TimelockAlreadyExecuted);
     require!(
         multisig.has_reached_threshold(&proposal.approvals),
-        ClimaFiError::Unauthorized
+        NimbusError::Unauthorized
     );
 
     // Proposal expiry: reject proposals older than 7 days
     let now = Clock::get()?.unix_timestamp;
     require!(
         now - proposal.created_at <= PROPOSAL_EXPIRY_SECS,
-        ClimaFiError::TimelockNotReady
+        NimbusError::TimelockNotReady
     );
 
     match &proposal.operation {

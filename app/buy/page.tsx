@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import TransactionStatus, { TxState } from '../../components/TransactionStatus'
-import { createBuyPolicyTransaction, getConfigPda, deserializeGlobalConfig, PROGRAM_ID } from '../../lib/climafi'
+import { createBuyPolicyTransaction, getConfigPda, deserializeGlobalConfig, PROGRAM_ID } from '../../lib/nimbus'
 import { PublicKey } from '@solana/web3.js'
 
 const REGIONS = [

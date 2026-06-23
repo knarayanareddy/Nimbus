@@ -13,7 +13,7 @@
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
-import { ClimaFiAlerting, AlertPayload } from './alerting';
+import { NimbusAlerting, AlertPayload } from './alerting';
 
 const PROGRAM_ID = new PublicKey("CliMaFi1111111111111111111111111111111111111");
 const UTILIZATION_WARNING = 0.80;
@@ -35,9 +35,9 @@ interface PoolState {
   utilization: number;
 }
 
-export class ClimaFiMonitoring {
+export class NimbusMonitoring {
   private connection: Connection;
-  private alerting: ClimaFiAlerting;
+  private alerting: NimbusAlerting;
   private config: MonitoringConfig;
   private running: boolean = false;
   private lastPausedState: boolean | null = null;
@@ -45,7 +45,7 @@ export class ClimaFiMonitoring {
 
   constructor(config: MonitoringConfig) {
     this.connection = new Connection(config.rpcUrl, 'confirmed');
-    this.alerting = new ClimaFiAlerting(config.slackWebhook, config.pagerDutyKey);
+    this.alerting = new NimbusAlerting(config.slackWebhook, config.pagerDutyKey);
     this.config = config;
   }
 
@@ -214,7 +214,7 @@ export class ClimaFiMonitoring {
 
 // CLI entrypoint
 if (require.main === module) {
-  const monitor = new ClimaFiMonitoring({
+  const monitor = new NimbusMonitoring({
     rpcUrl: process.env.RPC_URL || 'https://api.devnet.solana.com',
     slackWebhook: process.env.SLACK_WEBHOOK_URL,
     pagerDutyKey: process.env.PAGERDUTY_ROUTING_KEY,

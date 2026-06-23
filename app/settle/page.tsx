@@ -19,7 +19,7 @@ import {
   getVaultAuthPda,
   getPolicyPda,
   buildObservationAccountKeys,
-} from '../../lib/climafi'
+} from '../../lib/nimbus'
 import { deserializePolicy, DeserializationError, type PolicyData as PolicyAccountData } from '../../lib/deserialize'
 
 const INDEX_METHODS: Record<number, string> = { 0: 'Sum', 1: 'Mean', 2: 'Max' }

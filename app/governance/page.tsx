@@ -6,7 +6,7 @@ import { PublicKey } from '@solana/web3.js'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { Skeleton } from '../../components/LoadingSkeleton'
-import { PROGRAM_ID } from '../../lib/climafi'
+import { PROGRAM_ID } from '../../lib/nimbus'
 import {
   deserializeMultisigConfig,
   validateMultisigInvariants,

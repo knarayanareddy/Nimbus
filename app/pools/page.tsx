@@ -14,7 +14,7 @@ import {
   getLpMintPda,
   PROGRAM_ID,
   USDC_MINT,
-} from '../../lib/climafi'
+} from '../../lib/nimbus'
 import { deserializePool, validatePoolInvariants, DeserializationError } from '../../lib/deserialize'
 import { getAssociatedTokenAddress } from '@solana/spl-token'
 

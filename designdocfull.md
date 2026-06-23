@@ -1,11 +1,11 @@
-Design Doc 1 — ClimaFi (Parametric Climate Insurance on Solana)
+Design Doc 1 — Nimbus (Parametric Climate Insurance on Solana)
 Document status: v1.0 (Implementation Blueprint)
 Target: Frontier Hackathon submission by May 11, 2026
 Primary deliverable: Working devnet/mainnet demo of parametric coverage, oracle-driven trigger, and automated payout
 Core principle: “No adjusters, no claims process — deterministic trigger ⇒ deterministic payout.”
 
 0) Executive Summary (What we’re building)
-ClimaFi is a Solana protocol that lets:
+Nimbus is a Solana protocol that lets:
 
 Policyholders buy parametric coverage (e.g., drought, heavy rainfall, extreme heat),
 Capital providers underwrite risk by supplying liquidity to pools,
@@ -41,9 +41,9 @@ Pool: Liquidity pool underwriting a class of policies (peril + region set + max 
 3.1 Components
 On-chain (Solana programs)
 
-climafi_core — policies, pools, deposits/withdrawals, accounting
-climafi_oracle_consumer — reads oracle feed(s), validates freshness, stores “observation snapshots”
-climafi_payout_engine — evaluates triggers and executes payouts
+nimbus_core — policies, pools, deposits/withdrawals, accounting
+nimbus_oracle_consumer — reads oracle feed(s), validates freshness, stores “observation snapshots”
+nimbus_payout_engine — evaluates triggers and executes payouts
 Off-chain
 
 Oracle pipeline (recommended):
@@ -105,9 +105,9 @@ Freshness rule:
 Observation is valid if published_at_unix >= day_end_unix and published_at_unix <= day_end_unix + 48h
 5) On-chain Program Design (Accounts, PDAs, Instructions)
 5.1 Program set
-climafi_core (Anchor)
-climafi_oracle_consumer (Anchor)
-climafi_payout_engine (Anchor)
+nimbus_core (Anchor)
+nimbus_oracle_consumer (Anchor)
+nimbus_payout_engine (Anchor)
 You can combine these into one program for MVP to reduce CPI complexity, but keeping them separate helps audits and separation of concerns.
 
 5.2 Core Accounts (PDAs)
@@ -250,7 +250,7 @@ region risk tier (1–5)
 Add protocol_fee_bps
 You can hardcode risk tiers for hackathon, then later compute from historical climate data.
 
-7) Security / Threat Model (ClimaFi)
+7) Security / Threat Model (Nimbus)
 7.1 Key threats
 Oracle manipulation / bad data
 Pool insolvency (over-issuing policies)
@@ -265,7 +265,7 @@ Freshness checks + window boundaries
 Use integer math only, fixed scaling, explicit overflow checks
 Emergency pause in config
 Time-delayed admin changes (post-hackathon enhancement)
-8) Testing Plan (ClimaFi)
+8) Testing Plan (Nimbus)
 8.1 Unit tests (Anchor)
 Pool accounting: deposit/withdraw/locked math
 Quote verification: valid sig/invalid sig/expired quote
@@ -281,7 +281,7 @@ Spin local validator
 Seed mock USDC mint
 Simulate 30 days of observations
 Buy policy day 0, trigger day 30, payout day 30
-9) Deployment & Ops (ClimaFi)
+9) Deployment & Ops (Nimbus)
 Environments: localnet → devnet → mainnet (optional)
 Observability:
 index program logs
@@ -295,11 +295,11 @@ post-hackathon: governance + multisig
 
 
 
-Package A — climafi (single-program MVP)
+Package A — nimbus (single-program MVP)
 Directory layout
 text
 
-programs/climafi/src/
+programs/nimbus/src/
   lib.rs
   constants.rs
   state.rs
@@ -308,7 +308,7 @@ programs/climafi/src/
   utils/
     mod.rs
     ed25519.rs
-programs/climafi/src/constants.rs
+programs/nimbus/src/constants.rs
 Rust
 
 use anchor_lang::prelude::*;
@@ -327,7 +327,7 @@ pub const MAX_WINDOW_DAYS: u16 = 31;
 
 // Account size helpers (manual; adjust if you add fields)
 pub const PUBKEY_BYTES: usize = 32;
-programs/climafi/src/state.rs
+programs/nimbus/src/state.rs
 Rust
 
 use anchor_lang::prelude::*;
@@ -566,13 +566,13 @@ pub struct Quote {
     pub quote_expiry_unix: i64,
     pub nonce: u64,
 }
-programs/climafi/src/errors.rs
+programs/nimbus/src/errors.rs
 Rust
 
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum ClimaFiError {
+pub enum NimbusError {
     #[msg("Unauthorized")]
     Unauthorized,
 
@@ -636,7 +636,7 @@ pub enum ClimaFiError {
     #[msg("Math overflow")]
     MathOverflow,
 }
-programs/climafi/src/events.rs
+programs/nimbus/src/events.rs
 Rust
 
 use anchor_lang::prelude::*;
@@ -720,11 +720,11 @@ pub struct PolicySettled {
     pub payout_amount: u64,
     pub ts: i64,
 }
-programs/climafi/src/utils/mod.rs
+programs/nimbus/src/utils/mod.rs
 Rust
 
 pub mod ed25519;
-programs/climafi/src/utils/ed25519.rs
+programs/nimbus/src/utils/ed25519.rs
 This is the standard “verify that an Ed25519Program verify instruction exists in the same transaction” pattern.
 
 Rust
@@ -734,7 +734,7 @@ use anchor_lang::solana_program::{
     ed25519_program,
     sysvar::instructions::{load_instruction_at_checked, ID as IX_SYSVAR_ID},
 };
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 
 /// Verifies that instruction `ix_index` is an ed25519 verify instruction
 /// for (pubkey, message, signature). Use ix_index = 0 or 1 depending on your client ordering.
@@ -749,12 +749,12 @@ pub fn verify_ed25519_ix(
     message: &[u8],
     signature: &[u8; 64],
 ) -> Result<()> {
-    require_keys_eq!(instructions_sysvar.key(), IX_SYSVAR_ID, ClimaFiError::QuoteSigMissing);
+    require_keys_eq!(instructions_sysvar.key(), IX_SYSVAR_ID, NimbusError::QuoteSigMissing);
 
     let ix = load_instruction_at_checked(ix_index as usize, instructions_sysvar)
-        .map_err(|_| error!(ClimaFiError::QuoteSigMissing))?;
+        .map_err(|_| error!(NimbusError::QuoteSigMissing))?;
 
-    require_keys_eq!(ix.program_id, ed25519_program::ID, ClimaFiError::QuoteSigMissing);
+    require_keys_eq!(ix.program_id, ed25519_program::ID, NimbusError::QuoteSigMissing);
 
     // Ed25519Program instruction data layout:
     // [u8 num_signatures][u8 padding]
@@ -765,14 +765,14 @@ pub fn verify_ed25519_ix(
     // followed by the actual signature/pubkey/message bytes in the same ix data.
     let data = ix.data;
 
-    require!(data.len() >= 2, ClimaFiError::QuoteSigInvalid);
+    require!(data.len() >= 2, NimbusError::QuoteSigInvalid);
     let n = data[0] as usize;
-    require!(n == 1, ClimaFiError::QuoteSigInvalid);
+    require!(n == 1, NimbusError::QuoteSigInvalid);
 
     // Offsets start at byte 2
     let header_start = 2;
     let header_len = 14; // for one signature
-    require!(data.len() >= header_start + header_len, ClimaFiError::QuoteSigInvalid);
+    require!(data.len() >= header_start + header_len, NimbusError::QuoteSigInvalid);
 
     let read_u16 = |i: usize| -> u16 {
         u16::from_le_bytes([data[i], data[i + 1]])
@@ -788,18 +788,18 @@ pub fn verify_ed25519_ix(
     let msg_size = read_u16(header_start + 10) as usize;
     let _msg_ix = read_u16(header_start + 12);
 
-    require!(msg_size == message.len(), ClimaFiError::QuoteSigInvalid);
-    require!(sig_offset + 64 <= data.len(), ClimaFiError::QuoteSigInvalid);
-    require!(pub_offset + 32 <= data.len(), ClimaFiError::QuoteSigInvalid);
-    require!(msg_offset + msg_size <= data.len(), ClimaFiError::QuoteSigInvalid);
+    require!(msg_size == message.len(), NimbusError::QuoteSigInvalid);
+    require!(sig_offset + 64 <= data.len(), NimbusError::QuoteSigInvalid);
+    require!(pub_offset + 32 <= data.len(), NimbusError::QuoteSigInvalid);
+    require!(msg_offset + msg_size <= data.len(), NimbusError::QuoteSigInvalid);
 
-    require!(&data[sig_offset..sig_offset + 64] == signature, ClimaFiError::QuoteSigInvalid);
-    require!(&data[pub_offset..pub_offset + 32] == pubkey, ClimaFiError::QuoteSigInvalid);
-    require!(&data[msg_offset..msg_offset + msg_size] == message, ClimaFiError::QuoteSigInvalid);
+    require!(&data[sig_offset..sig_offset + 64] == signature, NimbusError::QuoteSigInvalid);
+    require!(&data[pub_offset..pub_offset + 32] == pubkey, NimbusError::QuoteSigInvalid);
+    require!(&data[msg_offset..msg_offset + msg_size] == message, NimbusError::QuoteSigInvalid);
 
     Ok(())
 }
-programs/climafi/src/lib.rs
+programs/nimbus/src/lib.rs
 Rust
 
 use anchor_lang::prelude::*;
@@ -822,7 +822,7 @@ use state::*;
 declare_id!("CLiMaFi1111111111111111111111111111111111"); // replace
 
 #[program]
-pub mod climafi {
+pub mod nimbus {
     use super::*;
 
     // ---------------------------
@@ -864,7 +864,7 @@ pub mod climafi {
 
     pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
         let cfg = &mut ctx.accounts.config;
-        require_keys_eq!(cfg.admin, ctx.accounts.admin.key(), ClimaFiError::Unauthorized);
+        require_keys_eq!(cfg.admin, ctx.accounts.admin.key(), NimbusError::Unauthorized);
         cfg.paused = paused;
         Ok(())
     }
@@ -878,9 +878,9 @@ pub mod climafi {
         ltv_limit_bps: u16,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
-        require_keys_eq!(cfg.admin, ctx.accounts.admin.key(), ClimaFiError::Unauthorized);
-        require!(ltv_limit_bps <= 10_000, ClimaFiError::InvalidBps);
+        require!(!cfg.paused, NimbusError::Paused);
+        require_keys_eq!(cfg.admin, ctx.accounts.admin.key(), NimbusError::Unauthorized);
+        require!(ltv_limit_bps <= 10_000, NimbusError::InvalidBps);
 
         let pool = &mut ctx.accounts.pool;
         pool.pool_id = pool_id;
@@ -912,7 +912,7 @@ pub mod climafi {
 
     pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         // Transfer USDC into pool vault
         token::transfer(
@@ -951,7 +951,7 @@ pub mod climafi {
         )?;
 
         let pool = &mut ctx.accounts.pool;
-        pool.capital = pool.capital.checked_add(amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.capital = pool.capital.checked_add(amount).ok_or(NimbusError::MathOverflow)?;
 
         emit!(LiquidityDeposited {
             pool_id: pool.pool_id,
@@ -966,14 +966,14 @@ pub mod climafi {
 
     pub fn withdraw_liquidity(ctx: Context<WithdrawLiquidity>, lp_amount: u64) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         // Placeholder math: 1:1 LP => USDC
         let amount = lp_amount;
 
         let pool = &mut ctx.accounts.pool;
-        let unlocked = pool.capital.checked_sub(pool.locked).ok_or(ClimaFiError::MathOverflow)?;
-        require!(unlocked >= amount, ClimaFiError::InsufficientUnlockedCapital);
+        let unlocked = pool.capital.checked_sub(pool.locked).ok_or(NimbusError::MathOverflow)?;
+        require!(unlocked >= amount, NimbusError::InsufficientUnlockedCapital);
 
         // Burn LP
         token::burn(
@@ -1009,7 +1009,7 @@ pub mod climafi {
             amount,
         )?;
 
-        pool.capital = pool.capital.checked_sub(amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.capital = pool.capital.checked_sub(amount).ok_or(NimbusError::MathOverflow)?;
 
         emit!(LiquidityWithdrawn {
             pool_id: pool.pool_id,
@@ -1033,11 +1033,11 @@ pub mod climafi {
         ed25519_ix_index: u8,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         // Time bounds
         let now = Clock::get()?.unix_timestamp;
-        require!(quote.quote_expiry_unix >= now, ClimaFiError::QuoteExpired);
+        require!(quote.quote_expiry_unix >= now, NimbusError::QuoteExpired);
 
         // Verify quote sig exists in tx
         let msg = quote.try_to_vec()?;
@@ -1064,20 +1064,20 @@ pub mod climafi {
 
         // Pool exposure checks (MVP simple)
         let pool = &mut ctx.accounts.pool;
-        require!(pool.peril as u8 == quote.peril as u8, ClimaFiError::PoolPerilMismatch);
+        require!(pool.peril as u8 == quote.peril as u8, NimbusError::PoolPerilMismatch);
 
         let new_capital = pool.capital
             .checked_add(quote.premium_amount)
-            .ok_or(ClimaFiError::MathOverflow)?;
+            .ok_or(NimbusError::MathOverflow)?;
         let new_locked = pool.locked
             .checked_add(quote.payout_amount)
-            .ok_or(ClimaFiError::MathOverflow)?;
+            .ok_or(NimbusError::MathOverflow)?;
 
         let max_locked = (new_capital as u128)
-            .checked_mul(pool.ltv_limit_bps as u128).ok_or(ClimaFiError::MathOverflow)?
-            .checked_div(10_000).ok_or(ClimaFiError::MathOverflow)? as u64;
+            .checked_mul(pool.ltv_limit_bps as u128).ok_or(NimbusError::MathOverflow)?
+            .checked_div(10_000).ok_or(NimbusError::MathOverflow)? as u64;
 
-        require!(new_locked <= max_locked, ClimaFiError::LtvExceeded);
+        require!(new_locked <= max_locked, NimbusError::LtvExceeded);
 
         pool.capital = new_capital;
         pool.locked = new_locked;
@@ -1122,18 +1122,18 @@ pub mod climafi {
 
     pub fn cancel_policy(ctx: Context<CancelPolicy>) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         let now = Clock::get()?.unix_timestamp;
         let policy = &mut ctx.accounts.policy;
 
-        require_keys_eq!(policy.owner, ctx.accounts.owner.key(), ClimaFiError::Unauthorized);
-        require!(policy.status == PolicyStatus::Active, ClimaFiError::PolicyNotActive);
-        require!(now < policy.window_start_unix, ClimaFiError::PolicyCancellationNotAllowed);
+        require_keys_eq!(policy.owner, ctx.accounts.owner.key(), NimbusError::Unauthorized);
+        require!(policy.status == PolicyStatus::Active, NimbusError::PolicyNotActive);
+        require!(now < policy.window_start_unix, NimbusError::PolicyCancellationNotAllowed);
 
         // Unlock pool exposure; (refund policy premium omitted here; add if desired)
         let pool = &mut ctx.accounts.pool;
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         policy.status = PolicyStatus::Cancelled;
 
@@ -1162,13 +1162,13 @@ pub mod climafi {
         agg_method: u8,
     ) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         // MVP: only oracle_authority (or admin)
         let signer = ctx.accounts.oracle.to_account_info().key();
         require!(
             signer == cfg.oracle_authority || signer == cfg.admin,
-            ClimaFiError::OracleUnauthorized
+            NimbusError::OracleUnauthorized
         );
 
         let obs = &mut ctx.accounts.observation;
@@ -1200,12 +1200,12 @@ pub mod climafi {
 
     pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
         let cfg = &ctx.accounts.config;
-        require!(!cfg.paused, ClimaFiError::Paused);
+        require!(!cfg.paused, NimbusError::Paused);
 
         let now = Clock::get()?.unix_timestamp;
         let policy = &mut ctx.accounts.policy;
-        require!(policy.status == PolicyStatus::Active, ClimaFiError::PolicyNotActive);
-        require!(now >= policy.window_end_unix, ClimaFiError::PolicyWindowNotEnded);
+        require!(policy.status == PolicyStatus::Active, NimbusError::PolicyNotActive);
+        require!(now >= policy.window_end_unix, NimbusError::PolicyWindowNotEnded);
 
         // Implement:
         // - iterate remaining obs accounts
@@ -1217,7 +1217,7 @@ pub mod climafi {
         //
         // Placeholder sets expired:
         let pool = &mut ctx.accounts.pool;
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         policy.status = PolicyStatus::SettledExpired;
         policy.observed_value = 0;
@@ -1346,8 +1346,8 @@ pub struct DepositLiquidity<'info> {
 
     #[account(
         mut,
-        constraint = depositor_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = depositor_usdc_ata.owner == depositor.key() @ ClimaFiError::Unauthorized
+        constraint = depositor_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = depositor_usdc_ata.owner == depositor.key() @ NimbusError::Unauthorized
     )]
     pub depositor_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1391,8 +1391,8 @@ pub struct WithdrawLiquidity<'info> {
 
     #[account(
         mut,
-        constraint = depositor_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = depositor_usdc_ata.owner == depositor.key() @ ClimaFiError::Unauthorized
+        constraint = depositor_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = depositor_usdc_ata.owner == depositor.key() @ NimbusError::Unauthorized
     )]
     pub depositor_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1442,8 +1442,8 @@ pub struct BuyPolicy<'info> {
 
     #[account(
         mut,
-        constraint = buyer_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-        constraint = buyer_usdc_ata.owner == buyer.key() @ ClimaFiError::Unauthorized
+        constraint = buyer_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+        constraint = buyer_usdc_ata.owner == buyer.key() @ NimbusError::Unauthorized
     )]
     pub buyer_usdc_ata: Account<'info, TokenAccount>,
 
@@ -1532,7 +1532,7 @@ pub struct SettlePolicy<'info> {
 
 
 PDA Seed Conventions (quick reference)
-ClimaFi
+Nimbus
 config PDA: [b"config"]
 pool PDA: [b"pool", pool_id_le]
 vault_auth PDA: [b"vault_auth", pool_id_le]
@@ -1543,7 +1543,7 @@ observation PDA: [b"obs", region_id_le, peril_u8, day_start_unix_le]
 
 
 mplementation notes you’ll want to follow immediately (so this spec “just works”)
-ClimaFi ed25519 quote verification (client-side requirement)
+Nimbus ed25519 quote verification (client-side requirement)
 In your client/SDK, you must:
 
 compute message = quote.try_to_vec() (Anchor serialization)
@@ -1567,29 +1567,29 @@ So minting LP tokens must be signed by vault_auth seeds, not by lp_mint seeds.
 Add helper math + index calc
 Create:
 
-programs/climafi/src/utils/math.rs
+programs/nimbus/src/utils/math.rs
 Rust
 
 use anchor_lang::prelude::*;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 
 /// mul_div floor: (a*b)/denom using u128 to avoid overflow.
 pub fn mul_div_u64(a: u64, b: u64, denom: u64) -> Result<u64> {
-    require!(denom != 0, ClimaFiError::MathOverflow);
+    require!(denom != 0, NimbusError::MathOverflow);
     let v = (a as u128)
         .checked_mul(b as u128)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .checked_div(denom as u128)
-        .ok_or(ClimaFiError::MathOverflow)?;
+        .ok_or(NimbusError::MathOverflow)?;
     Ok(v as u64)
 }
 
 pub fn checked_add_i128(a: i128, b: i128) -> Result<i128> {
-    a.checked_add(b).ok_or_else(|| error!(ClimaFiError::MathOverflow))
+    a.checked_add(b).ok_or_else(|| error!(NimbusError::MathOverflow))
 }
 And wire it:
 
-programs/climafi/src/utils/mod.rs
+programs/nimbus/src/utils/mod.rs
 Rust
 
 pub mod ed25519;
@@ -1602,7 +1602,7 @@ Rust
 
 pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<()> {
     let cfg = &ctx.accounts.config;
-    require!(!cfg.paused, ClimaFiError::Paused);
+    require!(!cfg.paused, NimbusError::Paused);
 
     let pool = &mut ctx.accounts.pool;
 
@@ -1654,7 +1654,7 @@ pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<
     )?;
 
     // Update pool accounting (capital increases by deposit)
-    pool.capital = pool.capital.checked_add(amount).ok_or(ClimaFiError::MathOverflow)?;
+    pool.capital = pool.capital.checked_add(amount).ok_or(NimbusError::MathOverflow)?;
 
     emit!(LiquidityDeposited {
         pool_id: pool.pool_id,
@@ -1671,19 +1671,19 @@ Rust
 
 pub fn withdraw_liquidity(ctx: Context<WithdrawLiquidity>, lp_amount: u64) -> Result<()> {
     let cfg = &ctx.accounts.config;
-    require!(!cfg.paused, ClimaFiError::Paused);
+    require!(!cfg.paused, NimbusError::Paused);
 
     let pool = &mut ctx.accounts.pool;
 
     let lp_supply = ctx.accounts.lp_mint.supply;
-    require!(lp_supply > 0, ClimaFiError::MathOverflow);
+    require!(lp_supply > 0, NimbusError::MathOverflow);
 
     // amount_out = lp_amount * pool.capital / lp_supply
     let amount_out = crate::utils::math::mul_div_u64(lp_amount, pool.capital, lp_supply)?;
 
     // Must not violate locked constraint
-    let unlocked = pool.capital.checked_sub(pool.locked).ok_or(ClimaFiError::MathOverflow)?;
-    require!(unlocked >= amount_out, ClimaFiError::InsufficientUnlockedCapital);
+    let unlocked = pool.capital.checked_sub(pool.locked).ok_or(NimbusError::MathOverflow)?;
+    require!(unlocked >= amount_out, NimbusError::InsufficientUnlockedCapital);
 
     // Burn LP from withdrawer
     token::burn(
@@ -1719,7 +1719,7 @@ pub fn withdraw_liquidity(ctx: Context<WithdrawLiquidity>, lp_amount: u64) -> Re
         amount_out,
     )?;
 
-    pool.capital = pool.capital.checked_sub(amount_out).ok_or(ClimaFiError::MathOverflow)?;
+    pool.capital = pool.capital.checked_sub(amount_out).ok_or(NimbusError::MathOverflow)?;
 
     emit!(LiquidityWithdrawn {
         pool_id: pool.pool_id,
@@ -1743,7 +1743,7 @@ Here’s the exact transfer logic:
 Rust
 
 let fee = crate::utils::math::mul_div_u64(quote.premium_amount, cfg.protocol_fee_bps as u64, 10_000)?;
-let net_premium = quote.premium_amount.checked_sub(fee).ok_or(ClimaFiError::MathOverflow)?;
+let net_premium = quote.premium_amount.checked_sub(fee).ok_or(NimbusError::MathOverflow)?;
 
 // fee -> treasury
 if fee > 0 {
@@ -1778,24 +1778,24 @@ A4) Settlement engine (deterministic observation coverage + trigger + payout)
 Add a helper to compute expected day count + validate observation schedule
 Create:
 
-programs/climafi/src/utils/settlement.rs
+programs/nimbus/src/utils/settlement.rs
 Rust
 
 use anchor_lang::prelude::*;
-use crate::{errors::ClimaFiError, state::*};
+use crate::{errors::NimbusError, state::*};
 
 pub const DAY_SECS: i64 = 86_400;
 
 /// Requires windows aligned on day boundaries for MVP.
 pub fn expected_days(window_start_unix: i64, window_end_unix: i64) -> Result<u16> {
-    require!(window_end_unix > window_start_unix, ClimaFiError::InvalidTimeRange);
+    require!(window_end_unix > window_start_unix, NimbusError::InvalidTimeRange);
     let dur = window_end_unix - window_start_unix;
     // Require integer number of days
-    require!(dur % DAY_SECS == 0, ClimaFiError::InvalidTimeRange);
+    require!(dur % DAY_SECS == 0, NimbusError::InvalidTimeRange);
 
     let days = (dur / DAY_SECS) as i64;
-    require!(days > 0, ClimaFiError::InvalidTimeRange);
-    require!(days <= crate::constants::MAX_WINDOW_DAYS as i64, ClimaFiError::TooManyObservations);
+    require!(days > 0, NimbusError::InvalidTimeRange);
+    require!(days <= crate::constants::MAX_WINDOW_DAYS as i64, NimbusError::TooManyObservations);
     Ok(days as u16)
 }
 
@@ -1807,20 +1807,20 @@ pub fn eval_trigger(direction: TriggerDirection, observed: i64, threshold: i64) 
 }
 
 pub fn compute_index(method: IndexMethod, values: &[i64]) -> Result<i64> {
-    require!(!values.is_empty(), ClimaFiError::TooManyObservations);
+    require!(!values.is_empty(), NimbusError::TooManyObservations);
 
     match method {
         IndexMethod::Sum => {
             let mut s: i128 = 0;
             for v in values {
-                s = s.checked_add(*v as i128).ok_or(ClimaFiError::MathOverflow)?;
+                s = s.checked_add(*v as i128).ok_or(NimbusError::MathOverflow)?;
             }
             Ok(s as i64)
         }
         IndexMethod::Mean => {
             let mut s: i128 = 0;
             for v in values {
-                s = s.checked_add(*v as i128).ok_or(ClimaFiError::MathOverflow)?;
+                s = s.checked_add(*v as i128).ok_or(NimbusError::MathOverflow)?;
             }
             let n = values.len() as i128;
             Ok((s / n) as i64)
@@ -1836,7 +1836,7 @@ pub fn compute_index(method: IndexMethod, values: &[i64]) -> Result<i64> {
 }
 Wire:
 
-programs/climafi/src/utils/mod.rs
+programs/nimbus/src/utils/mod.rs
 Rust
 
 pub mod ed25519;
@@ -1860,20 +1860,20 @@ Rust
 
 pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
     let cfg = &ctx.accounts.config;
-    require!(!cfg.paused, ClimaFiError::Paused);
+    require!(!cfg.paused, NimbusError::Paused);
 
     let now = Clock::get()?.unix_timestamp;
 
     let policy = &mut ctx.accounts.policy;
-    require!(policy.status == PolicyStatus::Active, ClimaFiError::PolicyNotActive);
-    require!(now >= policy.window_end_unix, ClimaFiError::PolicyWindowNotEnded);
+    require!(policy.status == PolicyStatus::Active, NimbusError::PolicyNotActive);
+    require!(now >= policy.window_end_unix, NimbusError::PolicyWindowNotEnded);
 
     // Ensure policy_owner matches
-    require_keys_eq!(policy.owner, ctx.accounts.policy_owner.key(), ClimaFiError::Unauthorized);
+    require_keys_eq!(policy.owner, ctx.accounts.policy_owner.key(), NimbusError::Unauthorized);
 
     // Expected observation accounts must cover each day in the window
     let days = crate::utils::settlement::expected_days(policy.window_start_unix, policy.window_end_unix)?;
-    require!(ctx.remaining_accounts.len() == days as usize, ClimaFiError::TooManyObservations);
+    require!(ctx.remaining_accounts.len() == days as usize, NimbusError::TooManyObservations);
 
     // Load snapshots in order and validate
     let mut values: Vec<i64> = Vec::with_capacity(days as usize);
@@ -1883,22 +1883,22 @@ pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
         let obs: Account<ObservationSnapshot> = Account::try_from(ai)?;
 
         // region/peril match
-        require!(obs.region_id == policy.region_id, ClimaFiError::ObservationMismatch);
-        require!(obs.peril as u8 == policy.peril as u8, ClimaFiError::ObservationMismatch);
+        require!(obs.region_id == policy.region_id, NimbusError::ObservationMismatch);
+        require!(obs.peril as u8 == policy.peril as u8, NimbusError::ObservationMismatch);
 
         // expected day schedule
         let expected_day_start =
             policy.window_start_unix + (i as i64) * crate::utils::settlement::DAY_SECS;
-        require!(obs.day_start_unix == expected_day_start, ClimaFiError::ObservationMismatch);
+        require!(obs.day_start_unix == expected_day_start, NimbusError::ObservationMismatch);
 
         // Oracle authority match (MVP)
-        require_keys_eq!(obs.oracle_authority, cfg.oracle_authority, ClimaFiError::OracleUnauthorized);
+        require_keys_eq!(obs.oracle_authority, cfg.oracle_authority, NimbusError::OracleUnauthorized);
 
         // Staleness rule: published must be after day_end, and not too late
-        require!(obs.published_at_unix >= obs.day_end_unix, ClimaFiError::ObservationStale);
+        require!(obs.published_at_unix >= obs.day_end_unix, NimbusError::ObservationStale);
         require!(
             obs.published_at_unix <= obs.day_end_unix + cfg.max_oracle_staleness_secs as i64,
-            ClimaFiError::ObservationStale
+            NimbusError::ObservationStale
         );
 
         values.push(obs.value);
@@ -1910,14 +1910,14 @@ pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
 
     // Always unlock reserved exposure
     let pool = &mut ctx.accounts.pool;
-    pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+    pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
     // If triggered, payout from vault -> owner's USDC ATA
     if triggered {
         // Validate destination token account on-chain (strongly recommended)
         let owner_ata: Account<TokenAccount> = Account::try_from(&ctx.accounts.policy_owner_usdc_ata)?;
-        require!(owner_ata.mint == cfg.usdc_mint, ClimaFiError::InvalidMint);
-        require!(owner_ata.owner == policy.owner, ClimaFiError::Unauthorized);
+        require!(owner_ata.mint == cfg.usdc_mint, NimbusError::InvalidMint);
+        require!(owner_ata.owner == policy.owner, NimbusError::Unauthorized);
 
         // Transfer payout signed by vault_auth
         let pool_id = pool.pool_id;
@@ -1941,7 +1941,7 @@ pub fn settle_policy(ctx: Context<SettlePolicy>) -> Result<()> {
         )?;
 
         // Pool capital decreases by payout
-        pool.capital = pool.capital.checked_sub(policy.payout_amount).ok_or(ClimaFiError::MathOverflow)?;
+        pool.capital = pool.capital.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         policy.status = PolicyStatus::SettledPaid;
     } else {
@@ -1989,7 +1989,7 @@ TypeScript
 
 import { PublicKey } from "@solana/web3.js";
 
-export const CLIMAFI_SEEDS = {
+export const NIMBUS_SEEDS = {
   CONFIG: Buffer.from("config"),
   POOL: Buffer.from("pool"),
   VAULT_AUTH: Buffer.from("vault_auth"),
@@ -2021,48 +2021,48 @@ export function i64LE(n: bigint) {
 }
 
 // --------------------
-// ClimaFi PDAs
+// Nimbus PDAs
 // --------------------
-export function climafiConfigPda(programId: PublicKey) {
-  return PublicKey.findProgramAddressSync([CLIMAFI_SEEDS.CONFIG], programId);
+export function nimbusConfigPda(programId: PublicKey) {
+  return PublicKey.findProgramAddressSync([NIMBUS_SEEDS.CONFIG], programId);
 }
 
-export function climafiPoolPda(programId: PublicKey, poolId: bigint) {
+export function nimbusPoolPda(programId: PublicKey, poolId: bigint) {
   return PublicKey.findProgramAddressSync(
-    [CLIMAFI_SEEDS.POOL, u64LE(poolId)],
+    [NIMBUS_SEEDS.POOL, u64LE(poolId)],
     programId
   );
 }
 
-export function climafiVaultAuthPda(programId: PublicKey, poolId: bigint) {
+export function nimbusVaultAuthPda(programId: PublicKey, poolId: bigint) {
   return PublicKey.findProgramAddressSync(
-    [CLIMAFI_SEEDS.VAULT_AUTH, u64LE(poolId)],
+    [NIMBUS_SEEDS.VAULT_AUTH, u64LE(poolId)],
     programId
   );
 }
 
-export function climafiLpMintPda(programId: PublicKey, poolId: bigint) {
+export function nimbusLpMintPda(programId: PublicKey, poolId: bigint) {
   return PublicKey.findProgramAddressSync(
-    [CLIMAFI_SEEDS.LP_MINT, u64LE(poolId)],
+    [NIMBUS_SEEDS.LP_MINT, u64LE(poolId)],
     programId
   );
 }
 
-export function climafiPolicyPda(programId: PublicKey, policyId: bigint) {
+export function nimbusPolicyPda(programId: PublicKey, policyId: bigint) {
   return PublicKey.findProgramAddressSync(
-    [CLIMAFI_SEEDS.POLICY, u64LE(policyId)],
+    [NIMBUS_SEEDS.POLICY, u64LE(policyId)],
     programId
   );
 }
 
-export function climafiObsPda(
+export function nimbusObsPda(
   programId: PublicKey,
   regionId: bigint,
   perilU8: number,
   dayStartUnix: bigint
 ) {
   return PublicKey.findProgramAddressSync(
-    [CLIMAFI_SEEDS.OBS, u64LE(regionId), Buffer.from([perilU8]), i64LE(dayStartUnix)],
+    [NIMBUS_SEEDS.OBS, u64LE(regionId), Buffer.from([perilU8]), i64LE(dayStartUnix)],
     programId
   );
 }
@@ -2100,10 +2100,10 @@ export function legacyAssetsPda(programId: PublicKey, vault: PublicKey) {
 export function legacyUnlockPda(programId: PublicKey, vault: PublicKey, nonce: bigint) {
   return PublicKey.findProgramAddressSync([LEGACY_SEEDS.UNLOCK, vault.toBuffer(), u64LE(nonce)], programId);
 }
-C2) ClimaFi quote serialization + signing + ed25519 ix
+C2) Nimbus quote serialization + signing + ed25519 ix
 Key point: your on-chain program uses quote.try_to_vec() (Anchor/Borsh). Your TS must serialize the quote exactly the same way.
 
-sdk/climafiQuote.ts
+sdk/nimbusQuote.ts
 TypeScript
 
 import nacl from "tweetnacl";
@@ -2175,18 +2175,18 @@ export function toPubkeyBytes(pk: PublicKey): Uint8Array {
   return new Uint8Array(pk.toBytes());
 }
 C3) Build buyPolicy transaction correctly (ed25519 ix index management)
-sdk/climafiTx.ts
+sdk/nimbusTx.ts
 TypeScript
 
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { Program } from "@coral-xyz/anchor";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import BN from "bn.js";
-import { ed25519VerifyIx, serializeQuote, signQuoteMessage, toPubkeyBytes, Quote } from "./climafiQuote";
-import { climafiConfigPda, climafiPoolPda, climafiPolicyPda, climafiVaultAuthPda } from "./pdas";
+import { ed25519VerifyIx, serializeQuote, signQuoteMessage, toPubkeyBytes, Quote } from "./nimbusQuote";
+import { nimbusConfigPda, nimbusPoolPda, nimbusPolicyPda, nimbusVaultAuthPda } from "./pdas";
 
 export async function buildBuyPolicyTx(args: {
-  program: Program;                 // Anchor Program<Climafi>
+  program: Program;                 // Anchor Program<Nimbus>
   buyer: PublicKey;
   usdcMint: PublicKey;
   quote: Quote;
@@ -2195,10 +2195,10 @@ export async function buildBuyPolicyTx(args: {
 }): Promise<Transaction> {
   const { program, buyer, usdcMint, quote, quoteSignerPubkey, quoteSignerSecretKey } = args;
 
-  const [configPda] = climafiConfigPda(program.programId);
-  const [poolPda] = climafiPoolPda(program.programId, BigInt(quote.poolId.toString()));
-  const [vaultAuthPda] = climafiVaultAuthPda(program.programId, BigInt(quote.poolId.toString()));
-  const [policyPda] = climafiPolicyPda(program.programId, BigInt(quote.policyId.toString()));
+  const [configPda] = nimbusConfigPda(program.programId);
+  const [poolPda] = nimbusPoolPda(program.programId, BigInt(quote.poolId.toString()));
+  const [vaultAuthPda] = nimbusVaultAuthPda(program.programId, BigInt(quote.poolId.toString()));
+  const [policyPda] = nimbusPolicyPda(program.programId, BigInt(quote.policyId.toString()));
 
   const buyerUsdcAta = getAssociatedTokenAddressSync(usdcMint, buyer);
   // pool vault ATA is derived in-program via ATA(vaultAuthPda, usdcMint), but you can compute too:
@@ -2246,7 +2246,7 @@ You must fill in TOKEN_PROGRAM_ID, SystemProgram.programId, and SYSVAR_INSTRUCTI
 
 
 Practical “wiring checklist” (so you don’t lose hours)
-ClimaFi
+Nimbus
 Quote signing service must serialize the quote with the exact same Borsh layout as Rust.
 Client tx must add:
 Ed25519Program verify ix first

@@ -9,14 +9,14 @@
 
 use anchor_lang::prelude::*;
 use crate::state::Pool;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 use crate::constants::BPS_DENOMINATOR;
 
 /// Enforces core economic invariant: capital >= locked
 pub fn assert_capital_solvency(pool: &Pool) -> Result<()> {
     require!(
         pool.capital >= pool.locked,
-        ClimaFiError::InsufficientUnlockedCapital
+        NimbusError::InsufficientUnlockedCapital
     );
     Ok(())
 }
@@ -32,13 +32,13 @@ pub fn assert_ltv_compliance(
 
     let current_ltv = pool.locked
         .checked_mul(BPS_DENOMINATOR as u64)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .checked_div(pool.capital)
-        .ok_or(ClimaFiError::MathOverflow)? as u16;
+        .ok_or(NimbusError::MathOverflow)? as u16;
 
     require!(
         current_ltv <= ltv_limit_bps,
-        ClimaFiError::LtvExceeded
+        NimbusError::LtvExceeded
     );
     Ok(())
 }
@@ -61,9 +61,9 @@ pub fn should_trigger_circuit_breaker(pool: &Pool) -> bool {
 pub fn calculate_max_safe_payout(pool: &Pool, ltv_limit_bps: u16) -> Result<u64> {
     let available_capacity = pool.capital
         .checked_mul(ltv_limit_bps as u64)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .checked_div(BPS_DENOMINATOR as u64)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .saturating_sub(pool.locked);
 
     Ok(available_capacity)

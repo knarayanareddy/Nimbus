@@ -74,9 +74,9 @@ export class SwitchboardOracle {
   }
 
   /**
-   * Post verified observation to ClimaFi program
+   * Post verified observation to Nimbus program
    */
-  async publishToClimaFi(
+  async publishToNimbus(
     regionId: number,
     value: number,
     oracleKeypair: Keypair

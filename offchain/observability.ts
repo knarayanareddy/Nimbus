@@ -10,7 +10,7 @@
  * - Event retention and export
  */
 
-import { ClimaFiAlerting } from './alerting';
+import { NimbusAlerting } from './alerting';
 
 export type SecurityEventType =
   | 'POLICY_PURCHASED'
@@ -47,10 +47,10 @@ interface MetricsSnapshot {
   lastEventTimestamp: string | null;
 }
 
-export class ClimaFiObservability {
+export class NimbusObservability {
   private events: SecurityEvent[] = [];
   private maxRetentionSize: number;
-  private alerting: ClimaFiAlerting | null;
+  private alerting: NimbusAlerting | null;
   private eventCountByType: Map<string, number> = new Map();
 
   constructor(options?: {
@@ -59,7 +59,7 @@ export class ClimaFiObservability {
     pagerDutyKey?: string;
   }) {
     this.maxRetentionSize = options?.maxRetentionSize || 10_000;
-    this.alerting = new ClimaFiAlerting(options?.slackWebhook, options?.pagerDutyKey);
+    this.alerting = new NimbusAlerting(options?.slackWebhook, options?.pagerDutyKey);
   }
 
   /**
@@ -86,7 +86,7 @@ export class ClimaFiObservability {
       level: event.severity === 'critical' ? 'error' : event.severity === 'warning' ? 'warn' : 'info',
       msg: `[${event.type}] ${this.summarize(event)}`,
       ...fullEvent,
-      service: 'climafi-protocol',
+      service: 'nimbus-protocol',
       environment: process.env.NODE_ENV || 'development',
     });
 
