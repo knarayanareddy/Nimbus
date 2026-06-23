@@ -1,4 +1,4 @@
-# ClimaFi — Parametric Climate Risk Protocol (MVP)
+# Nimbus — Parametric Climate Risk Protocol (MVP)
 
 Complete implementation of the master design document.
 
@@ -46,7 +46,7 @@ anchor test
 
 ## Architecture
 
-- **On-chain**: `programs/climafi`
+- **On-chain**: `programs/nimbus`
 - **Frontend**: `app/`
 - **Off-chain services**: `offchain/`
 - **Database**: `db/schema.sql`

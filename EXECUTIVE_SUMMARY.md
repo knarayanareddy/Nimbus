@@ -1,4 +1,4 @@
-# ClimaFi — Executive Summary
+# Nimbus — Executive Summary
 
 **Version:** 1.0  
 **Date:** 2026-06-22  
@@ -8,7 +8,7 @@
 
 ## 1. Project Overview
 
-**ClimaFi** is a Solana-native parametric climate risk protocol that enables users to purchase rainfall-based drought and flood coverage with **deterministic, automatic settlement**.
+**Nimbus** is a Solana-native parametric climate risk protocol that enables users to purchase rainfall-based drought and flood coverage with **deterministic, automatic settlement**.
 
 The protocol was built from a comprehensive 1,144-line master design document and has been elevated to **professional, audit-ready** standards through a structured four-phase productionization plan.
 
@@ -101,10 +101,10 @@ The protocol is now suitable for engagement with top-tier auditors (OtterSec, Ce
 
 ## 8. Conclusion
 
-ClimaFi has evolved from a well-designed hackathon prototype into a **security-hardened, economically sound, and compliance-aware protocol** that meets professional standards for decentralized finance.
+Nimbus has evolved from a well-designed hackathon prototype into a **security-hardened, economically sound, and compliance-aware protocol** that meets professional standards for decentralized finance.
 
 The project is now **ready for professional security audit** and subsequent mainnet deployment.
 
 ---
 
-*This executive summary reflects the complete state of the ClimaFi protocol as of June 22, 2026.*
+*This executive summary reflects the complete state of the Nimbus protocol as of June 22, 2026.*

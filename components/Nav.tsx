@@ -58,14 +58,14 @@ export default function Nav() {
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl" role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group" aria-label="ClimaFi Home">
+        <Link href="/" className="flex items-center gap-2.5 group" aria-label="Nimbus Home">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all duration-200 group-hover:scale-105">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
             </svg>
           </div>
           <div>
-            <div className="font-semibold text-lg tracking-tight text-white">ClimaFi</div>
+            <div className="font-semibold text-lg tracking-tight text-white">Nimbus</div>
           </div>
         </Link>
 

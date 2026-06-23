@@ -17,7 +17,7 @@
 
 use anchor_lang::prelude::*;
 use crate::state::Peril;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 use crate::constants::{DAY_SECS, SWITCHBOARD_PROGRAM_ID};
 
 // Switchboard V2 AggregatorAccountData layout offsets (packed(1)).
@@ -80,7 +80,7 @@ pub fn parse_switchboard_aggregator(
     // 1. Owner check
     require!(
         aggregator_info.owner == &SWITCHBOARD_PROGRAM_ID,
-        ClimaFiError::OracleUnauthorized
+        NimbusError::OracleUnauthorized
     );
 
     let data = aggregator_info.try_borrow_data()?;
@@ -88,37 +88,37 @@ pub fn parse_switchboard_aggregator(
     // 2. Size check
     require!(
         data.len() >= MIN_AGGREGATOR_SIZE,
-        ClimaFiError::OracleUnauthorized
+        NimbusError::OracleUnauthorized
     );
 
     // 3. Discriminator check
     let disc = &data[0..8];
     require!(
         disc == AGGREGATOR_DISCRIMINATOR,
-        ClimaFiError::OracleUnauthorized
+        NimbusError::OracleUnauthorized
     );
 
     // 4. Read min_oracle_results
     let min_oracle_results = u32::from_le_bytes(
         data[MIN_ORACLE_RESULTS_OFFSET..MIN_ORACLE_RESULTS_OFFSET + 4]
             .try_into()
-            .map_err(|_| error!(ClimaFiError::OracleUnauthorized))?
+            .map_err(|_| error!(NimbusError::OracleUnauthorized))?
     );
-    require!(min_oracle_results >= 1, ClimaFiError::OracleUnauthorized);
+    require!(min_oracle_results >= 1, NimbusError::OracleUnauthorized);
 
     // 5. Read result mantissa (i128) and scale (u32)
     let mantissa_offset = LATEST_CONFIRMED_ROUND_OFFSET + ROUND_RESULT_MANTISSA_OFFSET;
     let mantissa = i128::from_le_bytes(
         data[mantissa_offset..mantissa_offset + 16]
             .try_into()
-            .map_err(|_| error!(ClimaFiError::OracleUnauthorized))?
+            .map_err(|_| error!(NimbusError::OracleUnauthorized))?
     );
 
     let scale_offset = LATEST_CONFIRMED_ROUND_OFFSET + ROUND_RESULT_SCALE_OFFSET;
     let scale = u32::from_le_bytes(
         data[scale_offset..scale_offset + 4]
             .try_into()
-            .map_err(|_| error!(ClimaFiError::OracleUnauthorized))?
+            .map_err(|_| error!(NimbusError::OracleUnauthorized))?
     );
 
     // 6. Read round_open_timestamp
@@ -126,22 +126,22 @@ pub fn parse_switchboard_aggregator(
     let timestamp = i64::from_le_bytes(
         data[ts_offset..ts_offset + 8]
             .try_into()
-            .map_err(|_| error!(ClimaFiError::OracleUnauthorized))?
+            .map_err(|_| error!(NimbusError::OracleUnauthorized))?
     );
 
     // 7. Staleness check (timestamp must not be in the future, and not older than max_staleness)
     let now = Clock::get()?.unix_timestamp;
-    require!(timestamp <= now, ClimaFiError::ObservationStale);
+    require!(timestamp <= now, NimbusError::ObservationStale);
     require!(
         now - timestamp <= max_staleness_secs,
-        ClimaFiError::ObservationStale
+        NimbusError::ObservationStale
     );
 
     // 8. Convert SwitchboardDecimal to i64 scaled by 100 (for mm * 100)
     // SwitchboardDecimal: value = mantissa / 10^scale
     // We want value * 100, so: (mantissa * 100) / 10^scale
     // Guard against unreasonable scale values (max 20 digits for i128 range)
-    require!(scale <= 20, ClimaFiError::OracleUnauthorized);
+    require!(scale <= 20, NimbusError::OracleUnauthorized);
     let result_i128 = if scale == 0 {
         mantissa * 100
     } else {
@@ -151,7 +151,7 @@ pub fn parse_switchboard_aggregator(
     // Reject values that would truncate on i64 cast (prevents oracle manipulation)
     require!(
         result_i128 >= i64::MIN as i128 && result_i128 <= i64::MAX as i128,
-        ClimaFiError::OracleUnauthorized
+        NimbusError::OracleUnauthorized
     );
     let value_scaled = result_i128 as i64;
 
@@ -171,15 +171,15 @@ pub fn record_observation_switchboard(
     day_start_unix: i64,
 ) -> Result<()> {
     let cfg = &ctx.accounts.config;
-    require!(!cfg.paused, ClimaFiError::Paused);
+    require!(!cfg.paused, NimbusError::Paused);
 
     // Day alignment validation
-    require!(day_start_unix % DAY_SECS == 0, ClimaFiError::InvalidTimeRange);
+    require!(day_start_unix % DAY_SECS == 0, NimbusError::InvalidTimeRange);
 
     let now = Clock::get()?.unix_timestamp;
 
     // No future observations beyond 1 day ahead
-    require!(day_start_unix <= now + DAY_SECS, ClimaFiError::InvalidTimeRange);
+    require!(day_start_unix <= now + DAY_SECS, NimbusError::InvalidTimeRange);
 
     // Parse and validate Switchboard aggregator using raw deserialization
     let aggregator_info = ctx.accounts.switchboard_aggregator.to_account_info();
@@ -191,7 +191,7 @@ pub fn record_observation_switchboard(
     // Additional check: aggregator timestamp should cover the observation day
     require!(
         result.timestamp >= day_start_unix,
-        ClimaFiError::ObservationStale
+        NimbusError::ObservationStale
     );
 
     let obs = &mut ctx.accounts.observation;

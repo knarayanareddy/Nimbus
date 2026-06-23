@@ -1,9 +1,9 @@
 ---
-name: testing-climafi-frontend
-description: Test the ClimaFi frontend UI/UX end-to-end. Use when verifying frontend changes, dark theme, navigation, buy flow, or page rendering.
+name: testing-frontend
+description: Test the Nimbus frontend UI/UX end-to-end. Use when verifying frontend changes, dark theme, navigation, buy flow, or page rendering.
 ---
 
-# Testing ClimaFi Frontend
+# Testing Nimbus Frontend
 
 ## Quick Start
 
@@ -40,7 +40,14 @@ The `@walletconnect/solana-adapter` dependency chain references `pino-pretty` wh
 
 ### Program ID Validation
 
-The Solana `PublicKey` constructor rejects invalid base58 characters. If `lib/climafi.ts` has a program ID with lowercase `l` (not valid base58), it will crash on page load. Valid base58 uses uppercase `I` and `L` but not lowercase `l`.
+The Solana `PublicKey` constructor rejects invalid base58 characters. If `lib/nimbus.ts` has a program ID with lowercase `l` (not valid base58), it will crash on page load. Valid base58 uses uppercase `I` and `L` but not lowercase `l`.
+
+### Buy Flow Nav Link Resets State
+
+The nav link to `/buy` uses a bare route without URL params. Navigating away and clicking "Buy Cover" in the nav resets form state. This is expected behavior — the URL state persistence works correctly when:
+- Refreshing the page (F5)
+- Using browser back button
+- Navigating directly to a URL with params
 
 ### Buy Flow Nav Link Resets State
 

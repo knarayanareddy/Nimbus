@@ -1,4 +1,4 @@
-# ClimaFi — masterdesigndoc.md (Single Source of Truth)
+# Nimbus — masterdesigndoc.md (Single Source of Truth)
 **Version:** 1.0   
 **Date:** 2026-05-04  
 **Target:** Frontier Hackathon submission by 2026-05-11  
@@ -34,7 +34,7 @@
 ---
 
 # 1) Product Summary
-ClimaFi is a Solana-native protocol for **parametric climate cover**:
+Nimbus is a Solana-native protocol for **parametric climate cover**:
 - A user buys a policy defined by:
   - **Region** (bucketed geography)
   - **Peril** (MVP: rainfall)
@@ -91,7 +91,7 @@ ClimaFi is a Solana-native protocol for **parametric climate cover**:
 
 # 3) System Architecture (On-chain + Off-chain)
 
-## 3.1 On-chain (Anchor Program: `climafi`)
+## 3.1 On-chain (Anchor Program: `nimbus`)
 Single Anchor program that manages:
 - Global config
 - Pools (capital, locked exposure, vaults)
@@ -193,7 +193,7 @@ MAX_WINDOW_DAYS = 31
 DAY_SECS        = 86_400
 SCALE_RAIN_MM   = 100  // rainfall is mm * 100 stored as i64
 6.3 Exact Anchor State (Structs)
-Implementation note: The following structs are intended to be used verbatim in programs/climafi/src/state.rs.
+Implementation note: The following structs are intended to be used verbatim in programs/nimbus/src/state.rs.
 
 Rust
 
@@ -456,7 +456,7 @@ unlocks pool exposure
 transfers payout if triggered
 marks policy settled
 6.5 Exact Anchor Contexts (Accounts structs)
-Implementation note: Use these verbatim in programs/climafi/src/lib.rs (or contexts.rs). Requires anchor_spl features for token + ATA.
+Implementation note: Use these verbatim in programs/nimbus/src/lib.rs (or contexts.rs). Requires anchor_spl features for token + ATA.
 
 Rust
 
@@ -468,7 +468,7 @@ use anchor_spl::{
 
 use crate::state::*;
 use crate::constants::*;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 
 #[derive(Accounts)]
 pub struct InitializeConfig<'info> {
@@ -574,8 +574,8 @@ pub struct DepositLiquidity<'info> {
 
   #[account(
     mut,
-    constraint = depositor_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-    constraint = depositor_usdc_ata.owner == depositor.key() @ ClimaFiError::Unauthorized
+    constraint = depositor_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+    constraint = depositor_usdc_ata.owner == depositor.key() @ NimbusError::Unauthorized
   )]
   pub depositor_usdc_ata: Account<'info, TokenAccount>,
 
@@ -619,8 +619,8 @@ pub struct WithdrawLiquidity<'info> {
 
   #[account(
     mut,
-    constraint = depositor_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-    constraint = depositor_usdc_ata.owner == depositor.key() @ ClimaFiError::Unauthorized
+    constraint = depositor_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+    constraint = depositor_usdc_ata.owner == depositor.key() @ NimbusError::Unauthorized
   )]
   pub depositor_usdc_ata: Account<'info, TokenAccount>,
 
@@ -673,8 +673,8 @@ pub struct BuyPolicy<'info> {
 
   #[account(
     mut,
-    constraint = buyer_usdc_ata.mint == config.usdc_mint @ ClimaFiError::InvalidMint,
-    constraint = buyer_usdc_ata.owner == buyer.key() @ ClimaFiError::Unauthorized
+    constraint = buyer_usdc_ata.mint == config.usdc_mint @ NimbusError::InvalidMint,
+    constraint = buyer_usdc_ata.owner == buyer.key() @ NimbusError::Unauthorized
   )]
   pub buyer_usdc_ata: Account<'info, TokenAccount>,
 
@@ -761,7 +761,7 @@ Rust
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum ClimaFiError {
+pub enum NimbusError {
   #[msg("Unauthorized")]
   Unauthorized,
 
@@ -960,7 +960,7 @@ Key config:
 
 ORACLE_KEYPAIR_PATH
 SOLANA_RPC_URL
-PROGRAM_ID_CLIMAFI
+PROGRAM_ID_NIMBUS
 REGION_LIST_SOURCE (DB table)
 PUBLISH_TIME_UTC=00:05
 7.2 Quote + Pricing API

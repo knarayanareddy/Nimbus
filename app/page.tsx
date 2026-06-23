@@ -164,9 +164,9 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center">
-                <span className="font-bold text-xs text-white">C</span>
+                <span className="font-bold text-xs text-white">N</span>
               </div>
-              <span className="font-semibold text-sm text-white/60">ClimaFi Protocol</span>
+              <span className="font-semibold text-sm text-white/60">Nimbus Protocol</span>
             </div>
             <div className="flex items-center gap-6 text-xs text-white/30">
               <span>Built on Solana</span>

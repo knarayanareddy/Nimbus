@@ -8,7 +8,7 @@
 
 use anchor_lang::prelude::*;
 use crate::state::Pool;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 use crate::constants::BPS_DENOMINATOR;
 
 /// Calculates dynamic LTV based on pool utilization
@@ -27,18 +27,18 @@ pub fn calculate_dynamic_ltv(
     } else {
         pool.locked
             .checked_mul(BPS_DENOMINATOR as u64)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(pool.capital)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
     };
 
     let utilization_bps = utilization as u16;
 
     let reduction = utilization_bps
         .checked_mul(risk_multiplier_bps)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .checked_div(BPS_DENOMINATOR)
-        .ok_or(ClimaFiError::MathOverflow)?;
+        .ok_or(NimbusError::MathOverflow)?;
 
     let dynamic_ltv = base_ltv_bps.saturating_sub(reduction);
 
@@ -58,17 +58,17 @@ pub fn calculate_utilization_surcharge(
     } else {
         pool.locked
             .checked_mul(10_000)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
             .checked_div(pool.capital)
-            .ok_or(ClimaFiError::MathOverflow)?
+            .ok_or(NimbusError::MathOverflow)?
     };
 
     // Surcharge = base_rate * (utilization / 100)
     let surcharge = (base_rate_bps as u64)
         .checked_mul(utilization)
-        .ok_or(ClimaFiError::MathOverflow)?
+        .ok_or(NimbusError::MathOverflow)?
         .checked_div(10_000)
-        .ok_or(ClimaFiError::MathOverflow)?;
+        .ok_or(NimbusError::MathOverflow)?;
 
     Ok(surcharge as u16)
 }

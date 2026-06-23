@@ -5,7 +5,7 @@
 //! An attacker cannot grief other users by incrementing a global counter.
 
 use anchor_lang::prelude::*;
-use crate::errors::ClimaFiError;
+use crate::errors::NimbusError;
 
 pub const QUOTE_NONCE_SEED: &[u8] = b"quote_nonce";
 
@@ -28,11 +28,11 @@ pub fn validate_and_increment_nonce(
 ) -> Result<()> {
     require!(
         nonce_account.signer == *expected_signer,
-        ClimaFiError::Unauthorized
+        NimbusError::Unauthorized
     );
     require!(
         nonce > nonce_account.last_nonce,
-        ClimaFiError::NonceAlreadyUsed
+        NimbusError::NonceAlreadyUsed
     );
     nonce_account.last_nonce = nonce;
     Ok(())

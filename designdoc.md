@@ -1,4 +1,4 @@
-🌦️ CLIMAFI — MASTER DESIGN DOCUMENT
+🌦️ NIMBUS — MASTER DESIGN DOCUMENT
 Parametric Climate Insurance Protocol on Solana
 Version 1.0 | Frontier Hackathon 2026 | CONFIDENTIAL
 text
@@ -6,7 +6,7 @@ text
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                        DOCUMENT CONTROL                                      ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  Document Name  : ClimaFi Master Design Document                             ║
+║  Document Name  : Nimbus Master Design Document                             ║
 ║  Version        : 1.0.0                                                      ║
 ║  Status         : ACTIVE — HACKATHON BUILD                                   ║
 ║  Created        : May 2026                                                   ║
@@ -51,7 +51,7 @@ text
 17.0 Appendices
 1.0 EXECUTIVE SUMMARY & VISION
 1.1 The One-Liner
-ClimaFi is the world's first Solana-native parametric climate insurance protocol — enabling anyone, anywhere to buy weather-triggered insurance coverage that pays out automatically within 400 milliseconds of a climate event being confirmed onchain, with zero paperwork, zero adjusters, and zero waiting.
+Nimbus is the world's first Solana-native parametric climate insurance protocol — enabling anyone, anywhere to buy weather-triggered insurance coverage that pays out automatically within 400 milliseconds of a climate event being confirmed onchain, with zero paperwork, zero adjusters, and zero waiting.
 
 1.2 The Core Thesis
 22
@@ -74,7 +74,7 @@ The DeFi composability layer exists (enabling underwriter yield strategies)
  Pyth updates prices roughly every 400 milliseconds thanks to Solana's lightning-fast blockchain — that's over 200,000 updates per day, ensuring that dApps always work with fresh, accurate data. 
 17
  Traditional oracles didn't update fast enough for many financial applications, leading to inaccuracies and vulnerabilities — Pyth offers low-latency, high-frequency price feeds, a feature that requires a high-throughput blockchain like Solana to operate effectively and deliver real-time data.
-This is the precise advantage that makes ClimaFi work — real-time climate events require real-time onchain response. Ethereum cannot do this economically. Solana can.
+This is the precise advantage that makes Nimbus work — real-time climate events require real-time onchain response. Ethereum cannot do this economically. Solana can.
 
 2.0 PROBLEM STATEMENT & MARKET CONTEXT
 2.1 The Insurance Gap
@@ -83,9 +83,9 @@ The global insurance protection gap — the difference between total economic lo
 In existing financial infrastructure, policyholders must trust that the insurance provider holds sufficient liquid assets to cover potential claims — this requires reliance on periodic audits and regulatory oversight. In decentralized insurance, the capital pools are entirely onchain — anyone can view the protocol reserves in real time to verify that the platform is solvent and capable of honoring its active policies.
 
 2.2 The Traditional Insurance Failure Mode
-Traditional indemnity insurance suffers from four core failure modes that ClimaFi eliminates:
+Traditional indemnity insurance suffers from four core failure modes that Nimbus eliminates:
 
-Failure Mode	Traditional Insurance	ClimaFi Solution
+Failure Mode	Traditional Insurance	Nimbus Solution
 Speed	Weeks to months for payout	400ms after oracle confirmation
 Access	Requires underwriter approval	Permissionless, wallet-based
 Cost	30-40% administrative overhead	2-3% protocol fee
@@ -102,18 +102,18 @@ Event organizers, logistics companies, outdoor businesses — dependent on weath
 2.4 Why Now
 21
  The model incorporates key features of DeFi insurance, including parametric payouts, basis risk arising from imperfect loss verification and pooled collateralization involving the risk of liquidity shortfalls — numerical results show that DeFi insurance can complement or replace traditional coverage, improving welfare when basis and default risks are moderate or pricing advantages are substantial.
-The academic validation is now complete. The oracle infrastructure (WeatherXM, Pyth) is now live. The Solana ecosystem (USDC, Jupiter, Anchor) is production-ready. The moment to build ClimaFi is right now.
+The academic validation is now complete. The oracle infrastructure (WeatherXM, Pyth) is now live. The Solana ecosystem (USDC, Jupiter, Anchor) is production-ready. The moment to build Nimbus is right now.
 
 3.0 PRODUCT OVERVIEW & CORE MECHANICS
 3.1 Product Suite
-ClimaFi ships as three interconnected products:
+Nimbus ships as three interconnected products:
 
 text
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                        CLIMAFI PROTOCOL                          │
+│                        NIMBUS PROTOCOL                          │
 ├──────────────────┬──────────────────┬───────────────────────────┤
-│   CLIMAFI COVER  │  CLIMAFI VAULT   │    CLIMAFI RISK ENGINE     │
+│   NIMBUS COVER  │  NIMBUS VAULT   │    NIMBUS RISK ENGINE     │
 │  (Policyholders) │  (Underwriters)  │    (Actuarial Pricing)     │
 │                  │                  │                            │
 │  Buy weather     │  Stake USDC to   │  Real-time risk scoring    │
@@ -144,7 +144,7 @@ Use Case: Complex agri-businesses, insurtech B2B partners
 text
 
 ═══════════════════════════════════════════════════════════════════
-                    CLIMAFI POLICY LIFECYCLE
+                    NIMBUS POLICY LIFECYCLE
 ═══════════════════════════════════════════════════════════════════
 
 PHASE 1: POLICY CREATION
@@ -202,7 +202,7 @@ Protocol → Calculates underwriter loss ratio
 
 ═══════════════════════════════════════════════════════════════════
 3.4 The Hybrid-Parametric Innovation
-ClimaFi's core technical innovation is its Hybrid-Parametric Settlement Model:
+Nimbus's core technical innovation is its Hybrid-Parametric Settlement Model:
 
 text
 
@@ -236,7 +236,7 @@ This two-stage model reduces basis risk (the gap between parametric payout and a
 text
 
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    CLIMAFI FULL SYSTEM ARCHITECTURE                  ║
+║                    NIMBUS FULL SYSTEM ARCHITECTURE                  ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
 ║  ┌─────────────────────────────────────────────────────────────┐    ║
@@ -344,7 +344,7 @@ text
 
 ACCOUNT HIERARCHY:
 
-ProtocolState (PDA: ["climafi", "protocol"])
+ProtocolState (PDA: ["nimbus", "protocol"])
 ├── PolicyAccount (PDA: ["policy", user_pubkey, policy_id])
 │   ├── TriggerCondition (embedded in PolicyAccount)
 │   └── ClaimHistory (PDA: ["claim", policy_pubkey])
@@ -492,7 +492,7 @@ pub struct CreatePolicy<'info> {
 
     #[account(
         mut,
-        seeds = [b"climafi", b"protocol"],
+        seeds = [b"nimbus", b"protocol"],
         bump = protocol_state.bump,
     )]
     pub protocol_state: Account<'info, ProtocolState>,
@@ -1277,7 +1277,7 @@ pub struct LiquidityPool {
     pub coverage_type: CoverageType,       // What this pool covers
     pub authority: Pubkey,                 // Pool admin (protocol PDA)
     pub vault_pubkey: Pubkey,              // USDC vault token account
-    pub lp_token_mint: Pubkey,             // ClimaFi LP token mint
+    pub lp_token_mint: Pubkey,             // Nimbus LP token mint
     pub total_deposits: u64,               // Total USDC ever deposited
     pub total_withdrawals: u64,
     pub total_premiums_earned: u64,        // Lifetime premiums
@@ -1815,7 +1815,7 @@ class NOAASource {
       const response = await axios.get(
         `${this.apiBase}/stations/${stationId}/observations/latest`,
         {
-          headers: { "User-Agent": "ClimaFi/1.0 (climafi.io)" },
+          headers: { "User-Agent": "Nimbus/1.0 (nimbus.io)" },
           timeout: 10000,
         }
       );
@@ -2102,7 +2102,7 @@ export class OracleAggregator {
 
 // ─── REGION REGISTRY ─────────────────────────────────────────────
 
-export const CLIMAFI_REGIONS: RegionConfig[] = [
+export const NIMBUS_REGIONS: RegionConfig[] = [
   // PILOT REGIONS (Hackathon Demo)
   {
     region_id: "KEN-NRB-001",
@@ -2163,7 +2163,7 @@ const ORACLE_CONSUMER_PROGRAM_ID = new PublicKey(
 6.2 Oracle Security Architecture
 20
  Pyth employs a pull-based oracle model where applications request price updates on-demand rather than receiving continuous pushes — this design reduces blockchain congestion and allows developers to control update frequency based on their specific requirements.
-ClimaFi implements a 3-of-3 defense-in-depth oracle security model:
+Nimbus implements a 3-of-3 defense-in-depth oracle security model:
 
 text
 
@@ -2199,7 +2199,7 @@ Layer 5: MULTI-SIG GUARDIAN
 7.1 Application Structure
 text
 
-climafi-app/
+nimbus-app/
 ├── app/
 │   ├── layout.tsx                    # Root layout with WalletProvider
 │   ├── page.tsx                      # Landing page
@@ -2252,7 +2252,7 @@ climafi-app/
 │       ├── ErrorBoundary.tsx
 │       └── NotificationToast.tsx
 ├── hooks/
-│   ├── useClimaFi.ts                 # Main protocol hook
+│   ├── useNimbus.ts                 # Main protocol hook
 │   ├── usePolicies.ts                # Policy management
 │   ├── useOracleData.ts              # Live oracle data
 │   ├── useLiquidityPool.ts           # Pool metrics
@@ -2286,7 +2286,7 @@ TypeScript
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { CLIMAFI_REGIONS } from "@/lib/constants";
+import { NIMBUS_REGIONS } from "@/lib/constants";
 
 interface RegionMapProps {
   onRegionSelect: (regionId: string, regionName: string) => void;
@@ -2317,7 +2317,7 @@ export const RegionMap: React.FC<RegionMapProps> = ({
 
     map.current.on("load", () => {
       // Add region markers
-      CLIMAFI_REGIONS.forEach((region) => {
+      NIMBUS_REGIONS.forEach((region) => {
         const isSelected = region.region_id === selectedRegionId;
 
         const el = document.createElement("div");
@@ -2374,7 +2374,7 @@ export const RegionMap: React.FC<RegionMapProps> = ({
                       rounded-lg p-3 text-sm text-slate-300">
         <p className="font-medium text-white mb-1">🌍 Select Your Region</p>
         <p className="text-xs text-slate-400">
-          {CLIMAFI_REGIONS.length} regions available
+          {NIMBUS_REGIONS.length} regions available
         </p>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"/>
@@ -2867,7 +2867,7 @@ export const PremiumQuote: React.FC<PremiumQuoteProps> = ({
         <QuoteRow
           label="Protocol Fee (2%)"
           value={`$${(quote.protocol_fee / 1_000_000).toFixed(4)}`}
-          tooltip="ClimaFi protocol fee to maintain oracle infrastructure"
+          tooltip="Nimbus protocol fee to maintain oracle infrastructure"
         />
 
         <div className="flex justify-between items-center pt-3 mt-1">
@@ -3235,7 +3235,7 @@ const ORACLE_PROGRAM_ID = new PublicKey(
 SQL
 
 -- ═══════════════════════════════════════════════════════════════
--- CLIMAFI DATABASE SCHEMA
+-- NIMBUS DATABASE SCHEMA
 -- PostgreSQL 16
 -- ═══════════════════════════════════════════════════════════════
 
@@ -3480,7 +3480,7 @@ VALUES
 10.1 REST API Endpoints
 text
 
-BASE URL: https://api.climafi.io/v1
+BASE URL: https://api.nimbus.io/v1
 
 ════════════════════════════════════════════════════════════════════
 QUOTES
@@ -3677,7 +3677,7 @@ Get underwriter positions for a wallet.
 10.2 WebSocket API
 TypeScript
 
-// WebSocket endpoint: wss://api.climafi.io/ws
+// WebSocket endpoint: wss://api.nimbus.io/ws
 
 // Client subscribes to real-time events
 ws.send(JSON.stringify({
@@ -3815,7 +3815,7 @@ const cspHeaders = {
   "Content-Security-Policy":
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-eval'; " + // unsafe-eval needed for Solana wallet adapters
-    "connect-src 'self' https://api.climafi.io wss://api.climafi.io " +
+    "connect-src 'self' https://api.nimbus.io wss://api.nimbus.io " +
     "https://mainnet.helius-rpc.com; " +
     "img-src 'self' data: https:; " +
     "style-src 'self' 'unsafe-inline';",
@@ -3827,7 +3827,7 @@ const cspHeaders = {
 TypeScript
 
 // ─────────────────────────────────────────────────────────────────
-// FILE: tests/climafi.test.ts
+// FILE: tests/nimbus.test.ts
 // ─────────────────────────────────────────────────────────────────
 
 import * as anchor from "@coral-xyz/anchor";
@@ -3841,7 +3841,7 @@ import { assert, expect } from "chai";
 import { BankrunProvider } from "anchor-bankrun";
 import { startAnchor } from "solana-bankrun";
 
-describe("ClimaFi Protocol", () => {
+describe("Nimbus Protocol", () => {
   let provider: BankrunProvider;
   let program: Program;
   let context: any;
@@ -3871,7 +3871,7 @@ describe("ClimaFi Protocol", () => {
     context = await startAnchor("./", [], []);
     provider = new BankrunProvider(context);
     anchor.setProvider(provider);
-    program = anchor.workspace.ClimaFi;
+    program = anchor.workspace.Nimbus;
 
     // Create test keypairs
     admin = Keypair.generate();

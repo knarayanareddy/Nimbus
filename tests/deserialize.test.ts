@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js'
-import { PROGRAM_ID } from '../lib/climafi'
+import { PROGRAM_ID } from '../lib/nimbus'
 import {
   deserializeGlobalConfig,
   deserializeMultisigConfig,

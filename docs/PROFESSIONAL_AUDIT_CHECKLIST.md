@@ -1,4 +1,4 @@
-# ClimaFi Professional Security Audit Checklist
+# Nimbus Professional Security Audit Checklist
 
 **Prepared for:** Professional Security Auditors (OtterSec, Certik, Neodyme, etc.)  
 **Date:** 2026-06-22  
@@ -8,7 +8,7 @@
 
 ## 1. Program Overview
 
-- **Program ID:** `CliMaFi1111111111111111111111111111111111111`
+- **Program ID:** `CLiMaFi1111111111111111111111111111111111111`
 - **Primary Language:** Rust + Anchor 0.29
 - **Core Features:** Parametric rainfall cover, signed quotes, automatic settlement
 
@@ -39,7 +39,7 @@
 
 ## 3. Test Coverage
 
-- [x] Functional tests (`tests/climafi.ts`)
+- [x] Functional tests (`tests/nimbus.ts`)
 - [x] OWASP-mapped security tests (`tests/security-audit.ts`)
 - [x] Automated security test runner (`scripts/run-security-tests.sh`)
 
@@ -80,8 +80,8 @@
 
 ## 8. Contact
 
-For questions during the audit, please reach out via the repository or legal@climafi.xyz.
+For questions during the audit, please reach out via the repository or legal@nimbus.xyz.
 
 ---
 
-*This checklist represents the current security posture of the ClimaFi protocol as of the date above.*
+*This checklist represents the current security posture of the Nimbus protocol as of the date above.*

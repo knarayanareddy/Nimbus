@@ -1,8 +1,8 @@
-# ClimaFi Governance Framework (Future)
+# Nimbus Governance Framework (Future)
 
 ## Overview
 
-ClimaFi will transition from centralized admin control to a **decentralized governance model** after mainnet launch.
+Nimbus will transition from centralized admin control to a **decentralized governance model** after mainnet launch.
 
 ## Proposed Governance Structure
 
@@ -12,7 +12,7 @@ ClimaFi will transition from centralized admin control to a **decentralized gove
 - Parameter changes require off-chain coordination
 
 ### Phase 2 (Post-Mainnet)
-- **ClimaFi DAO** with governance token
+- **Nimbus DAO** with governance token
 - On-chain proposals for:
   - Protocol fee changes
   - New region approvals

@@ -1,4 +1,4 @@
-# ClimaFi — Legal, Compliance & Regulatory Notice
+# Nimbus — Legal, Compliance & Regulatory Notice
 
 **Version:** 1.0  
 **Last Updated:** 2026-06-22
@@ -7,7 +7,7 @@
 
 ## 1. Important Disclaimer
 
-**ClimaFi is a decentralized parametric risk protocol built on Solana.**
+**Nimbus is a decentralized parametric risk protocol built on Solana.**
 
 This software is provided **"AS IS"** without warranty of any kind. The protocol enables users to purchase parametric coverage based on objective weather data (rainfall indices). It is **not traditional insurance**.
 
@@ -27,13 +27,13 @@ Parametric weather products may be classified differently across jurisdictions:
 - **European Union**: May fall under insurance or financial instrument regulations (MiFID II, IDD).
 - **Other jurisdictions**: Users must ensure local compliance before interacting with the protocol.
 
-**ClimaFi does not provide legal, tax, or regulatory advice.**
+**Nimbus does not provide legal, tax, or regulatory advice.**
 
 ---
 
 ## 3. Risk Disclosure
 
-By using ClimaFi, users acknowledge and accept the following risks:
+By using Nimbus, users acknowledge and accept the following risks:
 
 ### Technical Risks
 - Smart contract bugs or exploits
@@ -54,14 +54,14 @@ By using ClimaFi, users acknowledge and accept the following risks:
 
 ## 4. Terms of Service (Summary)
 
-By interacting with the ClimaFi protocol, users agree to:
+By interacting with the Nimbus protocol, users agree to:
 
 1. Use the protocol only for lawful purposes
 2. Not attempt to manipulate oracles or exploit the system
 3. Accept all risks associated with decentralized finance
 4. Not hold the protocol developers or contributors liable for any losses
 
-Full Terms of Service will be published at `https://climafi.xyz/terms` upon mainnet launch.
+Full Terms of Service will be published at `https://nimbus.xyz/terms` upon mainnet launch.
 
 ---
 
@@ -81,7 +81,7 @@ These controls will be implemented off-chain via a compliant service provider.
 
 ## 6. Governance & Parameter Control
 
-Future versions of ClimaFi will introduce on-chain governance for:
+Future versions of Nimbus will introduce on-chain governance for:
 
 - Protocol fee adjustments
 - Addition of new regions
@@ -93,7 +93,7 @@ Governance will be implemented via a DAO with token-weighted voting.
 
 ## 7. Multi-Jurisdiction Compliance Strategy
 
-ClimaFi will maintain a **"Compliance by Design"** approach:
+Nimbus will maintain a **"Compliance by Design"** approach:
 
 - Geo-fencing capabilities (future)
 - Region-specific risk disclosures
@@ -105,7 +105,7 @@ ClimaFi will maintain a **"Compliance by Design"** approach:
 
 **Legal Entity:** To be established prior to mainnet launch.
 
-For legal inquiries, please contact: legal@climafi.xyz (to be activated).
+For legal inquiries, please contact: legal@nimbus.xyz (to be activated).
 
 ---
 

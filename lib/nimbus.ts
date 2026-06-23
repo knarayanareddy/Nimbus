@@ -11,7 +11,7 @@ export const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyT
 // Minimal IDL for buy_policy + init_quote_nonce + deposit/withdraw (matches updated lib.rs)
 export const IDL = {
   version: '0.1.0',
-  name: 'climafi',
+  name: 'nimbus',
   instructions: [
     {
       name: 'initQuoteNonce',

@@ -1,4 +1,4 @@
-name: ClimaFi Security CI/CD
+name: Nimbus Security CI/CD
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: programs/climafi
+        working-directory: programs/nimbus
     steps:
       - uses: actions/checkout@v4
       
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: programs/climafi
+        working-directory: programs/nimbus
     steps:
       - uses: actions/checkout@v4
       
@@ -77,14 +77,14 @@ jobs:
       - name: Validate project structure
         run: |
           echo "Checking required files..."
-          test -f programs/climafi/Cargo.toml && echo "Cargo.toml: OK"
-          test -f programs/climafi/src/lib.rs && echo "lib.rs: OK"
+          test -f programs/nimbus/Cargo.toml && echo "Cargo.toml: OK"
+          test -f programs/nimbus/src/lib.rs && echo "lib.rs: OK"
           test -f package.json && echo "package.json: OK"
           test -f next.config.js && echo "next.config.js: OK"
           echo "All required files present"
       
       - name: Dependency license check
         run: |
-          cd programs/climafi
+          cd programs/nimbus
           cargo install cargo-license 2>/dev/null || true
           cargo license 2>/dev/null || echo "License check completed"

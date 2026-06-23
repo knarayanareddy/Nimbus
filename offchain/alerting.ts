@@ -15,7 +15,7 @@ export interface AlertPayload {
   timestamp?: string;
 }
 
-export class ClimaFiAlerting {
+export class NimbusAlerting {
   private slackWebhook: string | null;
   private pagerDutyKey: string | null;
 
@@ -48,7 +48,7 @@ export class ClimaFiAlerting {
                   payload.severity === 'warning' ? 'warning' : 'good';
 
     const slackMessage = {
-      text: `ClimaFi Alert: ${payload.type}`,
+      text: `Nimbus Alert: ${payload.type}`,
       attachments: [{
         color,
         fields: [
@@ -74,7 +74,7 @@ export class ClimaFiAlerting {
       payload: {
         summary: payload.message,
         severity: payload.severity === 'critical' ? 'critical' : 'warning',
-        source: 'climafi-protocol',
+        source: 'nimbus-protocol',
         custom_details: payload.data,
       },
     };
@@ -88,7 +88,7 @@ export class ClimaFiAlerting {
 }
 
 // Example usage in policy monitor:
-// const alerting = new ClimaFiAlerting();
+// const alerting = new NimbusAlerting();
 // await alerting.sendAlert({
 //   type: 'POLICY_SETTLED',
 //   severity: 'info',

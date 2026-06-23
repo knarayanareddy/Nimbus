@@ -1,4 +1,4 @@
--- ClimaFi Database Schema (Postgres + TimescaleDB)
+-- Nimbus Database Schema (Postgres + TimescaleDB)
 -- Exact schema from design doc §8
 
 CREATE EXTENSION IF NOT EXISTS timescaledb;
