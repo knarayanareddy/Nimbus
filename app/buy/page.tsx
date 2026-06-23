@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Nav from '../../components/Nav'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import TransactionStatus, { TxState } from '../../components/TransactionStatus'
@@ -16,9 +18,12 @@ const REGIONS = [
 
 type Step = 'configure' | 'quote' | 'confirm'
 
-export default function BuyPolicy() {
+function BuyPolicyInner() {
   const { publicKey, sendTransaction, connected } = useWallet()
   const { connection } = useConnection()
+  const { setVisible: setWalletModalVisible } = useWalletModal()
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [step, setStep] = useState<Step>('configure')
   const [region, setRegion] = useState(REGIONS[0])
@@ -32,6 +37,31 @@ export default function BuyPolicy() {
   const [txMessage, setTxMessage] = useState('')
   const [txSig, setTxSig] = useState('')
   const [quoteError, setQuoteError] = useState('')
+
+  // Restore state from URL params on mount
+  useEffect(() => {
+    const r = searchParams.get('region')
+    const d = searchParams.get('direction')
+    const w = searchParams.get('days')
+    const t = searchParams.get('threshold')
+    const p = searchParams.get('payout')
+    if (r) { const found = REGIONS.find(reg => reg.id === r); if (found) setRegion(found) }
+    if (d === 'LT' || d === 'GT') setDirection(d)
+    if (w) setWindowDays(Number(w))
+    if (t) setThreshold(Number(t))
+    if (p) setPayout(Number(p))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist state to URL params on change
+  useEffect(() => {
+    const params = new URLSearchParams()
+    params.set('region', region.id)
+    params.set('direction', direction)
+    params.set('days', String(windowDays))
+    params.set('threshold', String(threshold))
+    params.set('payout', String(payout))
+    router.replace(`/buy?${params.toString()}`, { scroll: false })
+  }, [region, direction, windowDays, threshold, payout]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const windowStartUnix = Math.floor(Date.now() / 1000) + 86400 // starts tomorrow
   const windowEndUnix = windowStartUnix + windowDays * 86400
@@ -301,13 +331,21 @@ export default function BuyPolicy() {
                 <button onClick={() => setStep('configure')} className="btn-secondary flex-1">
                   Modify
                 </button>
-                <button
-                  onClick={() => setStep('confirm')}
-                  className="btn-primary flex-1"
-                  disabled={!connected}
-                >
-                  {connected ? 'Proceed to Purchase' : 'Connect Wallet First'}
-                </button>
+                {connected ? (
+                  <button
+                    onClick={() => setStep('confirm')}
+                    className="btn-primary flex-1"
+                  >
+                    Proceed to Purchase
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setWalletModalVisible(true)}
+                    className="btn-primary flex-1"
+                  >
+                    Connect Wallet to Continue
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -357,5 +395,13 @@ export default function BuyPolicy() {
         </div>
       </ErrorBoundary>
     </div>
+  )
+}
+
+export default function BuyPolicy() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-white/40">Loading...</div></div>}>
+      <BuyPolicyInner />
+    </Suspense>
   )
 }
