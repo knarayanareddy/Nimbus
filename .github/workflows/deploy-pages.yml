@@ -32,6 +32,7 @@ jobs:
       - name: Build Next.js Static Site
         env:
           EXPORT_STATIC: "true"
+          NEXT_PUBLIC_BASE_PATH: "/Nimbus"
           NEXT_PUBLIC_RPC_URL: "https://api.devnet.solana.com"
         run: npm run build
 
