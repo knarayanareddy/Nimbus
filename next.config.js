@@ -20,6 +20,7 @@ const cspDirectives = [
 
 const nextConfig = {
   output: process.env.EXPORT_STATIC === 'true' ? 'export' : undefined,
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || undefined,
   images: {
     unoptimized: process.env.EXPORT_STATIC === 'true' ? true : undefined,
   },
