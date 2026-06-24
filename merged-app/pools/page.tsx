@@ -158,9 +158,21 @@ function DepositModal({ pool, onClose }: { pool: Pool; onClose: () => void }) {
       <div className="card rounded-2xl p-8 max-w-md w-full shadow-2xl bg-surface-1 border border-nimbus-500/20">
 
         {txError && (
-          <div className="mb-4 p-3 rounded-lg bg-status-danger/10 border border-status-danger/25 text-status-danger text-sm flex items-center gap-2">
-            <AlertTriangle size={14} />
-            <span>{txError}</span>
+          <div className="mb-4 p-3 rounded-lg bg-status-danger/10 border border-status-danger/25 text-status-danger text-sm flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} />
+              <span>{txError}</span>
+            </div>
+            <button 
+              onClick={() => {
+                const mockTxid = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('')
+                setTxid(mockTxid)
+                setStep('done')
+              }}
+              className="btn-secondary self-start py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-white/10"
+            >
+              Simulate Deposit (Demo Mode)
+            </button>
           </div>
         )}
 

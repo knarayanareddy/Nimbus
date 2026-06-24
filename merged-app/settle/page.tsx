@@ -63,6 +63,7 @@ interface SettlablePolicy {
   triggered: boolean
   reason: string
   poolId: number
+  isLocalSim?: boolean
 }
 
 const SETTLEABLE: SettlablePolicy[] = [
@@ -184,14 +185,14 @@ function OracleProofPanel({ policy }: { policy: SettlablePolicy }) {
   )
 }
 
-function SettleCard({ policy, onSettle }: { policy: SettlablePolicy; onSettle: (id: string) => void }) {
+function SettleCard({ policy, onSettle }: { policy: SettlablePolicy; onSettle: (id: string, forceSimulate?: boolean) => Promise<void> }) {
   const [showProof, setShowProof] = useState(false)
   const { connected } = useWallet()
   const { setVisible: setWalletVisible } = useWalletModal()
   const [settling, setSettling] = useState(false)
   const [txError, setTxError] = useState<string | null>(null)
 
-  const handleSettleAction = async () => {
+  const handleSettleAction = async (forceSimulate = false) => {
     if (!connected) {
       setWalletVisible(true)
       return
@@ -199,7 +200,7 @@ function SettleCard({ policy, onSettle }: { policy: SettlablePolicy; onSettle: (
     setSettling(true)
     setTxError(null)
     try {
-      await onSettle(policy.id)
+      await onSettle(policy.id, forceSimulate)
     } catch (err: any) {
       setTxError(err.message || 'Settlement execution failed.')
     } finally {
@@ -210,9 +211,17 @@ function SettleCard({ policy, onSettle }: { policy: SettlablePolicy; onSettle: (
   return (
     <div className="card bg-surface-1/40 border border-white/[0.06] rounded-2xl p-6">
       {txError && (
-        <div className="mb-4 p-3 rounded-lg bg-status-danger/10 border border-status-danger/25 text-status-danger text-xs flex items-center gap-2">
-          <AlertCircle size={14} />
-          <span>{txError}</span>
+        <div className="mb-4 p-3 rounded-lg bg-status-danger/10 border border-status-danger/25 text-status-danger text-xs flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} />
+            <span>{txError}</span>
+          </div>
+          <button 
+            onClick={() => handleSettleAction(true)}
+            className="btn-secondary self-start py-1.5 px-3 rounded-lg text-[10px] font-semibold hover:bg-white/10"
+          >
+            Simulate Settlement (Demo Mode)
+          </button>
         </div>
       )}
 
@@ -233,7 +242,7 @@ function SettleCard({ policy, onSettle }: { policy: SettlablePolicy; onSettle: (
             {showProof ? 'Hide Proof' : 'View Proof'}
           </button>
           <button
-            onClick={handleSettleAction}
+            onClick={() => handleSettleAction(false)}
             disabled={settling}
             className="btn-primary px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
           >
@@ -271,56 +280,147 @@ export default function SettlePage() {
   const [activePolicies, setActivePolicies] = useState<SettlablePolicy[]>(SETTLEABLE)
   const [settledLogs, setSettledLogs] = useState(RECENTLY_SETTLED)
 
-  const handleSettlePolicyOnChain = async (policyIdStr: string) => {
+  // Load custom policies from localStorage
+  useEffect(() => {
+    if (!connected || !publicKey) {
+      setActivePolicies(SETTLEABLE)
+      return
+    }
+
+    try {
+      const localPoliciesRaw = localStorage.getItem(`nimbus_policies_${publicKey.toBase58()}`)
+      if (localPoliciesRaw) {
+        const localPolicies = JSON.parse(localPoliciesRaw)
+        if (Array.isArray(localPolicies)) {
+          // Find active ones
+          const activeLocal = localPolicies.filter((p: any) => p.status === 'active')
+          const mappedLocal: SettlablePolicy[] = activeLocal.map((p: any) => ({
+            id: p.id,
+            region: p.region,
+            country: 'Kenya',
+            peril: p.peril,
+            indexMethod: p.index.charAt(0).toUpperCase() + p.index.slice(1),
+            threshold: p.threshold,
+            direction: p.peril === 'drought' ? 'below' : 'above',
+            payout: p.payout,
+            premium: p.premium,
+            windowEnd: p.endDate,
+            oracleValue: p.peril === 'drought' ? 32.6 : 142.1,
+            oracleSources: ['Switchboard', 'Open-Meteo', 'NOAA'],
+            sourceBitmap: '0b111',
+            snapshotTx: p.txid,
+            triggered: true,
+            reason: p.peril === 'drought' 
+              ? `Rainfall index was below threshold of ${p.threshold}mm.`
+              : `Rainfall index exceeded threshold of ${p.threshold}mm.`,
+            poolId: 1,
+            isLocalSim: true,
+          }))
+          setActivePolicies([...mappedLocal, ...SETTLEABLE])
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load local policies in SettlePage', err)
+    }
+  }, [connected, publicKey])
+
+  const handleSettlePolicyOnChain = async (policyIdStr: string, forceSimulate = false) => {
     if (!connected || !publicKey) return
 
     const targetPolicy = activePolicies.find(p => p.id === policyIdStr)
     if (!targetPolicy) return
 
-    const provider = new AnchorProvider(connection, { publicKey } as any, {})
-    const program = new Program(FULL_IDL_WITH_SETTLE as any, PROGRAM_ID, provider)
+    // Run local simulation if it is marked as simulation, forced, or if it's a short mock ID (<10)
+    const isLocalSim = forceSimulate || targetPolicy.isLocalSim || policyIdStr.length < 10
 
-    const configPda = getConfigPda()
-    const poolPda = getPoolPda(targetPolicy.poolId)
-    const policyPda = getPolicyPda(new BN(policyIdStr))
-    const vaultAuthPda = getVaultAuthPda(targetPolicy.poolId)
+    if (isLocalSim) {
+      console.log('Simulating settlement for demo policy...')
+      await new Promise(resolve => setTimeout(resolve, 1200))
+      
+      const mockSignature = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('')
 
-    const policyOwnerUsdcAta = await getAssociatedTokenAddress(USDC_MINT, publicKey)
-    const poolVaultUsdcAta = await getAssociatedTokenAddress(USDC_MINT, vaultAuthPda, true)
+      // If it exists in localStorage, update its status to settled
+      try {
+        const localPoliciesRaw = localStorage.getItem(`nimbus_policies_${publicKey.toBase58()}`)
+        if (localPoliciesRaw) {
+          const localPolicies = JSON.parse(localPoliciesRaw)
+          if (Array.isArray(localPolicies)) {
+            const index = localPolicies.findIndex((p: any) => p.id === policyIdStr)
+            if (index !== -1) {
+              localPolicies[index].status = 'settled'
+              localStorage.setItem(`nimbus_policies_${publicKey.toBase58()}`, JSON.stringify(localPolicies))
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update local policy status to settled', err)
+      }
 
-    // Build settlePolicy instruction
-    const settleTx = await program.methods
-      .settlePolicy()
-      .accounts({
-        config: configPda,
-        pool: poolPda,
-        vaultAuth: vaultAuthPda,
-        poolVaultUsdcAta,
-        policy: policyPda,
-        policyOwner: publicKey,
-        policyOwnerUsdcAta,
-        instructionsSysvar: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .transaction()
+      setActivePolicies(prev => prev.filter(p => p.id !== policyIdStr))
+      setSettledLogs(prev => [
+        {
+          id: `NMB-${policyIdStr}-HIST`,
+          region: `${targetPolicy.region}, ${targetPolicy.country}`,
+          peril: targetPolicy.peril,
+          payout: targetPolicy.payout,
+          settleTx: mockSignature,
+          settledAt: new Date().toISOString().split('T')[0],
+          triggered: true,
+        },
+        ...prev,
+      ])
+      return
+    }
 
-    const signature = await sendTransaction(settleTx, connection)
-    await connection.confirmTransaction(signature, 'confirmed')
+    try {
+      const provider = new AnchorProvider(connection, { publicKey } as any, {})
+      const program = new Program(FULL_IDL_WITH_SETTLE as any, PROGRAM_ID, provider)
 
-    // On success: update local state lists
-    setActivePolicies(prev => prev.filter(p => p.id !== policyIdStr))
-    setSettledLogs(prev => [
-      {
-        id: `NMB-${policyIdStr}-HIST`,
-        region: `${targetPolicy.region}, ${targetPolicy.country}`,
-        peril: targetPolicy.peril,
-        payout: targetPolicy.payout,
-        settleTx: signature,
-        settledAt: new Date().toISOString().split('T')[0],
-        triggered: true,
-      },
-      ...prev,
-    ])
+      const configPda = getConfigPda()
+      const poolPda = getPoolPda(targetPolicy.poolId)
+      const policyPda = getPolicyPda(new BN(policyIdStr))
+      const vaultAuthPda = getVaultAuthPda(targetPolicy.poolId)
+
+      const policyOwnerUsdcAta = await getAssociatedTokenAddress(USDC_MINT, publicKey)
+      const poolVaultUsdcAta = await getAssociatedTokenAddress(USDC_MINT, vaultAuthPda, true)
+
+      // Build settlePolicy instruction
+      const settleTx = await program.methods
+        .settlePolicy()
+        .accounts({
+          config: configPda,
+          pool: poolPda,
+          vaultAuth: vaultAuthPda,
+          poolVaultUsdcAta,
+          policy: policyPda,
+          policyOwner: publicKey,
+          policyOwnerUsdcAta,
+          instructionsSysvar: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .transaction()
+
+      const signature = await sendTransaction(settleTx, connection)
+      await connection.confirmTransaction(signature, 'confirmed')
+
+      // On success: update local state lists
+      setActivePolicies(prev => prev.filter(p => p.id !== policyIdStr))
+      setSettledLogs(prev => [
+        {
+          id: `NMB-${policyIdStr}-HIST`,
+          region: `${targetPolicy.region}, ${targetPolicy.country}`,
+          peril: targetPolicy.peril,
+          payout: targetPolicy.payout,
+          settleTx: signature,
+          settledAt: new Date().toISOString().split('T')[0],
+          triggered: true,
+        },
+        ...prev,
+      ])
+    } catch (err: any) {
+      console.error(err)
+      throw err
+    }
   }
 
   return (

@@ -320,12 +320,13 @@ export default function PortfolioPage() {
 
     const fetchPolicies = async () => {
       setLoading(true)
+      let mapped: Policy[] = []
       try {
         const res = await fetch(`/api/policies/${publicKey.toBase58()}`)
         const data = await res.json()
         if (Array.isArray(data)) {
           // Map database structure to our detailed Policy UI structure
-          const mapped: Policy[] = data.map((p: any) => ({
+          mapped = data.map((p: any) => ({
             id: String(p.policy_id),
             region: p.region_id === 'KEN-NRB-001' ? 'Nairobi Region' : p.region_id,
             country: p.region_id === 'KEN-NRB-001' ? 'Kenya' : 'Solana',
@@ -345,13 +346,48 @@ export default function PortfolioPage() {
               { day: 'D1', value: 8.2 }, { day: 'D7', value: 15.1 }, { day: 'D14', value: 35.2 }
             ],
           }))
-          setLivePolicies(mapped)
         }
       } catch (err) {
-        console.error('Failed to fetch policies', err)
-      } finally {
-        setLoading(false)
+        console.warn('Failed to fetch policies from DB (offline/static mode), falling back to client-only policies.', err)
       }
+
+      // Fetch simulated policies from localStorage
+      try {
+        const localPoliciesRaw = localStorage.getItem(`nimbus_policies_${publicKey.toBase58()}`)
+        if (localPoliciesRaw) {
+          const localPolicies = JSON.parse(localPoliciesRaw)
+          if (Array.isArray(localPolicies)) {
+            const mappedLocal: Policy[] = localPolicies.map((p: any) => ({
+              id: p.id,
+              region: p.region + ' (Demo)',
+              country: 'Kenya',
+              peril: p.peril,
+              indexMethod: p.index.charAt(0).toUpperCase() + p.index.slice(1),
+              threshold: p.threshold,
+              direction: p.peril === 'drought' ? 'below' : 'above',
+              payout: p.payout,
+              premium: p.premium,
+              status: p.status,
+              startDate: p.startDate,
+              endDate: p.endDate,
+              daysRemaining: Math.max(0, Math.ceil((Date.parse(p.endDate) - Date.now()) / 86400000)),
+              currentIndex: p.peril === 'drought' ? 32.6 : 142.1,
+              oracle: 'Switchboard · NOAA',
+              chartData: [
+                { day: 'D1', value: p.peril === 'drought' ? 12.5 : 24.2 },
+                { day: 'D7', value: p.peril === 'drought' ? 24.1 : 89.5 },
+                { day: 'D14', value: p.peril === 'drought' ? 32.6 : 142.1 }
+              ],
+            }))
+            mapped = [...mappedLocal, ...mapped]
+          }
+        }
+      } catch (localErr) {
+        console.error('Failed to parse simulated policies from localStorage', localErr)
+      }
+
+      setLivePolicies(mapped)
+      setLoading(false)
     }
 
     fetchPolicies()
