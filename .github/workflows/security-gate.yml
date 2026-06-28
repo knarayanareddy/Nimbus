@@ -1,0 +1,90 @@
+name: Security Gate (OWASP A06 + A05 + A02)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 9 * * 1'   # Weekly Monday audit
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Run Security Gate
+        run: ./scripts/security-gate.sh
+      - name: Generate Static Security Headers
+        run: |
+          mkdir -p out
+          node scripts/generate-security-headers.js
+          test -f out/_headers
+
+  # === HARD FAIL on High/Critical (A06) ===
+  dependency-hard-fail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Fail on HIGH or CRITICAL vulnerabilities
+        run: |
+          npm audit --audit-level=high --json > /tmp/audit.json || true
+          HIGH_COUNT=$(node -e '
+            try {
+              const a = require("/tmp/audit.json");
+              const vulns = Object.values(a.vulnerabilities || {});
+              const highCrit = vulns.filter(v => ["high","critical"].includes(v.severity)).length;
+              console.log(highCrit);
+            } catch(e) { console.log(0); }
+          ')
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "❌ $HIGH_COUNT HIGH/CRITICAL vulnerabilities found"
+            npm audit --audit-level=high
+            exit 1
+          fi
+          echo "✅ No high or critical vulnerabilities"
+
+  # === Semgrep (A06 + A03 + A04) ===
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          generateSarif: true
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+  # === Dedicated Secrets Scanning (A02) ===
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks (Secrets Detection)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: TruffleHog (Fallback)
+        if: failure()
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD

@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:static": "EXPORT_STATIC=true next build && node scripts/generate-security-headers.js",
     "start": "next start",
     "lint": "next lint",
     "test": "anchor test",
     "oracle": "ts-node offchain/oracle-aggregator.ts",
-    "monitor": "ts-node offchain/policy-monitor.ts"
+    "monitor": "ts-node offchain/policy-monitor.ts",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:fix": "npm audit fix"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
@@ -30,7 +33,17 @@
     "tweetnacl": "^1.0.3"
   },
   "overrides": {
-    "@types/react": "^18"
+    "@types/react": "^18",
+    "ws": "^8.17.1",
+    "uuid": "^9.0.1",
+    "undici": "^6.19.2",
+    "@coral-xyz/borsh": "^0.29.0",
+    "elliptic": "^6.5.7",
+    "browserify-sign": "^4.2.3",
+    "crypto-browserify": "^3.12.1",
+    "uuidv4": "^6.2.13",
+    "@walletconnect/utils": "^2.17.0",
+    "@walletconnect/core": "^2.17.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.2.0",
