@@ -8,11 +8,12 @@ const POLICY_ACCOUNT_SIZE = 197 // Policy::LEN (includes 8-byte discriminator)
 
 export async function GET(
   _request: Request,
-  { params }: { params: { wallet: string } }
+  { params }: { params: Promise<{ wallet: string }> }
 ) {
   let owner: PublicKey
   try {
-    owner = new PublicKey(params.wallet)
+    const { wallet } = await params
+    owner = new PublicKey(wallet)
   } catch {
     return NextResponse.json({ error: 'Invalid wallet address' }, { status: 400 })
   }
