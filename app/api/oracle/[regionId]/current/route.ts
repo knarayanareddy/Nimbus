@@ -3,9 +3,10 @@ import { getRegionById, getRegionByU64 } from '../../../../../lib/regions'
 
 export async function GET(
   _request: Request,
-  { params }: { params: { regionId: string } }
+  { params }: { params: Promise<{ regionId: string }> }
 ) {
-  const id = params.regionId
+  const { regionId } = await params
+  const id = regionId
   const region = getRegionById(id) ?? getRegionByU64(Number(id))
   if (!region) {
     return NextResponse.json({ error: `Unknown region: ${id}` }, { status: 404 })
