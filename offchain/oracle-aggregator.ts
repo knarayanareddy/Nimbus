@@ -9,6 +9,7 @@ import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
 import fetch from 'node-fetch';
 import * as fs from 'fs';
 import { loadProgramIdl } from './load-idl';
+import { fetchCompletedDailyRainfall } from '../lib/weather-observation';
 
 const PROGRAM_ID = new PublicKey("CLiMaFi1111111111111111111111111111111111111");
 
@@ -89,20 +90,7 @@ export class OracleAggregator {
       throw new Error(`Invalid date format: ${date}. Expected YYYY-MM-DD.`);
     }
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&daily=precipitation_sum&start_date=${encodeURIComponent(date)}&end_date=${encodeURIComponent(date)}&timezone=UTC`;
-    
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Open-Meteo API returned ${res.status}: ${await res.text()}`);
-    }
-
-    const data = await res.json() as WeatherResponse;
-    
-    if (!data.daily || !data.daily.precipitation_sum || data.daily.precipitation_sum.length === 0) {
-      throw new Error(`No precipitation data returned for ${date}`);
-    }
-
-    return (data.daily.precipitation_sum[0] || 0) * 100; // mm * 100
+    return fetchCompletedDailyRainfall(lat, lon, date);
   }
 
   /**
@@ -183,7 +171,7 @@ if (require.main === module) {
   const rpcUrl = process.env.RPC_URL || 'https://api.devnet.solana.com';
   const keypairPath = process.env.ORACLE_KEYPAIR_PATH || './keys/oracle.json';
   const regionId = parseInt(process.env.REGION_ID || '1', 10);
-  const date = process.env.DATE || new Date().toISOString().slice(0, 10);
+  const date = process.env.DATE || new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
 
   (async () => {
     if (!fs.existsSync(keypairPath)) {

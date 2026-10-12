@@ -15,9 +15,11 @@ const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
 })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
-  title: 'Nimbus | Parametric Climate Cover on Solana',
-  description: 'Deterministic weather risk coverage on Solana. Oracle-verified rainfall indices trigger automatic USDC payouts. No claims. No adjusters. Just data.',
+  title: 'Nimbus | Verifiable Rainfall Evidence on Solana',
+  description: 'Replay historical rainfall, inspect data provenance and verify deterministic test-policy outcomes. Anchor receipt integrity on Solana devnet. Hackathon prototype, no real-fund coverage.',
   keywords: ['parametric', 'climate', 'solana', 'USDC', 'rainfall', 'coverage', 'defi'],
   openGraph: {
     title: 'Nimbus Protocol',

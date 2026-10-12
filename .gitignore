@@ -27,3 +27,12 @@ target/
 keys/*.json
 *.key
 wallet.json
+
+# Local verification and hosting artifacts
+.test-build/
+.offchain-build/
+test-results/
+playwright-report/
+playwright/.auth/
+.open-next/
+.wrangler/
