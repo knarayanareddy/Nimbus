@@ -16,6 +16,7 @@ pub mod reentrancy;
 pub mod economic_safety;
 pub mod compute;
 pub mod governance;
+mod settlement_math;
 
 use state::*;
 use constants::*;
@@ -389,7 +390,7 @@ pub mod nimbus {
         pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         // Pro-rata premium refund: refund based on unused time proportion
-        // refund = premium * (window_start - now) / (window_end - window_start) 
+        // refund = premium * (window_start - now) / (window_end - window_start)
         // If cancel is before window start, full premium refund minus protocol fee
         let total_window = policy.window_end_unix
             .checked_sub(policy.window_start_unix)
@@ -582,6 +583,16 @@ pub mod nimbus {
             TriggerDirection::GreaterThan => index_value >= policy.threshold,
         };
 
+        let (ending_capital, ending_locked) = settlement_math::settle_balances(
+            pool.capital,
+            pool.locked,
+            policy.payout_amount,
+            triggered,
+        ).map_err(|error| match error {
+            settlement_math::SettlementError::InsufficientUnlockedCapital => NimbusError::InsufficientUnlockedCapital,
+            settlement_math::SettlementError::Insolvent => NimbusError::InsufficientUnlockedCapital,
+        })?;
+
         policy.observed_value = index_value;
         policy.triggered = triggered;
         policy.settled_at_unix = now;
@@ -609,8 +620,8 @@ pub mod nimbus {
             )?;
         }
 
-        // Unlock pool exposure regardless of trigger outcome
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
+        pool.capital = ending_capital;
+        pool.locked = ending_locked;
 
         emit!(PolicySettled {
             policy_id: policy.policy_id,
