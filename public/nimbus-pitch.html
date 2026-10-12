@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nimbus — Verifiable Rainfall Evidence</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet"><style>/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* === NIMBUS OBSERVATORY THEME === */
+:root{--stage-bg:#050b12;--slide-bg:#08111f;--ink:#f4f7fb;--muted:#9aacc4;--cyan:#59e4df;--line:#1d3148}*{box-sizing:border-box}body{font-family:'Manrope',sans-serif;color:var(--ink)}.slide{padding:98px 116px;background:radial-gradient(ellipse at 92% 2%,#123245 0,transparent 56%),linear-gradient(135deg,#08111f,#050c15)}.slide:before{content:'';position:absolute;inset:0;background-image:linear-gradient(#ffffff04 1px,transparent 1px),linear-gradient(90deg,#ffffff04 1px,transparent 1px);background-size:64px 64px;pointer-events:none}.eyebrow{font-family:'IBM Plex Mono',monospace;color:var(--cyan);font-size:24px;text-transform:uppercase;letter-spacing:5px;margin-bottom:40px}h1{font-size:100px;line-height:1.08;letter-spacing:-4px;margin:0 0 56px;max-width:1600px;font-weight:650}em{font-style:normal;color:var(--cyan)}.lead{font-size:34px;line-height:1.55;color:#b7c8df;max-width:1390px;margin:26px 0}.stamp{margin-top:75px;border-left:4px solid var(--cyan);padding:18px 26px;font-size:26px;font-family:'IBM Plex Mono',monospace}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}.cards article{border-top:2px solid var(--cyan);padding:30px;background:#ffffff05;min-height:260px}.cards b{font-size:32px}.cards p{font-size:27px;line-height:1.55;color:#aabed7;margin:22px 0 0}.pipeline{display:flex;align-items:center;gap:18px;margin:50px 0}.pipeline span{border:1px solid #365066;padding:22px;font-size:26px}.pipeline i{font-size:28px;color:var(--cyan)}.note{font-size:22px;color:var(--muted);line-height:1.5;margin-top:34px}.example{display:grid;grid-template-columns:1.4fr 1fr;gap:66px}.chart{height:270px;display:flex;align-items:flex-end;gap:18px;border-bottom:1px solid var(--line)}.bar{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--muted)}.bar i{display:block;background:linear-gradient(#59e4df,#137f95);border-radius:6px 6px 0 0;margin-bottom:12px}.example aside{border-left:1px solid #365066;padding-left:48px}.example aside b{font-size:48px;color:var(--cyan)}.example aside strong{display:block;font-size:44px;margin-top:24px}.example aside p{font-size:25px;color:var(--muted);line-height:1.55}footer{position:absolute;left:116px;right:116px;bottom:64px;border-top:1px solid var(--line);padding-top:24px;display:flex;gap:48px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:20px;color:#90a9c4}footer span{font-size:17px;color:#6f879e}footer small{margin-left:auto;font-size:18px}.deck-controls{display:flex;gap:12px;padding:10px;background:#08111fe8;border:1px solid #294358;border-radius:50px}.deck-controls button,.deck-controls a{background:none;border:0;color:white;padding:9px 14px;cursor:pointer;font:14px 'Manrope',sans-serif;text-decoration:none}.deck-controls button:focus-visible,.deck-controls a:focus-visible{outline:2px solid var(--cyan);border-radius:8px}.edit-hotzone{position:fixed;top:0;left:0;width:75px;height:75px;z-index:1002}.edit-toggle{position:fixed;top:16px;left:16px;z-index:1003;opacity:0;pointer-events:none;color:white;background:#163145;border:1px solid #59e4df;padding:12px;border-radius:8px}.edit-toggle.show,.edit-toggle.active{opacity:1;pointer-events:auto}[contenteditable=true]{outline:2px dashed #59e4df88}.slide h1,.slide .cards,.slide .lead,.slide .pipeline,.slide .example{transition:opacity .3s ease,transform .3s ease}.slide:not(.visible) h1{opacity:0;transform:translateY(18px)}
+@media print{.slide h1{opacity:1!important;transform:none!important}.edit-hotzone,.edit-toggle{display:none!important}}
+</style></head><body><div class="deck-viewport"><main class="deck-stage" id="deckStage"><section class="slide active visible" aria-label="Slide 1: Nimbus"><div class="eyebrow">Nimbus</div><h1 data-edit>Understand the trigger.<br><em>Verify the evidence.</em></h1><p class="lead" data-edit>Verifiable rainfall evidence on Solana.<br>Historical replay · canonical receipts · test-only commitments</p><div class="stamp">Crypto World’s Fair 2026</div><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>01 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 2: The trust boundary"><div class="eyebrow">The trust boundary</div><h1 data-edit>A deterministic contract<br>still trusts its <em>inputs.</em></h1><div class="cards"><article><b>Which weather?</b><p data-edit>Provider, model and grid point—not a claim about rainfall at an individual farm.</p></article><article><b>Which calculation?</b><p data-edit>Complete UTC days, exclusive end date, integer units and inclusive thresholds.</p></article><article><b>Which result?</b><p data-edit>A replayable hypothetical outcome—not evidence of coverage or a token transfer.</p></article></div><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>02 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 3: The product"><div class="eyebrow">The product</div><h1 data-edit>Replay. Inspect.<br><em>Export. Verify.</em></h1><div class="pipeline"><span>Completed archive</span><i>→</i><span>Validated days</span><i>→</i><span>Fixed-point replay</span><i>→</i><span>Canonical receipt</span></div><p class="lead" data-edit>No wallet required to inspect or independently verify a receipt.<br>A missing reading fails closed; it does not become a drought.</p><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>03 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 4: A real captured example"><div class="eyebrow">A real captured example</div><h1 data-edit>Fourteen days.<br><em>4.60 millimetres.</em></h1><div class="example"><div><div class="chart"><div class="bar"><i style="height:0.0px"></i><span>01</span></div><div class="bar"><i style="height:0.0px"></i><span>02</span></div><div class="bar"><i style="height:0.0px"></i><span>03</span></div><div class="bar"><i style="height:11.2px"></i><span>04</span></div><div class="bar"><i style="height:11.2px"></i><span>05</span></div><div class="bar"><i style="height:0.0px"></i><span>06</span></div><div class="bar"><i style="height:0.0px"></i><span>07</span></div><div class="bar"><i style="height:56.0px"></i><span>08</span></div><div class="bar"><i style="height:0.0px"></i><span>09</span></div><div class="bar"><i style="height:100.7px"></i><span>10</span></div><div class="bar"><i style="height:44.8px"></i><span>11</span></div><div class="bar"><i style="height:235.0px"></i><span>12</span></div><div class="bar"><i style="height:44.8px"></i><span>13</span></div><div class="bar"><i style="height:11.2px"></i><span>14</span></div></div><p class="note">Nairobi · ERA5 · September 1–15, 2026 · end exclusive</p></div><aside><b>≤ 80 mm</b><p>Inclusive drought trigger met</p><strong>500 test USDC</strong><p>Hypothetical arithmetic only.<br>No policy purchase or payout.</p></aside></div><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>04 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 5: Why Solana"><div class="eyebrow">Why Solana</div><h1 data-edit>Commit the digest.<br><em>Not weather truth.</em></h1><div class="cards"><article><b>Native foundation</b><p data-edit>The inherited protocol uses Anchor and SPL tokens; no gratuitous multichain rewrite.</p></article><article><b>Signer-bound Memo</b><p data-edit>The browser checks devnet genesis before sending. A real local-validator Memo was confirmed and read back.</p></article><article><b>Clear boundary</b><p data-edit>A digest commitment establishes integrity and timing—not an authenticated oracle, purchase or payout.</p></article></div><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>05 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 6: Competitive reality"><div class="eyebrow">Competitive reality</div><h1 data-edit>Not the first insurance.<br><em>A clearer evidence layer.</em></h1><div class="cards"><article><b>Arbol & Etherisc</b><p data-edit>Existing weather and blockchain crop-protection precedents. No firstness claim.</p></article><article><b>Initial hypothesis</b><p data-edit>Climate-risk protocol builders and cooperative/distributor design partners who need inspectable terms.</p></article><article><b>Possible business</b><p data-edit>An evidence integration service for licensed carriers—not an unlicensed direct insurance offer. No traction claimed.</p></article></div><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>06 / 07</small></footer></section>
+<section class="slide " aria-label="Slide 7: Disclosed work &amp; next gate"><div class="eyebrow">Disclosed work &amp; next gate</div><h1 data-edit>A working prototype.<br><em>An honest next step.</em></h1><div class="cards"><article><b>New event work</b><p data-edit>Evidence Lab, historical ingestion, canonical verifier, Memo path and capital-accounting regressions.</p></article><article><b>Prior work disclosed</b><p data-edit>Existing May 2026 Anchor/UI prototype and earlier drafts. Only event-period changes are presented as new.</p></article><article><b>Before real coverage</b><p data-edit>Complete program deployment/integration, audit, oracle and pricing controls, legal review and underwriting capacity.</p></article></div><p class="note">This product presentation uses no founder identity or eligibility attestations. It does not replace a required personal founder video.</p><footer>NIMBUS <span>TEST-ONLY · NO REAL COVERAGE</span><small>07 / 07</small></footer></section></main></div><nav class="deck-controls" aria-label="Presentation navigation"><button id="prev" aria-label="Previous slide">←</button><span id="pageCount" aria-live="polite"></span><button id="next" aria-label="Next slide">→</button><a href="/nimbus-media.html">Demo &amp; sources</a></nav><div class="edit-hotzone" aria-hidden="true"></div><button class="edit-toggle" id="editToggle" aria-label="Toggle local text editing">Edit · E</button><script>/* === FIXED STAGE, NAVIGATION AND OPTIONAL LOCAL EDITING === */
+class SlidePresentation{constructor(){this.slides=[...document.querySelectorAll('.slide')];this.current=0;this.stage=document.getElementById('deckStage');this.editing=false;this.scale();window.addEventListener('resize',()=>this.scale());document.getElementById('next').onclick=()=>this.show(this.current+1);document.getElementById('prev').onclick=()=>this.show(this.current-1);document.addEventListener('keydown',e=>{if(e.target.isContentEditable)return;if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();this.show(this.current+1)}if(['ArrowLeft','PageUp'].includes(e.key))this.show(this.current-1);if(e.key.toLowerCase()==='e')this.toggle();if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();this.save()}});let start=0;document.addEventListener('touchstart',e=>start=e.changedTouches[0].clientX,{passive:true});document.addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-start;if(Math.abs(d)>40)this.show(this.current+(d<0?1:-1))},{passive:true});let last=0;document.addEventListener('wheel',e=>{if(Date.now()-last>650&&Math.abs(e.deltaY)>30){last=Date.now();this.show(this.current+(e.deltaY>0?1:-1))}},{passive:true});const btn=document.getElementById('editToggle'),zone=document.querySelector('.edit-hotzone');let hide;[zone,btn].forEach(e=>{e.addEventListener('mouseenter',()=>{clearTimeout(hide);btn.classList.add('show')});e.addEventListener('mouseleave',()=>hide=setTimeout(()=>{if(!this.editing)btn.classList.remove('show')},400))});zone.onclick=btn.onclick=()=>this.toggle();this.show(0)}scale(){const s=Math.min(innerWidth/1920,innerHeight/1080);this.stage.style.transform=`translate(${(innerWidth-1920*s)/2}px,${(innerHeight-1080*s)/2}px) scale(${s})`}show(i){this.current=Math.max(0,Math.min(i,this.slides.length-1));this.slides.forEach((s,n)=>{s.classList.toggle('active',n===this.current);s.classList.toggle('visible',n===this.current);s.setAttribute('aria-hidden',String(n!==this.current))});document.getElementById('pageCount').textContent=`${this.current+1} / ${this.slides.length}`}toggle(){this.editing=!this.editing;document.querySelectorAll('[data-edit]').forEach(e=>e.contentEditable=String(this.editing));document.getElementById('editToggle').classList.toggle('active',this.editing)}save(){const blob=new Blob(['<!DOCTYPE html>\n'+document.documentElement.outerHTML],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nimbus-pitch.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}}window.deck=new SlidePresentation();
+</script></body></html>

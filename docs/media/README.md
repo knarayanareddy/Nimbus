@@ -1,7 +1,12 @@
-# Nimbus hackathon recording
+# Nimbus — hosted demo and pitch
 
-`nimbus-demo.mp4` is an actual recording of the public Evidence Lab, exported as 1280×720 H.264. It has **no voice track**; English narration is supplied as a default selectable subtitle track and the adjacent SRT. Enable subtitles in your player, or upload the SRT alongside the MP4 on the video host. Burn-in captions were unavailable in this machine's FFmpeg build (`subtitles`/`drawtext` filters absent); no synthesized screen or transaction was substituted.
+Public player/materials: https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-media.html
 
-The footage shows real historical replay, source evidence, receipt export/import, rejected tampering and the explicit captured fallback. Localnet versus devnet limitations are disclosed in the captions. This is a demo recording, not a completed founder/team presentation. Use `COLOSSEUM_SUBMISSION.md` for a separate founder presentation and actual team details.
+- `public/nimbus-demo-voiced.mp4`: actual public Evidence Lab screen recording with **synthetic macOS Samantha product narration**, aligned to eight measured scene cue windows. 137.23s, 1280×720, 30fps H.264, AAC stereo 48kHz, English selectable subtitle track, -14.0 LUFS; YouTube format check recorded zero failures/warnings.
+- `docs/media/nimbus-demo.mp4` and `public/nimbus-demo.mp4`: preserved original silent recording, not overwritten.
+- `public/nimbus-demo.srt` / `.vtt`: uploadable and browser-player captions.
+- `public/nimbus-pitch.html` / `.pdf`: seven-slide fixed 16:9 product pitch, with desktop/mobile layout gates. The HTML is locally editable (E; Ctrl/Cmd+S exports a copy); the PDF is static.
 
-Original browser recording and frame-review contact sheet are retained locally in `/Users/brightech/Documents/Nimbus_Research_20261012/`.
+No synthesized UI/transaction footage was substituted. Narration is not the founder’s voice or appearance and does not replace a required personal founder/team presentation. Exact authenticated Arena video-host restrictions were not verified; if only specific hosts are allowed, upload the supplied MP4/SRT there. The user chose to handle Arena editing and final submission.
+
+Original browser recording, narration timing/PCM files, renderer project, format checks and screenshots are retained in `/Users/brightech/Documents/Nimbus_Research_20261012/`. The speech service returned 403, so narration used native local synthesis with no external inference account or new paid plan. Burned captions remain unavailable in the installed FFmpeg filter build; the video has a selectable track and the player loads WebVTT.

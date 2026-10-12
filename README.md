@@ -8,7 +8,7 @@ Nimbus makes rainfall-policy outcomes inspectable: choose a completed historical
 
 This is not a first-ever parametric insurance product: Arbol and Etherisc are clear precedents. The narrow new contribution is a usable evidence/replay workflow around the inherited Solana prototype. See [research](docs/COLOSSEUM_RESEARCH.md), [submission](docs/COLOSSEUM_SUBMISSION.md), and [verification/limits](docs/COLOSSEUM_VERIFICATION.md).
 
-**Recorded demo:** [137-second MP4](docs/media/nimbus-demo.mp4), with default selectable English captions and [SRT](docs/media/nimbus-demo_adjusted.srt). No voice track; upload the subtitles on the chosen video host. [Recording notes](docs/media/README.md).
+**Hosted demo/presentation:** https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-media.html · [narrated MP4](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-demo-voiced.mp4) · [7-slide pitch](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-pitch.html) · [PDF](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-pitch.pdf). The real 137-second recording has selectable English captions and aligned synthetic product narration, not a founder voice/appearance. Original silent footage is preserved; see [recording notes](docs/media/README.md).
 
 ## Quick start — no wallet or API keys
 
@@ -35,7 +35,7 @@ A changed result/reading/term is rejected. This checks internal integrity, regio
 
 ```sh
 npm run lint
-npm run test:unit       # 62 tests (includes 35 inherited decoding tests)
+npm run test:unit       # 65 tests (35 inherited decoding + evidence/ingestion/IDL regressions)
 npm run test:adapter    # 6 fail-closed/version/idempotence patch tests
 npm run build
 npm run typecheck
@@ -66,7 +66,9 @@ solana-test-validator --ledger .anchor/receipt-demo --rpc-port 18999 --faucet-po
 npx --no-install ts-node --project tsconfig.offchain.json scripts/localnet-receipt.ts
 ```
 
-**Do not deploy the inherited policy program with real funds.** The attempted SBF build emitted stack-limit diagnostics (including `CreatePool` and Token-2022 dependencies) despite an exit code of zero. Full Anchor validator buy→settle integration has not been established. The public quote-signing handler intentionally returns 503 when no quote signer is configured; the hosted demo has no signer secrets, live underwriting capital or policy issuance.
+**Real local-validator policy flow was exercised:** initialize → create pool → deposit → signed buy → observation → triggered settlement, plus a non-triggered settlement. Nine program-instruction transactions were confirmed/read back; three negative controls rejected unauthorized settlement, duplicate settlement and quote replay. Actual SPL vault balance matches recorded capital after a 500 test-token payout and after zero payout. [Proof](docs/evidence/localnet-policy-proof.json) and [independent final-account snapshot](docs/evidence/localnet-policy-account-readback.json) use synthetic observations and explicitly backdated one-day test windows—not valid risk-transfer issuance or the ERA5 demo receipt. The five boxed `CreatePool` wrappers remove its owned stack violation without changing account order/constraints/stored schemas. The malformed client Quote IDL was also repaired with three real-coder regressions. **Do not deploy with real funds:** Token-2022 dependency diagnostics remain despite SBF exit 0; no audit, complete production controls or public devnet policy deployment is claimed. Hosted signing remains intentionally unconfigured (503).
+
+To reproduce the separate program flow, follow [LOCALNET_POLICY_CHECK.md](docs/LOCALNET_POLICY_CHECK.md). It refuses an existing config, validates the exact preloaded ELF and uses ephemeral test keys. The client IDL remains intentionally partial; its Quote type reference is now valid and its signed transport is covered by real Anchor-coder tests.
 
 ## Architecture
 
@@ -104,8 +106,8 @@ npm run deploy:cloudflare
 - **Basis risk:** a reanalysis grid is not rainfall or crop loss at a particular field. Historical windows can be selected with hindsight; this lab is not a valid purchased risk-transfer policy.
 - **Trust:** the weather provider and permissioned publisher remain trusted. A Memo's integrity/timestamp does not establish correct meteorology or immutable purchase-time terms.
 - **Data:** archive publication lag is enforced; missing/null/negative/duplicate/out-of-order/wrong-unit data fails closed. Commercial weather-data use requires licence review.
-- **Dependencies:** final full audit recorded **0 critical, 33 high, 15 moderate** advisories. High advisory chains remain, including legacy Solana and tooling dependencies; the original stricter security gate may therefore fail. Do not interpret a green application gate as all-clear security.
-- **Deployment:** hosted replay/verification works without secrets; the inherited policy deployment remains blocked/unverified. No mainnet funds were touched.
-- **Hackathon:** pre-existing work must be disclosed; only event-period work is judged. This repository is not proof of personal/legal/funding eligibility, and the actual Arena submission/video hosting remain separate entrant actions.
+- **Dependencies:** final full audit recorded **0 critical, 23 high, 15 moderate** advisories. High advisory chains remain, including legacy Solana and tooling dependencies; the original stricter security gate may therefore fail. Do not interpret a green application gate as all-clear security.
+- **Deployment:** hosted replay/verification works without secrets; the local program flow is tested, but public/production policy deployment and remaining control/diagnostic gaps are not cleared. No mainnet funds were touched.
+- **Hackathon:** pre-existing work must be disclosed; only event-period work is judged. This repository is not proof of personal/legal/funding eligibility, and Arena submission, personal/eligibility facts and any required founder appearance remain entrant-owned; product media is hosted. Exact form-specific video-host requirements were not verified.
 
 The original protocol and design documents remain for context; older “production-grade”, automatic settlement and decentralization claims are superseded by the current verification/limitations document.
