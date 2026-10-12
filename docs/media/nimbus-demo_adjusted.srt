@@ -1,0 +1,99 @@
+1
+00:00:01,211 --> 00:00:09,114
+Nimbus makes rainfall policy inputs
+and outcomes inspectable. This is a
+
+2
+00:00:09,114 --> 00:00:15,211
+historical, test-only prototype—not
+purchased coverage.
+
+3
+00:00:15,722 --> 00:00:23,382
+This actual ERA5 archive contains
+fourteen complete UTC days.
+
+4
+00:00:23,382 --> 00:00:32,828
+Nairobi totals 4.60 millimetres; the
+hypothetical inclusive drought trigger
+
+5
+00:00:32,828 --> 00:00:33,749
+is met.
+
+6
+00:00:33,749 --> 00:00:40,903
+Inspect the model, queried
+and grid coordinates, source URL and
+
+7
+00:00:40,903 --> 00:00:47,941
+canonical SHA-256 receipt. These
+explain the data lineage, not
+
+8
+00:00:47,941 --> 00:00:51,749
+independent weather authenticity.
+
+9
+00:00:52,031 --> 00:00:58,964
+Export the receipt, then
+independently verify its terms,
+
+10
+00:00:58,964 --> 00:01:03,376
+observations and calculated
+outcome.
+
+11
+00:01:03,376 --> 00:01:07,031
+The unchanged receipt passes.
+
+12
+00:01:07,851 --> 00:01:15,867
+An altered result is rejected. The
+verifier reconstructs the calculation
+
+13
+00:01:15,867 --> 00:01:21,851
+rather than trusting
+a number displayed by the server.
+
+14
+00:01:21,979 --> 00:01:29,544
+For reliability, a genuine captured
+archive is an explicit fallback.
+
+15
+00:01:29,544 --> 00:01:35,979
+Its label makes clear
+that it is not a fresh live request.
+
+16
+00:01:35,999 --> 00:01:42,933
+The optional Solana devnet Memo
+anchors the digest only. A real
+
+17
+00:01:42,933 --> 00:01:49,196
+localnet Memo was confirmed
+and read back; devnet funding
+
+18
+00:01:49,196 --> 00:01:52,999
+was blocked. No payout is claimed.
+
+19
+00:01:53,307 --> 00:01:58,281
+New work: replayable evidence,
+an independent verifier, a Solana
+
+20
+00:01:58,281 --> 00:02:03,412
+commitment path and accounting
+regressions. Existing protocol work
+
+21
+00:02:03,412 --> 00:02:05,307
+is disclosed separately.

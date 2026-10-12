@@ -89,7 +89,7 @@ export const IDL = {
         { name: 'systemProgram', isMut: false, isSigner: false },
       ],
       args: [
-        { name: 'quote', type: 'defined' },
+        { name: 'quote', type: { defined: 'Quote' } },
         { name: 'signature', type: { array: ['u8', 64] } },
         { name: 'ed25519IxIndex', type: 'u8' },
       ],

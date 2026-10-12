@@ -111,6 +111,9 @@ function getClientIp(request: Request): string {
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
+  if (!process.env.QUOTE_SIGNER_SECRET_KEY) {
+    return NextResponse.json({ error: 'Policy issuance is not configured on this test-only evidence deployment. Historical replay is available at /evidence.' }, { status: 503 })
+  }
 
   const allowed = await getRateLimiter().isAllowed(ip)
   if (!allowed) {

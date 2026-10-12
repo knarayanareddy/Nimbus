@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": 1,
+      "url": "https://colosseum.com/arena/hackathon",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 2,
+      "url": "https://colosseum.com/arena/resources",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 3,
+      "url": "https://github.com/knarayanareddy/Nimbus",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 4,
+      "url": "https://colosseum.com/worldsfair",
+      "title": "Crypto World's Fair Hackathon - Colosseum",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "Crypto World’s Fair is an open competition of the ideas, technologies, and communities shaping the blockchain ecosystem.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "url": "https://colosseum.com/hackathon",
+      "title": "Hackathon - Colosseum",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "Builders may use pre-existing code, but teams must disclose all relevant past development work in the submission form.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "url": "https://colosseum.com/worldsfair/resources",
+      "title": "Developer Resources | Solana Crypto World's Fair Hackathon",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 7,
+      "url": "https://colosseum.com/legal/Crypto%20World%27s%20Fair%20Hackathon%20Rules.pdf",
+      "title": "",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "The Contest Period starts at 6:00am PT on September 14, 2026 and ends at 11:59pm PT on October 12, 2026.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "title": "🏛️ Historical Weather API | Open-Meteo.com",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "Select \"ERA5\" or \"ERA5-Land\" for consistent data over multiple decades.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "url": "https://www.arbol.io/products/rainfall-risk-solutions",
+      "title": "Rainfall Risk Solutions",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "If the trigger is met, payout is calculated and delivered—automatically",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "url": "https://etherisc.com/about",
+      "title": "About | Etherisc",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "The first payments have been processed directly through the system designed and built by Etherisc in tandem with ACRE Africa and are visible on-chain.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "url": "https://nexusmutual.io/blog/solana-youre-covered",
+      "title": "Solana, You're Covered | Nexus Mutual",
+      "accessed": "2026-10-12",
+      "quotes": [
+        {
+          "text": "Nexus Mutual now supports non-EVM blockchains, and the first Solana listings are live for Kamino, Raydium, Orca, and Jupiter.",
+          "added": "2026-10-12"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "url": "https://www.swissre.com/our-business/public-sector-solutions/parametric-insurance-solutions.html",
+      "title": "Parametric insurance solutions | Swiss Re",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 13,
+      "url": "https://descartesunderwriting.com/solutions/excess-precipitation",
+      "title": "Rainfall Insurance | Parametric Excess Precipitation Solution",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 14,
+      "url": "https://opennext.js.org/cloudflare",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 15,
+      "url": "https://developers.cloudflare.com/workers/framework-guides/web-apps/opennext",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 16,
+      "url": "https://nextjs.org/docs/app/guides/content-security-policy",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 17,
+      "url": "https://solana.com/docs/intro/installation/dependencies",
+      "title": "",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 18,
+      "url": "https://sdgprivatefinance.undp.org/leveraging-capital/sdg-investor-platform/business-case-studies/acre-africa-provides-micro-insurance",
+      "title": "ACRE Africa provides micro-insurance products to strengthen farmer resilience | Private Finance for the SDGs",
+      "accessed": "2026-10-12"
+    },
+    {
+      "id": 19,
+      "url": "https://www.ctc-n.org/whats-happening/news/thailand-using-blockchain-insurance-protect-farmers-climate-shocks",
+      "title": "Thailand -Using Blockchain Insurance to Protect Farmers from Climate Shocks | Climate Technology Centre & Network | Mon, 01/12/2026",
+      "accessed": "2026-10-12"
+    }
+  ]
+}

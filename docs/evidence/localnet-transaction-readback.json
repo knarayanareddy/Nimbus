@@ -1,0 +1,64 @@
+{
+  "blockTime": 1791811777,
+  "meta": {
+    "computeUnitsConsumed": 47280,
+    "costUnits": 48346,
+    "err": null,
+    "fee": 5000,
+    "innerInstructions": [],
+    "logMessages": [
+      "Program MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr invoke [1]",
+      "Program log: Signed by B1t9tCjizp4DRk31Z5MS6f3kM41YwLa2ujR9N8uvrTrP",
+      "Program log: Memo (len 91): \"nimbus:rainfall-receipt:v1:aeab0966eb3d31af0f54464996b51a3a21e025e1190af685366d2ddf7d534a82\"",
+      "Program MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr consumed 47280 of 200000 compute units",
+      "Program MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr success"
+    ],
+    "postBalances": [
+      999995000,
+      521498880
+    ],
+    "postTokenBalances": [],
+    "preBalances": [
+      1000000000,
+      521498880
+    ],
+    "preTokenBalances": [],
+    "rewards": [],
+    "status": {
+      "Ok": null
+    }
+  },
+  "slot": 4338,
+  "transaction": {
+    "message": {
+      "accountKeys": [
+        {
+          "pubkey": "B1t9tCjizp4DRk31Z5MS6f3kM41YwLa2ujR9N8uvrTrP",
+          "signer": true,
+          "source": "transaction",
+          "writable": true
+        },
+        {
+          "pubkey": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+          "signer": false,
+          "source": "transaction",
+          "writable": false
+        }
+      ],
+      "instructions": [
+        {
+          "parsed": "nimbus:rainfall-receipt:v1:aeab0966eb3d31af0f54464996b51a3a21e025e1190af685366d2ddf7d534a82",
+          "program": "spl-memo",
+          "programId": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+          "stackHeight": 1
+        }
+      ],
+      "recentBlockhash": "86vuuBCU3kMKTepwgz5HuFYX5GYZkEksrNF7xzceNnua"
+    },
+    "signatures": [
+      "5vjzMvptdm4rVgTB2fV5wGntdVrYtStTp1jZq2mx12fTh18Z5cuivLzNUwonK37YgrrksnA383g4dH9Udmsm4UMy"
+    ]
+  },
+  "transactionIndex": 1,
+  "version": "legacy"
+}

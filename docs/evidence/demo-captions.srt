@@ -1,0 +1,31 @@
+1
+00:00:01,211 --> 00:00:15,211
+Nimbus makes rainfall policy inputs and outcomes inspectable. This is a historical, test-only prototype—not purchased coverage.
+
+2
+00:00:15,722 --> 00:00:33,722
+This actual ERA5 archive contains fourteen complete UTC days. Nairobi totals 4.60 millimetres; the hypothetical inclusive drought trigger is met.
+
+3
+00:00:33,749 --> 00:00:51,749
+Inspect the model, queried and grid coordinates, source URL and canonical SHA-256 receipt. These explain the data lineage, not independent weather authenticity.
+
+4
+00:00:52,031 --> 00:01:07,031
+Export the receipt, then independently verify its terms, observations and calculated outcome. The unchanged receipt passes.
+
+5
+00:01:07,851 --> 00:01:21,851
+An altered result is rejected. The verifier reconstructs the calculation rather than trusting a number displayed by the server.
+
+6
+00:01:21,979 --> 00:01:35,979
+For reliability, a genuine captured archive is an explicit fallback. Its label makes clear that it is not a fresh live request.
+
+7
+00:01:35,999 --> 00:01:52,999
+The optional Solana devnet Memo anchors the digest only. A real localnet Memo was confirmed and read back; devnet funding was blocked. No payout is claimed.
+
+8
+00:01:53,307 --> 00:02:05,307
+New work: replayable evidence, an independent verifier, a Solana commitment path and accounting regressions. Existing protocol work is disclosed separately.

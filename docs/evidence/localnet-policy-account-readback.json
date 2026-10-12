@@ -1,0 +1,59 @@
+{
+  "schema": "nimbus-localnet-account-readback/v1",
+  "cluster": "localnet",
+  "genesisHash": "HES534FKNDvrasnmqHJigoHJ7dKmM2j9J1rrR47Vgiz8",
+  "slot": 4323,
+  "actualBalances": {
+    "capital": "9539600000",
+    "locked": "0",
+    "vault": "9539600000",
+    "owner": "5460000000",
+    "treasury": "400000"
+  },
+  "programBinarySha256": "a3cff4d3ed5f84871db028313549a1dbbd8333fc228a6b800922658421aaa1d0",
+  "accounts": [
+    {
+      "address": "27QCphY3XdzetehmCiXEpvquKDMz8rgCCwxFJBCZqTHQ",
+      "owner": "CLiMaFi1111111111111111111111111111111111111",
+      "dataBase64": "lQicyqD8sNnWHltCm4+0G3NQXr6bLSPUHM277WLyi/HwygENT+oUOwBkPQZ9S55baJq+G0u9jjbzL72QwivcjE0acExFf/ai8WQAqiGWyzkie3tiJKFewbbBBBakzSBlGrKJi9emgq/gQg0AowIAAsOjbz6HKLmXW//qA7bc1lMVE9TjWudI0/xcp27ghR7WHltCm4+0G3NQXr6bLSPUHM277WLyi/HwygENT+oUO4BRAQCA3igAAQAAAAAAAAAAAA==",
+      "lamports": 2234160
+    },
+    {
+      "address": "4j1H4oxhoPB9g7bQoJWHFGgYNHgAjXuYSNpFPHVkBWxA",
+      "owner": "CLiMaFi1111111111111111111111111111111111111",
+      "dataBase64": "8ZptBBGxbbwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDeKABAH4C+mjgCAAAAAAAAAAAAAAAKv9+edPzkWuk04qW1SrkN+Acxdd6sMrgqPUlQdSZlXtE9tWHcRJyRdrD4GmuT/RbrhLierOKiBi04ZXOhifzRF/rMagAAAAA=",
+      "lamports": 1886160
+    },
+    {
+      "address": "EBJ6jAyV88jigZHBLQnHj23fSQQFgPWhv3P4WRLZdaoA",
+      "owner": "CLiMaFi1111111111111111111111111111111111111",
+      "dataBase64": "3ocHo+uxIUQBAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AQAAAAAAAAA3VcSY9RO0CBo5oRoU+OcZnMyZhw9d/TbUatWNG8TJU2UAAAAAAAAAAIDRymoAAAAAACPMagAAAAAAAEAfAAAAAAAAAGXNHQAAAAAALTEBAAAAAAL0AQAAAAAAAAEZ+sxqAAAAAFl838+Th21KY5Z4YivDmRk5icR4SHCS8L6E0rv6OY/aGPrMagAAAAA=",
+      "lamports": 2262000
+    },
+    {
+      "address": "9Ygvb9gFdT5iVuB6mTEoAb3R7LsHhFHQXe7bSrp7ivyP",
+      "owner": "CLiMaFi1111111111111111111111111111111111111",
+      "dataBase64": "3ocHo+uxIUQCAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AQAAAAAAAAA3VcSY9RO0CBo5oRoU+OcZnMyZhw9d/TbUatWNG8TJU2UAAAAAAAAAAIDRymoAAAAAACPMagAAAAAAAUAfAAAAAAAAAGXNHQAAAAAALTEBAAAAAAP0AQAAAAAAAAAa+sxqAAAAADimFKRb/QXFo7G58VjodwJ89Plg9hslE8epKimeJtstGvrMagAAAAA=",
+      "lamports": 2262000
+    },
+    {
+      "address": "A3A4sX4JeMXAiFxzfTVvpxCA4R2W72bVbUCrbAGhZtAq",
+      "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      "dataBase64": "ZD0GfUueW2iavhtLvY428y+9kMIr3IxNGnBMRX/2ovHWHltCm4+0G3NQXr6bLSPUHM277WLyi/HwygENT+oUOwD9cEUBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "lamports": 2039280
+    },
+    {
+      "address": "F5nnUvoW4yD2DoLziuubZqfKpbtU93JB75A4uC4QRZGU",
+      "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      "dataBase64": "ZD0GfUueW2iavhtLvY428y+9kMIr3IxNGnBMRX/2ovEGOLt8XcWkfi1kGBpcR2shOU4/RA30xZgkVNaFoGtMWYC+mjgCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "lamports": 2039280
+    },
+    {
+      "address": "CT81sF45de4vWh5G5wGCT7X6EYP8iiMxQUJCebEcfUgk",
+      "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      "dataBase64": "ZD0GfUueW2iavhtLvY428y+9kMIr3IxNGnBMRX/2ovFsH9PSZ/sxXK+O/KRDBk0k91MhdzI5+NudBOJw+NOovYAaBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "lamports": 2039280
+    }
+  ],
+  "limitation": "Exact independent current-account readback. Original confirmed instruction logs are in localnet-policy-proof.json; later historical transaction lookup returned null on this ephemeral validator."
+}

@@ -3,11 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "build:static": "EXPORT_STATIC=true next build && node scripts/generate-security-headers.js",
+    "postinstall": "node scripts/patch-opennext-preview.cjs",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "build:static": "EXPORT_STATIC=true next build --webpack && node scripts/generate-security-headers.js",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components lib --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test:adapter": "node --test scripts/patch-opennext-preview.test.cjs",
+    "test:unit": "tsc -p tsconfig.unit.json && mocha .test-build/tests/*.test.js",
+    "verify:receipt": "ts-node --project tsconfig.offchain.json scripts/verify-receipt.ts",
+    "test:e2e": "playwright test",
+    "test:rust": "cargo test --manifest-path programs/nimbus/Cargo.toml --locked",
+    "build:cloudflare": "node scripts/patch-opennext-preview.cjs && opennextjs-cloudflare build",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
+    "preview:cloudflare": "npm run build:cloudflare && wrangler dev",
+    "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "demo:receipt": "ts-node --project tsconfig.offchain.json scripts/anchor-demo-receipt.ts",
+    "demo:policy:localnet": "ts-node --project tsconfig.offchain.json scripts/localnet-policy-proof.ts",
+    "demo:receipt:localnet": "ts-node --project tsconfig.offchain.json scripts/localnet-receipt.ts",
     "test": "anchor test",
     "oracle": "ts-node --project tsconfig.offchain.json offchain/oracle-aggregator.ts",
     "monitor": "ts-node --project tsconfig.offchain.json offchain/policy-monitor.ts",
@@ -29,7 +43,7 @@
     "bs58": "^4.0.1",
     "framer-motion": "^12.41.0",
     "lucide-react": "^1.21.0",
-    "next": "14.2.35",
+    "next": "16.4.0",
     "node-fetch": "^2.7.0",
     "postgres": "^3.4.4",
     "react": "^18",
@@ -39,6 +53,8 @@
     "tweetnacl": "^1.0.3"
   },
   "overrides": {
+    "glob@^10": "10.5.0",
+    "serialize-javascript": "7.0.5",
     "@types/react": "^18",
     "ws": "^8.17.1",
     "uuid": "^9.0.1",
@@ -52,6 +68,8 @@
     "@walletconnect/core": "^2.17.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.10",
+    "@playwright/test": "1.63.0",
     "@types/bn.js": "^5.2.0",
     "@types/bs58": "^4.0.4",
     "@types/chai": "^4.3.11",
@@ -69,6 +87,7 @@
     "tailwindcss": "^3.4.19",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "4.149.0"
   }
 }

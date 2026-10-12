@@ -1,273 +1,113 @@
-# Nimbus — Parametric Climate Risk Protocol (MVP)
+# Nimbus — Verifiable Rainfall Evidence on Solana
 
-Solana-native parametric climate coverage. Buy USDC-denominated rainfall policies with
-deterministic, oracle-driven settlement — no claims, no adjusters, pure data.
+**Crypto World's Fair 2026 adaptation · test-only prototype.**
 
-| Layer | Location |
-|---|---|
-| On-chain program (Anchor/Rust) | `programs/nimbus/` |
-| Frontend (Next.js 14) | `app/` |
-| Off-chain services (oracle, settlement, monitoring) | `offchain/` |
-| Client SDK + transaction builders | `lib/` |
-| Deploy / demo scripts | `scripts/` |
-| Database schema | `db/` |
-| Full specification | `master designdoc.md` |
+**Live Evidence Lab:** https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/evidence
 
----
+Nimbus makes rainfall-policy outcomes inspectable: choose a completed historical UTC window, fetch ERA5 reanalysis, see every daily reading, replay the existing inclusive threshold logic, and export a canonical SHA-256 receipt. A separate verifier rejects altered inputs or a forged result, including when it has been re-hashed. Optional Solana **devnet Memo anchoring** commits the digest—not weather authenticity, purchased coverage or a USDC payout.
 
-## 1. Prerequisites
+This is not a first-ever parametric insurance product: Arbol and Etherisc are clear precedents. The narrow new contribution is a usable evidence/replay workflow around the inherited Solana prototype. See [research](docs/COLOSSEUM_RESEARCH.md), [submission](docs/COLOSSEUM_SUBMISSION.md), and [verification/limits](docs/COLOSSEUM_VERIFICATION.md).
 
-- **Node.js 18+** and npm
-- **Rust** + **Solana CLI** + **Anchor 0.29** (`cargo install --git https://github.com/coral-xyz/anchor avm && avm install 0.29.0 && avm use 0.29.0`)
-- A Solana wallet (Phantom) for the *buyer* role (the protocol admin is a CLI keypair)
+**Prototype walkthrough:** [Clima Protect / Nimbus player](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/clima-protect-demo.html) · [new narrated MP4](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/clima-protect-demo-v2.mp4) · [7-slide pitch](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-pitch.html) · [PDF](https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/nimbus-pitch.pdf). The 112-second continuous browser playthrough shows live archive replay, changed trigger terms, receipt verification/forgery rejection and the quote wizard. Neural ElevenLabs narration and 30 English caption cues replace the rejected native-voice cut. [Capture/review notes](docs/media/README.md); previous recordings remain archived.
 
----
+## Quick start — no wallet or API keys
 
-## 2. Install
+Use Node.js **22+** and npm. The pinned Next.js version accepts React 18; retained web3.js is intentional compatibility with the inherited Anchor/client code.
 
-```bash
-npm install
-```
-
----
-
-## 3. Deploy runbook (devnet or localnet)
-
-### 3.1 Generate your program keypair and update the program ID (one-time)
-
-The repo ships with a placeholder program ID (`CLiMaFi111…`). You must deploy with a
-keypair **you** own. Generate one and replace the placeholder in every layer:
-
-```bash
-solana-keygen new -o target/deploy/nimbus-keypair.json --no-bip39-passphrase --force
-NEW_ID=$(solana address -k target/deploy/nimbus-keypair.json)
-sed -i "s/CLiMaFi1111111111111111111111111111111111111/${NEW_ID}/g" \
-  programs/nimbus/src/lib.rs \
-  Anchor.toml \
-  lib/nimbus.ts \
-  offchain/monitoring.ts \
-  offchain/oracle-aggregator.ts \
-  offchain/policy-monitor.ts \
-  scripts/deploy.ts \
-  .env.example
-```
-
-Verify nothing references the placeholder anymore:
-
-```bash
-grep -rn "CLiMaFi" --include="*.ts" --include="*.rs" --include="*.toml" . | grep -v node_modules
-# (must print nothing)
-```
-
-### 3.2 Build
-
-```bash
-anchor build
-```
-
-This compiles the program and generates `target/idl/nimbus.json` — the IDL the offchain
-services and deploy/demo scripts load at runtime.
-
-### 3.3 Deploy the program
-
-**Option A — local validator** (fastest, unlimited SOL, great for the demo video):
-
-```bash
-# terminal 1
-anchor localnet          # starts a validator AND deploys the program
-```
-
-**Option B — devnet** (public links + contract address for the submission):
-
-```bash
-solana config set --url devnet
-solana airdrop 2         # funds ~/.config/solana/id.json (the anchor provider wallet)
-anchor deploy
-```
-
-> Devnet faucets are rate-limited (~2 SOL/request, a few per day). For the demo video,
-> Option A is zero-friction and looks identical (real transaction signatures, local chain).
-
-### 3.4 Bootstrap on-chain state (USDC mint + config + pool + capital)
-
-```bash
-SOLANA_RPC_URL=http://localhost:8899 npm run deploy   # localnet
-npm run deploy                                        # devnet (default)
-```
-
-`scripts/deploy.ts` does, in order:
-
-1. Generates keypairs under `keys/` (gitignored): `admin`, `oracle`, `quote_signer`,
-   `treasury`, `usdc_mint`.
-2. Funds `admin` + `oracle` (airdrop, devnet only).
-3. Creates the **devnet USDC mint** (6 decimals) and mints 1,000,000 USDC to the admin.
-4. `initialize_config` — sets protocol fee (1%), oracle staleness (1 day), policy duration
-   bounds, the **quote signer** and **oracle authority**.
-5. `create_pool` — Pool #1 (Rainfall, 80% LTV limit).
-6. `deposit_liquidity` — seeds 10,000 USDC of capital (required, or `buy_policy` fails the
-   LTV check).
-7. (optional) funds a buyer wallet — see §3.7.
-
-It prints a copy-paste environment block at the end.
-
-> Prefer a dry run first: `npm run deploy:dryrun` prints every address without touching a
-> cluster.
-
-### 3.5 Configure the app
-
-Create `.env.local` and paste the block printed by `npm run deploy`:
-
-```bash
-SOLANA_RPC_URL=<cluster url>
-NEXT_PUBLIC_USDC_MINT=<mint printed by deploy>
-NEXT_PUBLIC_RPC_URL=<cluster url>
-QUOTE_SIGNER_SECRET_KEY=<base58 secret printed by deploy>
-```
-
-`QUOTE_SIGNER_SECRET_KEY` is the **secret** key of `keys/quote_signer.json`; its **public**
-key was stored on-chain as `quote_signer` in `initialize_config`. The `/api/quotes/sign`
-route signs quotes with it, and `buy_policy` verifies them on-chain.
-
-### 3.6 Run the frontend
-
-```bash
+```sh
+npm ci --include=dev
 npm run dev
 ```
 
-Open http://localhost:3000. The buy flow now runs end-to-end: quote → sign → (init nonce →
-Ed25519 verify → `buy_policy`) → on-chain policy account.
+Open http://localhost:3000/evidence. Use the default Nairobi September 1–15 exclusive window. **Replay historical rainfall** calls the actual archive API. **Load captured sample** explicitly uses a genuine recorded archive and labels it; there is no silent mock/zero/forecast fallback. A wallet is not required to inspect, export or verify a receipt.
 
-### 3.7 Fund a buyer wallet
+### Receipt verification
 
-The wallet you connect in the UI needs **devnet SOL** (fees/rent) and **USDC** (premium).
+Download a receipt from the app, or use the committed captured sample:
 
-```bash
-# airdrop SOL to your wallet (devnet)
-solana airdrop 2 <your-wallet-address>     # or Phantom settings → "Request Devnet SOL"
-
-# send it 100 USDC (and 1 SOL on devnet) from the admin
-FUND_WALLET=<your-wallet-address> npm run deploy
+```sh
+npm run verify:receipt -- docs/evidence/sample-receipt.json
 ```
 
-### 3.8 Oracle + settlement
+A changed result/reading/term is rejected. This checks internal integrity, region consistency and deterministic replay; anyone can fabricate a wholly new internally consistent receipt, so this is **not independent weather authentication**. Source evidence remains a provider trust assumption.
 
-```bash
-# post today's rainfall observation for region 1 (runs once and exits)
-npm run oracle
-# specific region/date
-REGION_ID=2 DATE=2026-09-03 npm run oracle
+## Gates exercised
 
-# continuously settle matured policies owned by the oracle wallet
-npm run monitor
+```sh
+npm run lint
+npm run test:unit       # 65 tests (35 inherited decoding + evidence/ingestion/IDL regressions)
+npm run test:adapter    # 6 fail-closed/version/idempotence patch tests
+npm run build
+npm run typecheck
+npm run test:e2e        # 10 desktop/mobile flows; zero retries
+npm run test:rust       # 12 Rust host tests; NOT validator integration tests
 ```
 
-- `oracle` posts a daily `ObservationSnapshot` (fetches real rainfall from Open-Meteo and
-  calls `record_observation`).
-- `monitor` polls for matured policies and settles them.
+To exercise the same flows against the published Worker:
 
-**One-shot demo — no waiting for a window to elapse:**
-
-```bash
-npm run demo
+```sh
+NIMBUS_BASE_URL=https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev npm run test:e2e
 ```
 
-`scripts/demo-settle.ts` buys a policy with a backdated window (yesterday → today), posts
-yesterday's real rainfall, and settles it immediately — printing the buy/observe/settle
-transaction links and the final policy state. Perfect for a 2-minute demo recording.
+All 10 remote flows were observed passing, and a fresh live archive receipt from the public API was verified independently via the CLI. Tests do not manufacture live weather; synthetic fixtures are labelled in unit-test source.
 
-For normal (non-backdated) policies, settle via the **/settle** page once the window ends
-(settlement is owner-signed by design).
+## What is on Solana?
 
----
+The retained Anchor program contains policy/pool/nonce and settlement instructions. This adaptation repairs pool capital accounting when a payout occurs, with eight new checked-balance regressions. The new receipt commitment uses the deployed Solana Memo program and a connected signer; frontend anchoring refuses non-devnet genesis hashes.
 
-## 4. Environment reference
+A **real local Solana validator Memo transaction** was sent, confirmed and read back exactly. Its proof is [localnet-receipt-proof.json](docs/evidence/localnet-receipt-proof.json). **It is not a devnet transaction, deployed Nimbus policy, purchase or token payout.** The public faucet returned 429, so no devnet commitment is claimed.
 
-| Variable | Used by | Notes |
-|---|---|---|
-| `SOLANA_RPC_URL` | deploy/demo scripts | default `https://api.devnet.solana.com` |
-| `RPC_URL` | oracle, monitor | default `https://api.devnet.solana.com` |
-| `NEXT_PUBLIC_RPC_URL` | frontend | wallet + on-chain reads |
-| `NEXT_PUBLIC_USDC_MINT` | frontend (`lib/nimbus.ts`, Nav) | devnet mint you created |
-| `QUOTE_SIGNER_SECRET_KEY` | `/api/quotes/sign` | base58 secret of `keys/quote_signer.json` |
-| `QUOTE_SIGNER_ALLOW_PAST` | `/api/quotes/sign` | `true` to allow backdated windows (demo) |
-| `ORACLE_KEYPAIR_PATH` | oracle, monitor | default `./keys/oracle.json` |
-| `REGION_ID`, `DATE` | oracle | region id + `YYYY-MM-DD` override |
-| `FUND_WALLET` | deploy | buyer address to fund with USDC |
-| `SKIP_AIRDROP` | deploy/demo | `1` to skip faucet requests |
-| `REDIS_URL` | `/api/quotes/sign` rate limiter | falls back to in-memory if absent |
-| `SLACK_WEBHOOK_URL`, `PAGERDUTY_ROUTING_KEY` | monitor/alerting | optional |
+To reproduce that local proof, install the Solana CLI using its [official manual guide](https://solana.com/docs/intro/installation/dependencies), then use two terminals:
 
----
-
-## 5. Testing
-
-```bash
-anchor test          # on-chain integration suite (requires the harness in §3)
-npx tsc --noEmit     # typecheck the app
-npm run lint         # ESLint (security gate requires --max-warnings=0)
+```sh
+# A fresh task-owned ledger; default binding is loopback. Do not reset a user's existing ledger.
+solana-test-validator --ledger .anchor/receipt-demo --rpc-port 18999 --faucet-port 19010 --dynamic-port-range 21000-21040 --bind-address 127.0.0.1
+# Second terminal; creates only an ignored, generated test wallet.
+npx --no-install ts-node --project tsconfig.offchain.json scripts/localnet-receipt.ts
 ```
 
----
+**Real local-validator policy flow was exercised:** initialize → create pool → deposit → signed buy → observation → triggered settlement, plus a non-triggered settlement. Nine program-instruction transactions were confirmed/read back; three negative controls rejected unauthorized settlement, duplicate settlement and quote replay. Actual SPL vault balance matches recorded capital after a 500 test-token payout and after zero payout. [Proof](docs/evidence/localnet-policy-proof.json) and [independent final-account snapshot](docs/evidence/localnet-policy-account-readback.json) use synthetic observations and explicitly backdated one-day test windows—not valid risk-transfer issuance or the ERA5 demo receipt. The five boxed `CreatePool` wrappers remove its owned stack violation without changing account order/constraints/stored schemas. The malformed client Quote IDL was also repaired with three real-coder regressions. **Do not deploy with real funds:** Token-2022 dependency diagnostics remain despite SBF exit 0; no audit, complete production controls or public devnet policy deployment is claimed. Hosted signing remains intentionally unconfigured (503).
 
-## 6. Security & Developer Onboarding
+To reproduce the separate program flow, follow [LOCALNET_POLICY_CHECK.md](docs/LOCALNET_POLICY_CHECK.md). It refuses an existing config, validates the exact preloaded ELF and uses ephemeral test keys. The client IDL remains intentionally partial; its Quote type reference is now valid and its signed transport is covered by real Anchor-coder tests.
 
-**This project maintains a high security standard.** All contributions must pass our
-automated security gate.
+## Architecture
 
-### Security Gate (Mandatory)
-
-Every commit and PR is automatically checked for:
-
-- **A06** — High/critical dependency vulnerabilities (`npm audit --audit-level=high`)
-- **A05** — Static export security headers
-- **A09** — Linting and code quality
-- **A02** — Secret detection
-
-### Quick Setup (New Developers)
-
-```bash
-npm install
-pip install pre-commit
-pre-commit install
-./scripts/security-gate.sh
-```
-
-### Available Security Commands
-
-| Command | Description |
+| Layer | Location |
 |---|---|
-| `npm run security:audit` | Run npm audit (moderate level) |
-| `npm run security:fix` | Attempt automatic vulnerability fixes |
-| `./scripts/security-gate.sh` | Full local security gate |
-| `npm run build:static` | Build for GitHub Pages + generate headers |
+| Historical evidence, canonical hashing and replay | `lib/evidence.ts` |
+| Bounded replay / sample / verification endpoints | `app/api/evidence/` |
+| No-wallet user workflow | `app/evidence/page.tsx` |
+| Devnet-only Memo builder and confirmation | `lib/receipt-anchor.ts` |
+| Captured genuine ERA5 archive | `data/colosseum/nairobi-archive.json` |
+| Fail-closed completed-day ingestion | `lib/weather-observation.ts` |
+| Inherited Anchor program + repaired accounting | `programs/nimbus/` |
+| Browser and unit regression gates | `tests/`, `playwright.config.ts` |
 
-### CI / Automated Checks
+Dates are UTC midnight-aligned; the end is **exclusive**. Sum/Max and truncated integer Mean use hundredths of mm. Trigger enum names `LT`/`GT` preserve the inherited contract's **inclusive** `<=`/`>=` semantics. Payout arithmetic uses 6-decimal test-USDC base units. Historical replay never transfers tokens or backdates a purchase.
 
-Security Gate · CodeQL (JS/TS + Rust) · Semgrep (OWASP Top 10 + secrets) · Gitleaks ·
-Weekly full audit (Mondays 09:00 UTC).
+## Cloudflare deployment
 
----
+The current app retains actual Next server/API behavior via pinned OpenNext and Workers; it is not a screenshot companion or laptop tunnel.
 
-## 7. Troubleshooting
+```sh
+npm run build:cloudflare
+npm run cf:typegen
+npm run preview:cloudflare
+npm run deploy:cloudflare
+```
 
-| Symptom | Cause / fix |
-|---|---|
-| `anchor build` errors on program ID | Keypair not generated / `declare_id!` not updated — redo §3.1 |
-| `npm run deploy` can't find the IDL | Run `anchor build` first (generates `target/idl/nimbus.json`) |
-| "Airdrop request failed" / rate limited | Wait ~60s and retry, use `solfaucet.com`, or use `anchor localnet` |
-| "Locked exposure would exceed LTV limit" / `LtvExceeded` on buy | Pool has no capital — seed it (`npm run deploy` deposits 10k USDC) |
-| Buy fails on a missing token account | The buy flow initializes the nonce account (separate tx) then auto-creates the USDC ATA in the purchase — ensure the wallet has SOL for both |
-| `QuoteSigMissing` / `QuoteSigInvalid` | `QUOTE_SIGNER_SECRET_KEY` doesn't match the on-chain `quote_signer` — check `.env.local` |
-| `Account not found` / wrong balances | Program ID mismatch between layers — redo §3.1 and redeploy |
-| `/settle` says no matured policies | Policy window hasn't ended, or daily observations aren't posted yet (`npm run oracle`) |
-| `npm run monitor` settles nothing | Settlement is **owner-signed**; the monitor only settles policies owned by its own wallet. Other policies are settled by their owner via /settle |
-| `next build` fails fetching Google Fonts | Sandboxed/offline environments only — builds fine on Vercel/local |
+`wrangler.jsonc` targets the owner's existing account and a distinct Worker `nimbus-worldsfair-2026`. Change the non-secret account/Worker identifiers before deploying to your own account. Do not copy credentials into source or browser bundles. No R2/D1 resource or paid plan is provisioned.
 
----
+`build:cloudflare` applies a narrow, version-checked compatibility patch: OpenNext 1.20.10 omitted Next 16.4's required `preview-props.json`, producing Worker 1101. The patch checks the installed package version is exactly `1.20.10` before either patching or accepting an already-patched file, requires one unambiguous known manifest glob, and is idempotent. Six isolated synthetic-package tests exercise these fail-closed paths. A fresh checkout therefore preserves the observed fix. Fresh CSP nonces use dynamic rendering; arbitrary inline script is not allowed. Retained edge middleware is deliberate OpenNext compatibility and produces a Next deprecation warning.
 
-## 8. Reporting Security Issues
+## Honest limits
 
-Please report vulnerabilities privately to the maintainers before public disclosure.
+- **No real coverage/insurance, underwriting, audit, compliance approval or actuarial pricing claim.** Existing flat demo pricing is not risk-based pricing.
+- **Basis risk:** a reanalysis grid is not rainfall or crop loss at a particular field. Historical windows can be selected with hindsight; this lab is not a valid purchased risk-transfer policy.
+- **Trust:** the weather provider and permissioned publisher remain trusted. A Memo's integrity/timestamp does not establish correct meteorology or immutable purchase-time terms.
+- **Data:** archive publication lag is enforced; missing/null/negative/duplicate/out-of-order/wrong-unit data fails closed. Commercial weather-data use requires licence review.
+- **Dependencies:** final full audit recorded **0 critical, 23 high, 15 moderate** advisories. High advisory chains remain, including legacy Solana and tooling dependencies; the original stricter security gate may therefore fail. Do not interpret a green application gate as all-clear security.
+- **Deployment:** hosted replay/verification works without secrets; the local program flow is tested, but public/production policy deployment and remaining control/diagnostic gaps are not cleared. No mainnet funds were touched.
+- **Hackathon:** pre-existing work must be disclosed; only event-period work is judged. This repository is not proof of personal/legal/funding eligibility, and Arena submission, personal/eligibility facts and any required founder appearance remain entrant-owned; product media is hosted. Exact form-specific video-host requirements were not verified.
 
-**Security is everyone's responsibility.** The gate is designed to be helpful, not
-blocking. If it fails, fix the issue and re-run.
+The original protocol and design documents remain for context; older “production-grade”, automatic settlement and decentralization claims are superseded by the current verification/limitations document.

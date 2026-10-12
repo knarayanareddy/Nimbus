@@ -1,23 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-const isDev = process.env.NODE_ENV !== 'production'
-
-const cspDirectives = [
-  "default-src 'self'",
-  // 'wasm-unsafe-eval' required for Solana wallet adapter WASM modules (Phantom, etc.)
-  // 'unsafe-eval' allowed only in dev for Next.js hot module replacement
-  `script-src 'self' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''}`,
-  // 'unsafe-inline' required for Next.js inline style injection
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
-  "font-src 'self'",
-  // Solana RPC endpoints + WebSocket connections.
-  // In dev we also allow the local validator so `npm run dev` can point at `anchor localnet`.
-  `connect-src 'self' https://*.solana.com https://api.mainnet-beta.solana.com https://api.devnet.solana.com wss://*.solana.com${isDev ? ' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*' : ''}`,
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join('; ')
+// Security headers remain here; request-specific CSP is in middleware.ts.
 
 const nextConfig = {
   output: process.env.EXPORT_STATIC === 'true' ? 'export' : undefined,
@@ -44,7 +27,8 @@ const nextConfig = {
             { key: 'X-Content-Type-Options', value: 'nosniff' },
             { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
             { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-            { key: 'Content-Security-Policy', value: cspDirectives },
+            // Per-request nonce CSP is supplied by middleware.ts so Next's
+            // inline hydration scripts execute without allowing arbitrary inline JS.
           ],
         },
       ];

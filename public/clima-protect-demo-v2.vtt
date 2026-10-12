@@ -1,0 +1,129 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.472
+Clima Protect makes rainfall-based protection transparent,
+
+2
+00:00:02.472 --> 00:00:07.004
+from the terms you choose to a result you can verify.
+
+3
+00:00:07.004 --> 00:00:09.063
+This is the Nimbus prototype.
+
+4
+00:00:09.063 --> 00:00:12.771
+Let's go from rainfall evidence to the quote screen.
+
+5
+00:00:14.426 --> 00:00:17.247
+Start with Nairobi and a fourteen-day window.
+
+6
+00:00:17.247 --> 00:00:22.082
+Choose how rainfall is aggregated, set the threshold, and
+replay the archive.
+
+7
+00:00:22.082 --> 00:00:26.111
+Fourteen daily readings add up to four point six
+millimetres,
+
+8
+00:00:26.111 --> 00:00:28.126
+meeting the selected drought trigger.
+
+9
+00:00:31.399 --> 00:00:35.029
+Change the threshold to three millimetres and replay.
+
+10
+00:00:35.029 --> 00:00:40.021
+The weather hasn't changed, but the trigger is no longer
+met.
+
+11
+00:00:40.021 --> 00:00:44.105
+Put the original terms back, and the result returns.
+
+12
+00:00:44.105 --> 00:00:47.282
+Compare policy settings against the same evidence.
+
+13
+00:00:47.715 --> 00:00:49.302
+Open the provenance panel.
+
+14
+00:00:49.302 --> 00:00:52.477
+The model, coordinates and daily readings are visible.
+
+15
+00:00:52.477 --> 00:00:56.842
+The receipt binds them to the policy terms and calculated
+outcome.
+
+16
+00:00:56.842 --> 00:01:00.811
+Download it, and anyone can check the same result
+independently.
+
+17
+00:01:03.148 --> 00:01:05.734
+Import the receipt we just exported.
+
+18
+00:01:05.734 --> 00:01:09.180
+The verifier reconstructs the calculation and confirms it.
+
+19
+00:01:09.180 --> 00:01:13.489
+Now import an altered result, even with a recalculated
+hash.
+
+20
+00:01:13.489 --> 00:01:14.782
+It is rejected.
+
+21
+00:01:14.782 --> 00:01:18.659
+Verification goes beyond checking whether a file has
+changed.
+
+22
+00:01:20.525 --> 00:01:23.629
+Take those verified terms into policy setup.
+
+23
+00:01:23.629 --> 00:01:27.619
+The region, index, window, threshold and payout carry
+forward.
+
+24
+00:01:27.619 --> 00:01:31.167
+Step through the configuration and request a quote.
+
+25
+00:01:31.167 --> 00:01:34.271
+The prototype produces a reviewable policy summary.
+
+26
+00:01:34.984 --> 00:01:38.832
+The underlying Solana flow has also been exercised
+
+27
+00:01:38.832 --> 00:01:41.717
+from pooled liquidity and signed purchase
+
+28
+00:01:41.717 --> 00:01:44.121
+through triggered and non-triggered settlement.
+
+29
+00:01:44.121 --> 00:01:46.526
+Clima Protect connects configurable terms,
+
+30
+00:01:46.526 --> 00:01:49.892
+reproducible outcomes and receipts people can verify.

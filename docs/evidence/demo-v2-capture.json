@@ -1,0 +1,132 @@
+{
+  "schema": "clima-protect-browser-walkthrough/v2",
+  "source": "https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev",
+  "durationSeconds": 111.7,
+  "resolution": "1440x810",
+  "fps": 30,
+  "narrationProvider": "ElevenLabs",
+  "captionCues": 30,
+  "capture": "Playwright recordVideo, single continuous page recording, visible event-driven cursor/ripples and filming chapters",
+  "noScreenshotInputs": true,
+  "noApiMocks": true,
+  "evidenceRuns": [
+    {
+      "thresholdMmX100": 8000,
+      "observedMmX100": 460,
+      "triggered": true,
+      "digest": "1a7e243cc3c47194edc55b00bd58b1b0ab5ed9b97baaf050d84a2ae2d07d858d"
+    },
+    {
+      "thresholdMmX100": 300,
+      "observedMmX100": 460,
+      "triggered": false,
+      "digest": "7482a96f14bc00e9ffde3dbb67dee9384b8444e2eae994ef7525c2ffc1148f3d"
+    },
+    {
+      "thresholdMmX100": 8000,
+      "observedMmX100": 460,
+      "triggered": true,
+      "digest": "c0bded0d8a38f632b0e943987f0cb7830b74afc1d414fa94df930ffba2352a40"
+    }
+  ],
+  "downloadedDigest": "c0bded0d8a38f632b0e943987f0cb7830b74afc1d414fa94df930ffba2352a40",
+  "verification": "Actual exported receipt accepted; deliberately changed result with recomputed hash rejected by real UI/server",
+  "quote": {
+    "region": "KEN-NRB-001",
+    "direction": "LT",
+    "days": "14",
+    "threshold": "80",
+    "premium": 23,
+    "premiumAmount": 23,
+    "breakdown": {
+      "purePremium": 17,
+      "utilizationSurcharge": 5,
+      "protocolFee": 1
+    },
+    "quoteValiditySecs": 120
+  },
+  "formatCheck": {
+    "failed": 0,
+    "warnings": 0,
+    "rows": [
+      {
+        "check": "duration",
+        "status": "PASS",
+        "value": "111.70s"
+      },
+      {
+        "check": "aspect",
+        "status": "PASS",
+        "value": "16:9"
+      },
+      {
+        "check": "resolution",
+        "status": "PASS",
+        "value": "1440x810"
+      },
+      {
+        "check": "fps",
+        "status": "PASS",
+        "value": "30"
+      },
+      {
+        "check": "vfr",
+        "status": "PASS",
+        "value": "constant"
+      },
+      {
+        "check": "video codec",
+        "status": "PASS",
+        "value": "h264"
+      },
+      {
+        "check": "colour",
+        "status": "PASS",
+        "value": "bt709/bt709"
+      },
+      {
+        "check": "file size",
+        "status": "PASS",
+        "value": "10.2 MB"
+      },
+      {
+        "check": "audio",
+        "status": "PASS",
+        "value": "aac 2ch 44100Hz"
+      },
+      {
+        "check": "subtitles",
+        "status": "PASS",
+        "value": "1 (eng)"
+      },
+      {
+        "check": "loudness",
+        "status": "PASS",
+        "value": "-14.1 LUFS"
+      },
+      {
+        "check": "true peak",
+        "status": "PASS",
+        "value": "-1.8 dBTP"
+      },
+      {
+        "check": "black",
+        "status": "PASS",
+        "value": "0% black"
+      },
+      {
+        "check": "frozen",
+        "status": "PASS",
+        "value": "longest 3.7s"
+      },
+      {
+        "check": "silence",
+        "status": "PASS",
+        "value": "17% silent"
+      }
+    ]
+  },
+  "captionTiming": "Measured per-segment voice and actual action beats; clause timing proportional within clips, not phoneme alignment",
+  "scopeNotes": "No wallet purchase is made in this movie. Separately exercised local-validator policy mechanics remain backed by existing proof. Deployment/pricing/security details stay in judges notes, not repeated voice disclaimers.",
+  "editorialReview": "Independent bounded pass: no blocking factual/provenance/caption-phrase findings; non-blocking chapter-label overlap at~73/102s noted. Sampled image/text/metadata review, not soundtrack/full-motion listening approval. See docs/media/DEMO_V2_REVIEW.md."
+}

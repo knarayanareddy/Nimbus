@@ -16,6 +16,7 @@ pub mod reentrancy;
 pub mod economic_safety;
 pub mod compute;
 pub mod governance;
+mod settlement_math;
 
 use state::*;
 use constants::*;
@@ -389,7 +390,7 @@ pub mod nimbus {
         pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
 
         // Pro-rata premium refund: refund based on unused time proportion
-        // refund = premium * (window_start - now) / (window_end - window_start) 
+        // refund = premium * (window_start - now) / (window_end - window_start)
         // If cancel is before window start, full premium refund minus protocol fee
         let total_window = policy.window_end_unix
             .checked_sub(policy.window_start_unix)
@@ -582,6 +583,16 @@ pub mod nimbus {
             TriggerDirection::GreaterThan => index_value >= policy.threshold,
         };
 
+        let (ending_capital, ending_locked) = settlement_math::settle_balances(
+            pool.capital,
+            pool.locked,
+            policy.payout_amount,
+            triggered,
+        ).map_err(|error| match error {
+            settlement_math::SettlementError::InsufficientUnlockedCapital => NimbusError::InsufficientUnlockedCapital,
+            settlement_math::SettlementError::Insolvent => NimbusError::InsufficientUnlockedCapital,
+        })?;
+
         policy.observed_value = index_value;
         policy.triggered = triggered;
         policy.settled_at_unix = now;
@@ -609,8 +620,8 @@ pub mod nimbus {
             )?;
         }
 
-        // Unlock pool exposure regardless of trigger outcome
-        pool.locked = pool.locked.checked_sub(policy.payout_amount).ok_or(NimbusError::MathOverflow)?;
+        pool.capital = ending_capital;
+        pool.locked = ending_locked;
 
         emit!(PolicySettled {
             policy_id: policy.policy_id,
@@ -879,7 +890,7 @@ pub struct SetPaused<'info> {
 #[instruction(pool_id: u64)]
 pub struct CreatePool<'info> {
     #[account(seeds = [CONFIG_SEED], bump)]
-    pub config: Account<'info, GlobalConfig>,
+    pub config: Box<Account<'info, GlobalConfig>>,
 
     #[account(
         init,
@@ -888,7 +899,7 @@ pub struct CreatePool<'info> {
         seeds = [POOL_SEED, &pool_id.to_le_bytes()],
         bump
     )]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     /// CHECK: PDA only
     #[account(seeds = [VAULT_AUTH_SEED, &pool_id.to_le_bytes()], bump)]
@@ -903,7 +914,7 @@ pub struct CreatePool<'info> {
         mint::authority = vault_auth,
         mint::freeze_authority = vault_auth
     )]
-    pub lp_mint: Account<'info, Mint>,
+    pub lp_mint: Box<Account<'info, Mint>>,
 
     #[account(
         init_if_needed,
@@ -911,9 +922,9 @@ pub struct CreatePool<'info> {
         associated_token::mint = usdc_mint,
         associated_token::authority = vault_auth
     )]
-    pub pool_vault_usdc_ata: Account<'info, TokenAccount>,
+    pub pool_vault_usdc_ata: Box<Account<'info, TokenAccount>>,
 
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
 
     #[account(mut)]
     pub admin: Signer<'info>,

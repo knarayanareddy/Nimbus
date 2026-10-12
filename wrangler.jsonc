@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nimbus-worldsfair-2026",
+  "account_id": "15b7611f28f1e7f331d4b878015206fb",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-12",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "nimbus-worldsfair-2026" }],
+  "vars": { "SOLANA_RPC_URL": "https://api.devnet.solana.com", "NEXT_PUBLIC_RPC_URL": "https://api.devnet.solana.com" },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

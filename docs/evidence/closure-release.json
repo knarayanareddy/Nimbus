@@ -1,0 +1,67 @@
+{
+  "worker": "nimbus-worldsfair-2026",
+  "version": "026a0ab8-6aaa-4367-ad28-6912ddb579ad",
+  "trafficPercent": 100,
+  "observedAt": "2026-10-12T16:05:10Z",
+  "assets": [
+    {
+      "path": "/nimbus-demo-voiced.mp4",
+      "bytes": 4240808,
+      "sha256": "51e72f23f50a707e1f3826b0a6151062f6f869af508bd17ce389a1f711719eb9",
+      "exactRemoteMatch": true
+    },
+    {
+      "path": "/nimbus-pitch.pdf",
+      "bytes": 1215842,
+      "sha256": "699ff893c80b72df216f06f6dd19ca1dfe70bee287a147a984bd12ac8c8ba839",
+      "exactRemoteMatch": true
+    },
+    {
+      "path": "/nimbus-pitch.html",
+      "bytes": 15684,
+      "sha256": "48c30ad77d64dae0b18f7bfc952b82069cb5c77e01b667ecc74efa2fe09e2b39",
+      "exactRemoteMatch": true
+    },
+    {
+      "path": "/nimbus-media.html",
+      "bytes": 2652,
+      "sha256": "dbb25287fe38e8b8c7a89f2c03c256d3ce0b1e075148326008fd10c6082cb729",
+      "exactRemoteMatch": true
+    },
+    {
+      "path": "/nimbus-demo.srt",
+      "bytes": 1835,
+      "sha256": "03d459a8ad0b0a4aba6b6e47905d6081f98aa96751f4f2146df17cf30244113d",
+      "exactRemoteMatch": true
+    },
+    {
+      "path": "/nimbus-demo.vtt",
+      "bytes": 1843,
+      "sha256": "1847a4b006a5b722d5ce1eb323228c6d4fc4f1349e799302af70f470f2564ca0",
+      "exactRemoteMatch": true
+    }
+  ],
+  "checks": {
+    "typescriptUnit": 65,
+    "adapter": 6,
+    "rustHost": 12,
+    "publicEvidenceBrowserFlows": 10,
+    "mediaPlaybackViewports": 2,
+    "pitchLayoutStates": 14,
+    "pdfPages": 7,
+    "localProgramConfirmedInstructions": 9,
+    "localProgramPreflightRejections": 3,
+    "independentAccountSnapshots": 7
+  },
+  "audit": {
+    "critical": 0,
+    "high": 23,
+    "moderate": 15
+  },
+  "limits": [
+    "Token-2022 dependency compiler diagnostics remain; no clean-build/audit or production-ready claim",
+    "Local program fixture is synthetic/backdated, not coverage or external-weather authentication",
+    "No public devnet policy deployment or real funds",
+    "User handles Arena entry, personal/eligibility confirmation and final submission; no form changes made"
+  ]
+}

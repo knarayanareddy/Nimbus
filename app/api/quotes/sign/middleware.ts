@@ -10,7 +10,11 @@ const WINDOW_MS = 60_000;
 const requestLog = new Map<string, number[]>();
 
 export function rateLimit(req: NextRequest) {
-  const ip = req.ip || 'unknown';
+  // Next 16 removed NextRequest.ip. The direct-connection address is no
+  // longer exposed, so use the forwarded header a proxy sets.
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown';
   const now = Date.now();
   const timestamps = requestLog.get(ip) || [];
   
