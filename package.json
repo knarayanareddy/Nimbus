@@ -52,6 +52,8 @@
     "tweetnacl": "^1.0.3"
   },
   "overrides": {
+    "glob@^10": "10.5.0",
+    "serialize-javascript": "7.0.5",
     "@types/react": "^18",
     "ws": "^8.17.1",
     "uuid": "^9.0.1",
@@ -85,6 +87,6 @@
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5",
-    "wrangler": "4.148.0"
+    "wrangler": "4.149.0"
   }
 }
