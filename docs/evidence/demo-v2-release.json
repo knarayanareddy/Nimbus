@@ -1,0 +1,81 @@
+{
+  "worker": "nimbus-worldsfair-2026",
+  "versionId": "51f51498-19b9-436d-97f4-76738502e715",
+  "trafficPercent": 100,
+  "deployedAt": "2026-10-12T18:07:41.316704Z",
+  "assets": [
+    {
+      "path": "/clima-protect-demo-v2.mp4",
+      "bytes": 10746458,
+      "sha256": "c0e82d396a428a831c4ae939da6ff99575807553a0fad62f4701372fcfedd3e2",
+      "remoteByteMatch": true
+    },
+    {
+      "path": "/clima-protect-demo-v2.srt",
+      "bytes": 2549,
+      "sha256": "c49d7ce3f000888565effc10a7ff90fc76d1a94345143fdbe2afb5c5b80bbc1e",
+      "remoteByteMatch": true
+    },
+    {
+      "path": "/clima-protect-demo-v2.vtt",
+      "bytes": 2557,
+      "sha256": "df3a0903ca8212fc65e11485676e75b0f4a1a1f81a226453691a8a7413951974",
+      "remoteByteMatch": true
+    },
+    {
+      "path": "/clima-protect-demo.html",
+      "bytes": 6329,
+      "sha256": "60fc58d2742351d66b7af825f97525fa9db6dbcf06b41f9cf69573273bfa393e",
+      "remoteByteMatch": true
+    },
+    {
+      "path": "/nimbus-media.html",
+      "bytes": 6329,
+      "sha256": "60fc58d2742351d66b7af825f97525fa9db6dbcf06b41f9cf69573273bfa393e",
+      "remoteByteMatch": true
+    }
+  ],
+  "review": "docs/media/DEMO_V2_REVIEW.md: independent bounded pass, non-blocking label-polish note, audio/full-motion listening limits declared",
+  "durationSeconds": 111.7,
+  "captionCues": 30,
+  "narration": "ElevenLabs",
+  "previousVersion": "026a0ab8-6aaa-4367-ad28-6912ddb579ad",
+  "publicPlayerChecks": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "src": "blob:https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/020998b4-257d-4187-ae71-01612881bf0b",
+      "sourcePath": "/clima-protect-demo-v2.mp4",
+      "duration": 111.7,
+      "width": 1440,
+      "height": 810,
+      "captionTracks": 1,
+      "provider": true,
+      "overflow": false,
+      "playback": true,
+      "chapterSeek": true,
+      "cues": 30
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "src": "blob:https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/b657213e-7bce-4afa-a426-422093b51051",
+      "sourcePath": "/clima-protect-demo-v2.mp4",
+      "duration": 111.7,
+      "width": 1440,
+      "height": 810,
+      "captionTracks": 1,
+      "provider": true,
+      "overflow": false,
+      "playback": true,
+      "chapterSeek": true,
+      "cues": 30
+    }
+  ],
+  "publicAppBrowserFlowsPassed": 10,
+  "playerSeekFix": "Measured public MP4 responses ignore range requests; full bounded25MB fetch\u2192Blob permits native seeking. No global CSP relaxation, new storage resource or movie change."
+}

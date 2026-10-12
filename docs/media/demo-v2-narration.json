@@ -1,0 +1,47 @@
+{
+  "positioning": "working prototype; capability-first; no repetitive caveat narration",
+  "segments": [
+    {
+      "id": 1,
+      "text": "Clima Protect makes rainfall-based protection transparent, from the terms you choose to a result you can verify. This is the Nimbus prototype. Let's go from rainfall evidence to the quote screen.",
+      "audio": "neural-1.mp3",
+      "duration": 12.770975
+    },
+    {
+      "id": 2,
+      "text": "Start with Nairobi and a fourteen-day window. Choose how rainfall is aggregated, set the threshold, and replay the archive. Fourteen daily readings add up to four point six millimetres, meeting the selected drought trigger.",
+      "audio": "neural-2.mp3",
+      "duration": 13.699773
+    },
+    {
+      "id": 3,
+      "text": "Change the threshold to three millimetres and replay. The weather hasn't changed, but the trigger is no longer met. Put the original terms back, and the result returns. Compare policy settings against the same evidence.",
+      "audio": "neural-3.mp3",
+      "duration": 15.882449
+    },
+    {
+      "id": 4,
+      "text": "Open the provenance panel. The model, coordinates and daily readings are visible. The receipt binds them to the policy terms and calculated outcome. Download it, and anyone can check the same result independently.",
+      "audio": "neural-4.mp3",
+      "duration": 13.096054
+    },
+    {
+      "id": 5,
+      "text": "Import the receipt we just exported. The verifier reconstructs the calculation and confirms it. Now import an altered result, even with a recalculated hash. It is rejected. Verification goes beyond checking whether a file has changed.",
+      "audio": "neural-5.mp3",
+      "duration": 15.51093
+    },
+    {
+      "id": 6,
+      "text": "Take those verified terms into policy setup. The region, index, window, threshold and payout carry forward. Step through the configuration and request a quote. The prototype produces a reviewable policy summary.",
+      "audio": "neural-6.mp3",
+      "duration": 13.746213
+    },
+    {
+      "id": 7,
+      "text": "The underlying Solana flow has also been exercised from pooled liquidity and signed purchase through triggered and non-triggered settlement. Clima Protect connects configurable terms, reproducible outcomes and receipts people can verify.",
+      "audio": "neural-7.mp3",
+      "duration": 14.907211
+    }
+  ]
+}
