@@ -11,7 +11,7 @@ import { ArrowRight, Download, FileUp, FlaskConical, ShieldCheck } from 'lucide-
 type Reading = { date: string; rainMmX100: number }
 type Receipt = {
   schema: string; mode: string
-  terms: { region: { id: string; regionId: string; name: string; country: string; lat: number; lon: number }; startDate: string; endDate: string; indexMethod: 'Sum' | 'Mean' | 'Max'; direction: 'LT' | 'GT'; thresholdMmX100: number; payoutMicroUsdc: string }
+  terms: { region: { id: string; regionId: number; name: string; country: string; lat: number; lon: number }; startDate: string; endDate: string; indexMethod: 'Sum' | 'Mean' | 'Max'; direction: 'LT' | 'GT'; thresholdMmX100: number; payoutMicroUsdc: string }
   evidence: { source: string; model: string; sourceUrl: string; fetchedAt: string; latitude: number; longitude: number; gridLatitude: number; gridLongitude: number; timezone: string; unit: string; daily: Reading[]; provenance: 'live-archive' | 'captured-archive' }
   result: { observedMmX100: number; triggered: boolean; payoutMicroUsdc: string; dayCount: number }
 }
@@ -66,16 +66,18 @@ export default function EvidencePage() {
   }
 
   async function importReceipt(file?: File) {
-    if (!file) return
-    setError(''); setNotice(''); setResult(null)
+    if (!file || busy) return
+    setBusy(true)
+    setError(''); setNotice('Verifying imported receipt…')
     try {
+      if (file.size > 64_000) throw new Error('Receipt file exceeds 64000 bytes')
       const envelope = JSON.parse(await file.text())
       const response = await fetch('/api/evidence/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(envelope) })
       const data = await response.json()
       if (!response.ok || data.valid !== true) throw new Error(data.error || 'Receipt verification failed.')
       setResult(envelope); setNotice(`Receipt verified · SHA-256 ${data.digest}`)
-    } catch (err) { setError(err instanceof Error ? err.message : 'Could not verify this receipt.') }
-    finally { if (fileInput.current) fileInput.current.value = '' }
+    } catch (err) { setResult(null); setError(err instanceof Error ? err.message : 'Could not verify this receipt.') }
+    finally { setBusy(false); if (fileInput.current) fileInput.current.value = '' }
   }
 
   async function anchor() {
@@ -107,12 +109,12 @@ export default function EvidencePage() {
         <div><label className="label block mb-2" htmlFor="payoutUsdc">Hypothetical payout (test USDC)</label><input className="input" id="payoutUsdc" type="number" min="0.01" max="1000000" step="0.01" required value={form.payoutUsdc} onChange={e => update('payoutUsdc', e.target.value)} /></div>
       </div>
       <p className="text-xs text-white/40">End date is exclusive and interpreted at 00:00 UTC. Every displayed payout is hypothetical test-USDC arithmetic only.</p>
-      <div className="flex flex-wrap gap-3"><button className="btn-primary" type="submit" disabled={busy}>{busy ? 'Loading evidence…' : 'Replay historical rainfall'}</button><button className="btn-secondary" type="button" disabled={busy} onClick={loadSample}>Load captured sample</button><button className="btn-secondary inline-flex items-center gap-2" type="button" onClick={() => fileInput.current?.click()}><FileUp className="w-4 h-4" />Verify imported receipt</button><input ref={fileInput} className="sr-only" type="file" accept="application/json,.json" aria-label="Choose receipt JSON to verify" onChange={e => importReceipt(e.target.files?.[0])} /></div>
+      <div className="flex flex-wrap gap-3"><button className="btn-primary" type="submit" disabled={busy}>{busy ? 'Loading evidence…' : 'Replay historical rainfall'}</button><button className="btn-secondary" type="button" disabled={busy} onClick={loadSample}>Load captured sample</button><button className="btn-secondary inline-flex items-center gap-2" type="button" disabled={busy} onClick={() => fileInput.current?.click()}><FileUp className="w-4 h-4" />Verify imported receipt</button><input ref={fileInput} className="sr-only" type="file" accept="application/json,.json" aria-label="Choose receipt JSON to verify" onChange={e => importReceipt(e.target.files?.[0])} /></div>
     </form>
-    {(error || notice) && <div className={`mt-5 p-4 rounded-xl border text-sm ${error ? 'border-status-danger/30 bg-status-danger/10 text-status-danger' : 'border-status-active/30 bg-status-active/10 text-status-active'}`} role={error ? 'alert' : 'status'}>{error || notice}</div>}
+    {(error || notice) && <div className={`mt-5 p-4 rounded-xl border text-sm break-words ${error ? 'border-status-danger/30 bg-status-danger/10 text-status-danger' : 'border-status-active/30 bg-status-active/10 text-status-active'}`} role={error ? 'alert' : 'status'}>{error || notice}</div>}
     {result && terms && evidence && <section className="mt-8 space-y-5" aria-label="Rainfall replay result">
       <div className="card"><div className="flex flex-wrap justify-between gap-4 items-start"><div><span className="badge-muted">{evidence.provenance === 'captured-archive' ? 'Offline recorded evidence · captured archive' : 'Live historical archive reanalysis'}</span><h2 className="heading-sm text-white mt-3">{terms.region.name} · {terms.startDate} to {terms.endDate} (exclusive)</h2><p className="text-sm text-white/50 mt-2">{terms.indexMethod} index {comparison} {mm(terms.thresholdMmX100)} mm</p></div><div className="text-right"><div className={`badge ${triggered ? 'badge-triggered' : 'badge-active'}`}>{triggered ? 'Threshold met' : 'Threshold not met'}</div><div className="data-value mt-2">{mm(result.receipt.result.observedMmX100)} <span className="text-sm text-white/40">mm</span></div><div className="text-xs text-white/40">Hypothetical payout: {triggered ? usdc(result.receipt.result.payoutMicroUsdc) : '0'} test USDC</div></div></div>
-        <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Daily historical rainfall included in this receipt</caption><thead><tr className="text-white/40 border-b border-white/10"><th className="py-3 pr-4">Date (UTC)</th><th className="py-3 pr-4">Rainfall (mm)</th><th className="py-3">Contribution to index (mm)</th></tr></thead><tbody>{evidence.daily.map(day => <tr key={day.date} className="border-b border-white/[0.05]"><td className="py-3 pr-4 font-mono">{day.date}</td><td className="py-3 pr-4">{mm(day.rainMmX100)}</td><td className="py-3">{terms.indexMethod === 'Max' ? mm(result.receipt.result.observedMmX100) : terms.indexMethod === 'Mean' ? mm(Math.trunc(result.receipt.result.observedMmX100 / result.receipt.result.dayCount)) : mm(result.receipt.result.observedMmX100)}</td></tr>)}</tbody></table></div>
+        <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Daily historical rainfall included in this receipt</caption><thead><tr className="text-white/40 border-b border-white/10"><th className="py-3 pr-4">Date (UTC)</th><th className="py-3 pr-4">Rainfall (mm)</th></tr></thead><tbody>{evidence.daily.map(day => <tr key={day.date} className="border-b border-white/[0.05]"><td className="py-3 pr-4 font-mono">{day.date}</td><td className="py-3 pr-4">{mm(day.rainMmX100)}</td></tr>)}</tbody></table></div>
       </div>
       <div className="card"><h3 className="heading-sm text-white mb-4">Evidence provenance</h3><dl className="grid sm:grid-cols-2 gap-4 text-sm"><div><dt className="label">Source / model</dt><dd className="text-white/70 mt-1">{evidence.source} · {evidence.model}</dd></div><div><dt className="label">Fetched at</dt><dd className="text-white/70 mt-1">{evidence.fetchedAt}</dd></div><div><dt className="label">Queried coordinates</dt><dd className="text-white/70 mt-1 font-mono">{evidence.latitude}, {evidence.longitude}</dd></div><div><dt className="label">Grid coordinates · timezone · units</dt><dd className="text-white/70 mt-1 font-mono">{evidence.gridLatitude}, {evidence.gridLongitude} · {evidence.timezone} · {evidence.unit}</dd></div><div className="sm:col-span-2"><dt className="label">Source URL</dt><dd className="mt-1 break-all"><a className="text-nimbus-300 underline" href={evidence.sourceUrl} target="_blank" rel="noreferrer">{evidence.sourceUrl}</a></dd></div><div className="sm:col-span-2"><dt className="label">SHA-256 receipt digest</dt><dd className="text-white/80 mt-1 font-mono break-all">{result.digest}</dd></div></dl>
         <div className="mt-5 flex flex-wrap gap-3"><button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={download}><Download className="w-4 h-4" />Download receipt</button><button type="button" className="btn-secondary" onClick={anchor} disabled={!wallet.publicKey || busy}><ShieldCheck className="inline w-4 h-4 mr-2" />Anchor receipt on Solana devnet</button><Link href={buyHref} className="btn-secondary inline-flex items-center gap-2">Continue to buy settings <ArrowRight className="w-4 h-4" /></Link></div><p className="text-xs text-white/40 mt-3">Anchoring requires a connected wallet. A devnet memo records the digest only; it does not prove weather truth, purchase a policy, or authorize a payout. Buy settings are prefilled separately; historical dates are not transferred into a purchase.</p>
