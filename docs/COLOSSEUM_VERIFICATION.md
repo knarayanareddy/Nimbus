@@ -17,13 +17,18 @@
 | Devnet commitment attempt | Blocked: official faucet 429; no devnet transaction claimed |
 | Full SBF program build | BLOCKED for deployment: stack-overflow/error diagnostics in CreatePool and Token-2022 code despite process exit 0 |
 | Full Anchor validator buy→observe→settle integration | Not established; do not confuse host tests or Memo proof with this |
+| Clean-checkout reproduction | Fresh npm ci patched the pinned adapter; 62 unit tests, build, lint/typecheck and 10 browser flows passed |
+| GitHub Actions on application-source commit | Application and rust-host jobs succeeded in run `38255954305`; this gates critical advisories only, not all high advisories |
+| MP4 probe / YouTube format check | 137.23s, 1280×720, 30fps H.264, English selectable subtitle track; 0 failed checks, 1 warning (no audio) |
 | Full npm dependency audit | 0 critical, 33 high, 15 moderate; retained high advisory chains remain |
 | Authenticated Arena form / hackathon submission | Not accessed/submitted; user declined login flow |
 
 ## Exact public deployment readback
 - Worker: `nimbus-worldsfair-2026`
 - Public app: https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/evidence
-- Observed active version: `17dedd3a-64a6-4812-88ad-7a97b717339f` (wrangler deployment readback after a timed-out CLI).
+- Final observed active version: `b3aaca37-4c3c-463a-aa3d-e49d29b2ecb0`, at 100% traffic after a successful deploy and separate deployment-list readback. The final logo HTTP fetch, 10 remote desktop/mobile flows and fresh live archive receipt verification passed on this version.
+- Application source matches commit `f65e78a4419ff53f6794f77c0bd98323cba5d3ed`; subsequent commits update evidence/docs only. Both application and Rust host jobs passed in GitHub Actions run `38255954305` on that commit.
+- Intermediate working version `17dedd3a-64a6-4812-88ad-7a97b717339f` was confirmed via deployment readback after a timed-out CLI.
 - Initial version `bd93b89c-6e86-46bf-b2a6-99730078f6b0` was NOT a working deployment: every dynamic request returned Worker1101. Both local workerd and cloud logs identified `Unexpected loadManifest(/.next/server/preview-props.json)`.
 - A reproducible narrow build patch adds that required Next16.4 manifest to OpenNext1.20.10's inlining glob. Local/remote browser suites then exercised the actual workflow. No permissive CSP or fake HTTP handler replaced the app.
 
@@ -47,6 +52,6 @@
 - The repository's older executive summary and earlier event submission drafts describe past intended states. This document supersedes their readiness, timing and security claims.
 
 ## Reproducibility and truth boundaries
-The captured sample is genuine retrieved data, not synthesized rainfall; unit test transport fixtures are synthetic and labelled. Receipt integrity is internally reproducible but does not authenticate the external provider or prevent a dishonest producer from creating a new self-consistent receipt. Historical replay is not a purchased policy and its displayed payout is not evidence of a transfer. Localnet transaction signatures are real but have no public devnet explorer verification. No mainnet wallet, real USDC, paid model or paid cloud-storage resource was used.
+The captured sample is genuine retrieved data, not synthesized rainfall; unit test transport fixtures are synthetic and labelled. Receipt integrity is internally reproducible but does not authenticate the external provider or prevent a dishonest producer from creating a new self-consistent receipt. Historical replay is not a purchased policy and its displayed payout is not evidence of a transfer. Localnet transaction signatures are real but have no public devnet explorer verification. No mainnet wallet or real USDC was used; no hosted inference service, paid cloud-storage resource or new paid plan was provisioned for the app.
 
 A finite test/rehearsal establishes observed behavior, not guaranteed future uptime. The presentation should include the captured sample plus the locally playable recording if the weather provider or public platform is unavailable.

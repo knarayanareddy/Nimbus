@@ -11,7 +11,11 @@ The current event is Crypto World's Fair, an open competition across crypto ecos
 Colosseum explicitly permits pre-existing code with disclosure: “Builders may use pre-existing code, but teams must disclose all relevant past development work in the submission form.”[5] The same FAQ says only work between the competition start/end is judged.[5] Nimbus was created before this event and includes a prior Common S3nse adaptation/submission draft; those facts must be disclosed even though the owner says it was never submitted. Lack of prior submission is user-reported, not independently certified. Personal/jurisdiction/funding eligibility and the authenticated form's exact requirements remain entrant responsibilities.
 
 ## Competitive reality
-Arbol is the closest direct commercial comparator: its rainfall product describes threshold selection and automatic calculated payouts for drought/excess-rain structures.[9] Etherisc documents crop protection and historical farmer payouts visible onchain.[10] These precedents defeat claims that blockchain, rainfall thresholds or automatic weather payouts are novel.[9][10] Nexus Mutual also says its first public Solana listings are live for Kamino, Raydium, Orca and Jupiter, but this is DeFi protocol-risk cover rather than rainfall protection.[11] Nimbus must not claim “first insurance on Solana.”[11]
+Arbol is the closest direct commercial comparator: its rainfall product describes threshold selection and automatic calculated payouts for drought/excess-rain structures.[9]
+Etherisc documents crop protection and historical farmer payouts visible onchain.[10]
+These precedents defeat claims that blockchain, rainfall thresholds or automatic weather payouts are novel.[9][10]
+Nexus Mutual also says its first public Solana listings are live for Kamino, Raydium, Orca and Jupiter, but this is DeFi protocol-risk cover rather than rainfall protection.[11]
+Nimbus must not claim “first insurance on Solana.”[11]
 
 Broader alternatives researched include Swiss Re agricultural parametric products, Descartes excess-precipitation insurance, ACRE Africa index microinsurance and the UN CTCN Thailand blockchain feasibility/pilot-design project. Their respective status/capabilities are documented in the companion competitor report; a pilot design is not proof of paid live policies. No credible “nobody has built this” claim is supported by this search.
 

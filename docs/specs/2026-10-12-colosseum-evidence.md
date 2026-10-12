@@ -1,6 +1,6 @@
 # Nimbus — verifiable rainfall evidence adaptation
 
-**Status:** accepted
+**Status:** implemented (test-only evidence scope; devnet funding blocked and inherited full policy deployment unverified)
 **Owner:** Hermes / knarayanareddy
 **Date:** 2026-10-12
 
@@ -19,16 +19,16 @@ Fix paid settlement reserve bookkeeping and fail-closed weather handling, with r
 No regulated insurance offer, actuarially validated premium, decentralized weather oracle, yield/crop-loss measurement, guaranteed farmer distribution, production liquidity, bridge, added chain, mainnet transaction, hidden backdating or fabricated settlement signatures. Historical replay is not a purchased policy or a risk-price estimate.
 
 ## Acceptance criteria / gates
-- [ ] Completed historical range (1–31 days, UTC exclusive end) returns exact daily readings, provider/model/units/grid coordinates/provenance; invalid region/dates/enums/missing/null/duplicate/negative values fail closed (unit + HTTP tests).
-- [ ] Sum, truncated integer mean and max match Anchor inclusive <= / >= trigger semantics at threshold-1 / threshold / threshold+1 (unit tests).
-- [ ] A canonical receipt includes input terms, validated observations, model/units/source URL, result and version; changing one term/reading changes digest. `verify:receipt` rejects tampering (unit + CLI tests).
-- [ ] `/evidence` works without wallet and displays historical-only warning, raw days, deterministic payout, source link, digest, export, explicit cached sample fallback and buy-settings link (Playwright desktop/mobile tests).
-- [ ] Devnet Memo transaction builder binds the receipt digest and connected signer; mainnet refused; UI never reports a confirmation when RPC says error. Exercise a real devnet transaction if faucet/account funding is available; otherwise mark the live hop blocked.
-- [ ] Rust settlement helper decreases capital on payout and unlocks maximum liability once, rejects underflow/insolvency, preserving paid/no-trigger invariant (real `rustc --test` and source integration review; full Anchor suite separately recorded).
-- [ ] Existing quote/weather failure paths show an error rather than inventing premium/rainfall (unit/HTTP/browser checks).
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run build`, `npm run test:e2e` pass; all baseline routes remain; `npm audit --include=dev` has zero criticals (high advisories separately reported, not called clean).
-- [ ] README + current-event submission + provenance disclosure + 2–3 minute pitch/demo script document only exercised features, competitors, basis risk, oracle trust and remaining deployment/submission requirements.
-- [ ] Public-hosted evidence path verified if an authorized existing account is available; otherwise exact deployable artifact/runbook and explicit blocker, never call a tunnel permanent hosting.
+- [x] Completed historical range (1–31 days, UTC exclusive end) returns exact daily readings, provider/model/units/grid coordinates/provenance; invalid region/dates/enums/missing/null/duplicate/negative values fail closed (unit + HTTP tests).
+- [x] Sum, truncated integer mean and max match Anchor inclusive <= / >= trigger semantics at threshold-1 / threshold / threshold+1 (unit tests).
+- [x] A canonical receipt includes input terms, validated observations, model/units/source URL, result and version; changing one term/reading changes digest. `verify:receipt` rejects tampering (unit + CLI tests).
+- [x] `/evidence` works without wallet and displays historical-only warning, raw days, deterministic payout, source link, digest, export, explicit cached sample fallback and buy-settings link (Playwright desktop/mobile tests).
+- [x] Devnet Memo transaction builder binds the receipt digest and connected signer; mainnet refused; UI never reports a confirmation when RPC says error. Exercise a real devnet transaction if faucet/account funding is available; otherwise mark the live hop blocked.
+- [x] Rust settlement helper decreases capital on payout and unlocks maximum liability once, rejects underflow/insolvency, preserving paid/no-trigger invariant (real `rustc --test` and source integration review; full Anchor suite separately recorded).
+- [x] Existing quote/weather failure paths show an error rather than inventing premium/rainfall (unit/HTTP/browser checks).
+- [x] `npm run lint`, `npm run typecheck`, `npm run test:unit`, `npm run build`, `npm run test:e2e` pass; all baseline routes remain; `npm audit --include=dev` has zero criticals (high advisories separately reported, not called clean).
+- [x] README + current-event submission + provenance disclosure + 2–3 minute pitch/demo script document only exercised features, competitors, basis risk, oracle trust and remaining deployment/submission requirements.
+- [x] Public-hosted evidence path verified if an authorized existing account is available; otherwise exact deployable artifact/runbook and explicit blocker, never call a tunnel permanent hosting.
 
 ## Demo path (under two minutes)
 1. Open Evidence Lab; note historical/test-only label.
