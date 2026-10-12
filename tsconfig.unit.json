@@ -11,5 +11,5 @@
     "rootDir": ".",
     "outDir": ".test-build"
   },
-  "include": ["tests/deserialize.test.ts", "tests/evidence.test.ts", "tests/receipt-anchor.test.ts", "tests/weather-observation.test.ts"]
+  "include": ["tests/deserialize.test.ts", "tests/evidence.test.ts", "tests/receipt-anchor.test.ts", "tests/weather-observation.test.ts", "tests/nimbus-idl.test.ts"]
 }

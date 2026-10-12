@@ -20,6 +20,7 @@
     "preview:cloudflare": "npm run build:cloudflare && wrangler dev",
     "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "demo:receipt": "ts-node --project tsconfig.offchain.json scripts/anchor-demo-receipt.ts",
+    "demo:policy:localnet": "ts-node --project tsconfig.offchain.json scripts/localnet-policy-proof.ts",
     "demo:receipt:localnet": "ts-node --project tsconfig.offchain.json scripts/localnet-receipt.ts",
     "test": "anchor test",
     "oracle": "ts-node --project tsconfig.offchain.json offchain/oracle-aggregator.ts",

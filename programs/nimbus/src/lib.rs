@@ -890,7 +890,7 @@ pub struct SetPaused<'info> {
 #[instruction(pool_id: u64)]
 pub struct CreatePool<'info> {
     #[account(seeds = [CONFIG_SEED], bump)]
-    pub config: Account<'info, GlobalConfig>,
+    pub config: Box<Account<'info, GlobalConfig>>,
 
     #[account(
         init,
@@ -899,7 +899,7 @@ pub struct CreatePool<'info> {
         seeds = [POOL_SEED, &pool_id.to_le_bytes()],
         bump
     )]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     /// CHECK: PDA only
     #[account(seeds = [VAULT_AUTH_SEED, &pool_id.to_le_bytes()], bump)]
@@ -914,7 +914,7 @@ pub struct CreatePool<'info> {
         mint::authority = vault_auth,
         mint::freeze_authority = vault_auth
     )]
-    pub lp_mint: Account<'info, Mint>,
+    pub lp_mint: Box<Account<'info, Mint>>,
 
     #[account(
         init_if_needed,
@@ -922,9 +922,9 @@ pub struct CreatePool<'info> {
         associated_token::mint = usdc_mint,
         associated_token::authority = vault_auth
     )]
-    pub pool_vault_usdc_ata: Account<'info, TokenAccount>,
+    pub pool_vault_usdc_ata: Box<Account<'info, TokenAccount>>,
 
-    pub usdc_mint: Account<'info, Mint>,
+    pub usdc_mint: Box<Account<'info, Mint>>,
 
     #[account(mut)]
     pub admin: Signer<'info>,

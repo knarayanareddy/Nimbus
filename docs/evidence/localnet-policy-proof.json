@@ -1,0 +1,263 @@
+{
+  "schema": "nimbus-localnet-policy-proof/v1",
+  "cluster": "localnet",
+  "rpc": "http://127.0.0.1:19199",
+  "genesisHash": "HES534FKNDvrasnmqHJigoHJ7dKmM2j9J1rrR47Vgiz8",
+  "programId": "CLiMaFi1111111111111111111111111111111111111",
+  "binarySha256": "a3cff4d3ed5f84871db028313549a1dbbd8333fc228a6b800922658421aaa1d0",
+  "mint": "7kHjyQMK1xNNkkkbQdPFfYSQLpz7xeos5UwiWe2KzZ9z",
+  "config": "27QCphY3XdzetehmCiXEpvquKDMz8rgCCwxFJBCZqTHQ",
+  "pool": "4j1H4oxhoPB9g7bQoJWHFGgYNHgAjXuYSNpFPHVkBWxA",
+  "wallet": "FQq6VjuVEwMv7VMR2zLGhS5NQvdYfCW6owVxbmbNMNMG",
+  "fixture": {
+    "kind": "synthetic-localnet-regression",
+    "startUnix": "1791676800",
+    "endUnix": "1791763200",
+    "rainMmX100": 500,
+    "warning": "Backdated one-day test windows exercise inherited mechanics, not valid risk-transfer issuance or historical ERA5 authenticity"
+  },
+  "finalBalances": {
+    "capital": "9539600000",
+    "locked": "0",
+    "vault": "9539600000",
+    "owner": "5460000000",
+    "treasury": "400000"
+  },
+  "observed": {
+    "initialized": true,
+    "poolCreated": true,
+    "liquidityDeposited": true,
+    "triggeredPayoutMicroTestUsdc": "500000000",
+    "untriggeredPayout": "0",
+    "reserveAccountingMatchedVault": true,
+    "unauthorizedSettlementRejected": true,
+    "doubleSettlementRejected": true,
+    "quoteReplayRejected": true
+  },
+  "steps": [
+    {
+      "label": "initialize_config",
+      "signature": "5rppWRKZ1C4U8zrPjtb3c13oqnsmQvXXKbGu73x7MmmQtTUqtpSUFFpgssXMG6MU3pj7xrgLkESe7BpvkpZexjzD",
+      "slot": 1285,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: InitializeConfig",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 7721 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "create_pool",
+      "signature": "2sswgzeA7quSyBgB6odg8UntSQJVdXYM3EtGrv7XcdjxkB5dM8fcSumNbuRfvLfwPHtwDZ8M7kksk6LLXUmto8Bk",
+      "slot": 1286,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: CreatePool",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 214 of 383453 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [2]",
+        "Program log: Create",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 179 of 367266 compute units",
+        "Program return: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA pQAAAAAAAAA=",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: Initialize the associated token account",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 37 of 362177 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 233 of 359714 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 16510 of 375687 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 58245 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "deposit_liquidity",
+      "signature": "3fyHdWXtxh71V8sPtXAYv5upihnayuvi9Apac5G8vQ4tsj2q6g5go47zGBchmbPopm2q4KFWzPyBTfw6yDLVGRMb",
+      "slot": 1287,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: DepositLiquidity",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [2]",
+        "Program log: Create",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 179 of 380712 compute units",
+        "Program return: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA pQAAAAAAAAA=",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: Initialize the associated token account",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 37 of 375623 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [3]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 233 of 373162 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 16409 of 389055 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 354198 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 120 of 352170 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program data: 2ptKwTtCXnoBAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AOQLVAIAAAAA5AtUAgAAABf6zGoAAAAA",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 49704 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "init_quote_nonce",
+      "signature": "3Q6ExzpSw5fk5XHGD9kCsVEyjGNwWX9UPUVDyqgumbrMaubXG3QruYZi3f3MdPiNnWKskRTpz35h6TntHJG3ZVdk",
+      "slot": 1288,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: InitQuoteNonce",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 8844 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "buy_triggered_policy",
+      "signature": "48iwds1ati33DsV4H7za76iyeVUUTqDNCQqywt4LJ5HDKU78K9QJPsFRY6g6f1cwokx63VT9bP1FyG7gSiWELmvu",
+      "slot": 1289,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: BuyPolicy",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 375093 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 373103 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program data: eGT/2hAkwsABAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AQAAAAAAAAAALTEBAAAAAABlzR0AAAAAQA0DAAAAAAAY+sxqAAAAAA==",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 30057 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "record_completed_test_observation",
+      "signature": "3jCegRd8ALUit615YrRqa965PzjZfKjoWyrxoRRDLhCWiixbjzzYE9kRBjVzXuRoekoDmLJGygdQyHLE2GxwCqj5",
+      "slot": 1290,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: RecordObservation",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program data: 6fKuiw8kr8RlAAAAAAAAAACA0cpqAAAAAPQBAAAAAAAA1h5bQpuPtBtzUF6+my0j1BzNu+1i8ovx8MoBDU/qFDsZ+sxqAAAAAA==",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 9674 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "unauthorized_settlement",
+      "rejected": true,
+      "reason": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 1: custom program error: 0x1770. \nLogs: \n[\n  \"Program ComputeBudget111111111111111111111111111111 invoke [1]\",\n  \"Program ComputeBudget111111111111111111111111111111 success\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 invoke [1]\",\n  \"Program log: Instruction: SettlePolicy\",\n  \"Program log: AnchorError caused by account: policy_owner. Error Code: Unauthorized. Error Number: 6000. Error Message: Unauthorized.\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 consumed 16334 of 399850 compute units\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x1770\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.\nProgram ComputeBudget111111111111111111111111111111 invoke [1]\nProgram ComputeBudget111111111111111111111111111111 success\nProgram CLiMaFi1111111111111111111111111111111111111 invoke [1]\nProgram log: Instruction: SettlePolicy\nProgram log: AnchorError caused by account: policy_owner. Error Code: Unauthorized. Error Number: 6000. Error Message: Unauthorized.\nProgram CLiMaFi1111111111111111111111111111111111111 consumed 16334 of 399850 compute units\nProgram CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x1770"
+    },
+    {
+      "label": "settle_triggered_policy",
+      "signature": "RoDZ6xzAT7RCyUAYy1nirWsAjwsYVW7ke9p2QWxRHCCAR3GK52B1QmTKXrjd98uvgsqVudHkLi1AK8L7YN5aZhh",
+      "slot": 1291,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: SettlePolicy",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 381576 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program data: Qy2V68e4U00BAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AfQBAAAAAAAAAABlzR0AAAAAGfrMagAAAAA=",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 20853 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "double_settlement",
+      "rejected": true,
+      "reason": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 1: custom program error: 0x177c. \nLogs: \n[\n  \"Program ComputeBudget111111111111111111111111111111 invoke [1]\",\n  \"Program ComputeBudget111111111111111111111111111111 success\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 invoke [1]\",\n  \"Program log: Instruction: SettlePolicy\",\n  \"Program log: AnchorError thrown in src/lib.rs:521. Error Code: PolicyNotActive. Error Number: 6012. Error Message: Policy not active.\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 consumed 17995 of 399850 compute units\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x177c\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.\nProgram ComputeBudget111111111111111111111111111111 invoke [1]\nProgram ComputeBudget111111111111111111111111111111 success\nProgram CLiMaFi1111111111111111111111111111111111111 invoke [1]\nProgram log: Instruction: SettlePolicy\nProgram log: AnchorError thrown in src/lib.rs:521. Error Code: PolicyNotActive. Error Number: 6012. Error Message: Policy not active.\nProgram CLiMaFi1111111111111111111111111111111111111 consumed 17995 of 399850 compute units\nProgram CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x177c"
+    },
+    {
+      "label": "quote_nonce_replay",
+      "rejected": true,
+      "reason": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 2: custom program error: 0x1787. \nLogs: \n[\n  \"Program ComputeBudget111111111111111111111111111111 invoke [1]\",\n  \"Program ComputeBudget111111111111111111111111111111 success\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 invoke [1]\",\n  \"Program log: Instruction: BuyPolicy\",\n  \"Program 11111111111111111111111111111111 invoke [2]\",\n  \"Program 11111111111111111111111111111111 success\",\n  \"Program log: AnchorError thrown in src/nonce.rs:33. Error Code: NonceAlreadyUsed. Error Number: 6023. Error Message: Quote nonce already used (replay protection).\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 consumed 20198 of 399850 compute units\",\n  \"Program CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x1787\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.\nProgram ComputeBudget111111111111111111111111111111 invoke [1]\nProgram ComputeBudget111111111111111111111111111111 success\nProgram CLiMaFi1111111111111111111111111111111111111 invoke [1]\nProgram log: Instruction: BuyPolicy\nProgram 11111111111111111111111111111111 invoke [2]\nProgram 11111111111111111111111111111111 success\nProgram log: AnchorError thrown in src/nonce.rs:33. Error Code: NonceAlreadyUsed. Error Number: 6023. Error Message: Quote nonce already used (replay protection).\nProgram CLiMaFi1111111111111111111111111111111111111 consumed 20198 of 399850 compute units\nProgram CLiMaFi1111111111111111111111111111111111111 failed: custom program error: 0x1787"
+    },
+    {
+      "label": "buy_non_triggered_policy",
+      "signature": "jM1SgdiJ9tHSWVr89t1kL9JEtocu7WwgLafmKKQ3sC1bjEKg3Qxp1KxHimeMaFbt3yXFZ5uJwDYXJVRQDjJtnT1",
+      "slot": 1292,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: BuyPolicy",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 373589 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 76 of 371599 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program data: eGT/2hAkwsACAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7AQAAAAAAAAAALTEBAAAAAABlzR0AAAAAQA0DAAAAAAAa+sxqAAAAAA==",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 31561 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "label": "settle_non_triggered_policy",
+      "signature": "4npxyzCekA1wrptTxe6YVYvRG1Fp96TETiYqa1eDJDmgiwVChcgv9QjbASd2GQVAZCe2wmauoTPhyW4tWH69Eep8",
+      "slot": 1293,
+      "readbackVerified": true,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program CLiMaFi1111111111111111111111111111111111111 invoke [1]",
+        "Program log: Instruction: SettlePolicy",
+        "Program data: Qy2V68e4U00CAAAAAAAAANYeW0Kbj7Qbc1BevpstI9QczbvtYvKL8fDKAQ1P6hQ7APQBAAAAAAAAAAAAAAAAAAAAGvrMagAAAAA=",
+        "Program CLiMaFi1111111111111111111111111111111111111 consumed 18845 of 399850 compute units",
+        "Program CLiMaFi1111111111111111111111111111111111111 success"
+      ]
+    }
+  ],
+  "limitations": [
+    "Real local-validator program execution, not public devnet/mainnet deployment",
+    "Synthetic observations and backdated test issuance; no insurance, premium validation or external-weather truth",
+    "Token-2022 dependency compiler diagnostics and inherited production controls require separate review"
+  ]
+}
