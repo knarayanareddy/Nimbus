@@ -1,0 +1,148 @@
+{
+  "receipt": {
+    "schema": "nimbus-rainfall-receipt/v1",
+    "mode": "historical-replay",
+    "terms": {
+      "region": {
+        "id": "KEN-NRB-001",
+        "regionId": 1,
+        "name": "Nairobi, Kenya",
+        "country": "Kenya",
+        "lat": -1.2921,
+        "lon": 36.8219
+      },
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-15",
+      "indexMethod": "Sum",
+      "direction": "LT",
+      "thresholdMmX100": 8000,
+      "payoutMicroUsdc": "500000000"
+    },
+    "evidence": {
+      "source": "Open-Meteo Historical Weather API",
+      "model": "era5",
+      "sourceUrl": "https://archive-api.open-meteo.com/v1/archive?latitude=-1.2921&longitude=36.8219&start_date=2026-09-01&end_date=2026-09-14&daily=precipitation_sum&timezone=UTC&models=era5",
+      "fetchedAt": "2026-10-12T12:15:54.388Z",
+      "latitude": -1.2921,
+      "longitude": 36.8219,
+      "gridLatitude": -1.25,
+      "gridLongitude": 36.75,
+      "timezone": "GMT",
+      "unit": "mm",
+      "daily": [
+        {
+          "date": "2026-09-01",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-02",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-03",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-04",
+          "rainMmX100": 10
+        },
+        {
+          "date": "2026-09-05",
+          "rainMmX100": 10
+        },
+        {
+          "date": "2026-09-06",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-07",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-08",
+          "rainMmX100": 50
+        },
+        {
+          "date": "2026-09-09",
+          "rainMmX100": 0
+        },
+        {
+          "date": "2026-09-10",
+          "rainMmX100": 90
+        },
+        {
+          "date": "2026-09-11",
+          "rainMmX100": 40
+        },
+        {
+          "date": "2026-09-12",
+          "rainMmX100": 210
+        },
+        {
+          "date": "2026-09-13",
+          "rainMmX100": 40
+        },
+        {
+          "date": "2026-09-14",
+          "rainMmX100": 10
+        }
+      ],
+      "provenance": "captured-archive",
+      "rawResponse": {
+        "latitude": -1.25,
+        "longitude": 36.75,
+        "generationtime_ms": 0.09381771087646484,
+        "utc_offset_seconds": 0,
+        "timezone": "GMT",
+        "timezone_abbreviation": "GMT",
+        "elevation": 1668,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm"
+        },
+        "daily": {
+          "time": [
+            "2026-09-01",
+            "2026-09-02",
+            "2026-09-03",
+            "2026-09-04",
+            "2026-09-05",
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            0,
+            0.1,
+            0.1,
+            0,
+            0,
+            0.5,
+            0,
+            0.9,
+            0.4,
+            2.1,
+            0.4,
+            0.1
+          ]
+        }
+      },
+      "responseSha256": "cb29e12b026e6df3fa64dd4b1e6c3b2c9bf85e6e7d3b35c12b9287f098dc9fc1"
+    },
+    "result": {
+      "observedMmX100": 460,
+      "triggered": true,
+      "payoutMicroUsdc": "500000000",
+      "dayCount": 14
+    }
+  },
+  "digest": "aeab0966eb3d31af0f54464996b51a3a21e025e1190af685366d2ddf7d534a82"
+}

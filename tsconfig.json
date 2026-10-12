@@ -40,6 +40,9 @@
     "offchain",
     "programs",
     "tests",
-    "scripts"
+    "scripts",
+    "cloudflare-env.d.ts",
+    ".open-next",
+    ".test-build"
   ]
 }

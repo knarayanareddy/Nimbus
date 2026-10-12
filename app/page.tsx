@@ -70,22 +70,22 @@ function HeroSection() {
 
           {/* Headline */}
           <h1 className="heading-xl text-white mb-6 animate-slide-up">
-            Weather data crosses threshold.{' '}
-            <span className="text-gradient">USDC hits your wallet.</span>
+            Understand the trigger.{' '}
+            <span className="text-gradient">Verify the evidence.</span>
           </h1>
 
           {/* Subheadline */}
           <p className="body-lg max-w-2xl mb-10 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            Nimbus is deterministic parametric climate coverage on Solana.
-            Oracle-verified rainfall indices trigger automatic payouts.
-            No claims process. No adjusters. No waiting.
+            Nimbus makes rainfall policy outcomes inspectable on Solana.
+            Replay completed historical data, export a tamper-evident receipt,
+            and distinguish deterministic math from oracle trust. Test-only prototype.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <Link href="/buy" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
-              <Shield className="w-4 h-4" />
-              Buy Cover
+            <Link href="/evidence" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
+              <FlaskConical className="w-4 h-4" />
+              Replay Rainfall
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/evidence" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
@@ -139,8 +139,8 @@ function HowItWorksSection() {
     },
     {
       number: '04',
-      title: 'Automatic settlement',
-      description: 'When the observation window ends, the oracle index is checked against your threshold. If triggered, USDC is sent to your wallet automatically.',
+      title: 'Owner-triggered settlement',
+      description: 'After the window ends, the owner submits a settlement transaction; authenticated observations determine the outcome.',
       icon: Zap,
     },
   ]
@@ -153,8 +153,8 @@ function HowItWorksSection() {
             How Nimbus works
           </h2>
           <p className="body-lg max-w-2xl mx-auto">
-            Four steps from coverage selection to automatic payout.
-            No claims. No human decision. Pure data.
+            Historical replay, inspectable data and deterministic arithmetic.
+            Actual policy settlement is a separate owner-signed test protocol path.
           </p>
         </div>
 
@@ -188,7 +188,7 @@ function MechanicsVisualization() {
             <span className="label text-nimbus-400 mb-4 block">Parametric Mechanics</span>
             <h2 className="heading-lg text-white mb-6">
               Index crosses threshold.<br />
-              <span className="text-gradient">Payout is automatic.</span>
+              <span className="text-gradient">Outcome is deterministic.</span>
             </h2>
             <p className="body-md mb-8">
               Unlike traditional insurance, Nimbus uses objective weather data indices.
@@ -265,17 +265,17 @@ function MechanicsVisualization() {
 
 function TrustSection() {
   const stats = [
-    { value: '83', label: 'On-chain safety checks', icon: Lock },
-    { value: 'Ed25519', label: 'Quote signature verification', icon: Shield },
-    { value: 'M-of-N', label: 'Multisig governance', icon: Vote },
-    { value: 'Auto', label: 'Deterministic settlement', icon: Zap },
+    { value: 'SHA-256', label: 'Canonical receipt integrity', icon: Lock },
+    { value: 'ERA5', label: 'Historical source lineage', icon: Shield },
+    { value: 'UTC', label: 'Explicit observation windows', icon: Timer },
+    { value: 'Replay', label: 'Inclusive deterministic triggers', icon: Zap },
   ]
 
   const features = [
-    { name: 'Oracle-verified rainfall', desc: 'Daily Open-Meteo data, validated on-chain at settlement' },
-    { name: 'OWASP Hardened', desc: 'Full security audit with validated deserialization' },
-    { name: 'USDC Native', desc: 'All premiums and payouts in stablecoin' },
-    { name: 'Open Source', desc: 'Fully verifiable on-chain program code' },
+    { name: 'Historical reanalysis', desc: 'Raw daily data and exact queried/grid coordinates' },
+    { name: 'Prototype, not audited', desc: 'Reproducible tests; independent audit still required' },
+    { name: 'Test tokens only', desc: 'No real money or coverage is offered by this demo' },
+    { name: 'Open source', desc: 'Inspect the evidence engine and inherited Anchor code' },
   ]
 
   return (
@@ -330,15 +330,15 @@ function CTASection() {
           <div className="relative z-10">
             <Cloud className="w-12 h-12 text-nimbus-400 mx-auto mb-6 animate-float" />
             <h2 className="heading-lg text-white mb-4">
-              Ready to protect against climate risk?
+              Ready to inspect the evidence?
             </h2>
             <p className="body-lg max-w-xl mx-auto mb-8">
-              Coverage from as little as 5 USDC. Payouts within seconds of trigger.
-              Connect your Phantom, Backpack, or Solflare wallet to begin.
+              Reproduce the rainfall trigger without a wallet. Historical replay
+              is hypothetical; it is not purchased coverage or a guaranteed payout.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/buy" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
-                Get Coverage Now
+              <Link href="/evidence" className="btn-primary inline-flex items-center justify-center gap-2 text-base">
+                Open Evidence Lab
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/pools" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
@@ -378,7 +378,7 @@ function Footer() {
 
           {/* Legal */}
           <p className="text-xs text-white/20">
-            Nimbus provides parametric risk coverage, not traditional insurance.
+            Nimbus is a test-only hackathon prototype. Historical replay is not insurance or purchased coverage.
           </p>
         </div>
       </div>

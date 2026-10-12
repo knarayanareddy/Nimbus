@@ -36,3 +36,4 @@ playwright-report/
 playwright/.auth/
 .open-next/
 .wrangler/
+cloudflare-env.d.ts

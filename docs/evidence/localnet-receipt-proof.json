@@ -1,0 +1,12 @@
+{
+  "cluster": "localnet",
+  "rpc": "http://127.0.0.1:18999",
+  "genesisHash": "BLNdJzUfo6oqq7iL9viUrYUam59xYXYMP5DJoWTATG7G",
+  "signature": "67CBYZVrEideMzCM9PYKmtZESsMqeT8mvUm4ZD4hFLBNwhLiMN9SdjSgmuSQKgmDDKd7UCcFSDL1Rk9nH4YWsTW7",
+  "slot": 1335,
+  "signer": "Ftn1k5CKbtoVPhQSWuwPhyF6vhnCQShwmo7X8sRYtcNZ",
+  "digest": "aeab0966eb3d31af0f54464996b51a3a21e025e1190af685366d2ddf7d534a82",
+  "memoProgram": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+  "readbackVerified": true,
+  "limitation": "Real transaction on local Solana validator; NOT a devnet deployment or policy purchase/payout"
+}
