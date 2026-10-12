@@ -1,6 +1,6 @@
 # Nimbus competitor and chain-selection brief
 
-**Research snapshot:** 12 October 2026.  
+**Research snapshot:** 12 October 2026.
 **Scope:** Nimbus is described as a Solana-native USDC parametric rainfall/drought policy product with deterministic oracle settlement. This brief compares direct climate-risk competitors, adjacent insurance/onchain precedents, conventional agricultural products, and chain fit. It does not validate Nimbus' actual implementation; the repo's README-level description should not be confused with tested product capability.
 
 ## Executive take

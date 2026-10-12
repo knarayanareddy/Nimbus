@@ -38,6 +38,10 @@ A real historical archive was fetched and replayed (Nairobi September 1–14: 46
 ## Research artifacts
 Detailed competitor report and official-rule report are retained in the local research directory `/Users/brightech/Documents/Nimbus_Research_20261012/`. Its ledger, source captures, exact quotes and baseline/adaptation audit outputs are evidence artifacts; current submission text distinguishes old and new work. The public app's runtime result must be checked separately from a successful deployment command.
 
+## Historical source attributions and registration
+
+The new synthesis uses its own source ledger; companion competitor/rules reports retain independent numbered bibliographies. Do not mix their source numbers. The complete quoted source texts, current legal rules, baseline audit and public runtime receipts are retained in the local research directory. Public vendor claims are attributed rather than treated as independent sales/performance evidence.
+
 ## Sources
 
 [4] https://colosseum.com/worldsfair — Crypto World's Fair Hackathon - Colosseum
