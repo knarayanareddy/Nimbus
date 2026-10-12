@@ -106,6 +106,7 @@ function BuyFlowContent() {
   const [txState, setTxState] = useState<TxState>('idle')
   const [txMessage, setTxMessage] = useState('')
   const [txSignature, setTxSignature] = useState<string | undefined>(undefined)
+  const [quoteError, setQuoteError] = useState('')
 
   const syncURL = useCallback(() => {
     const params = new URLSearchParams()
@@ -137,16 +138,21 @@ function BuyFlowContent() {
 
   const calculateQuote = async () => {
     setIsCalculating(true)
+    setQuoteError('')
     try {
-      const res = await fetch(`/api/quotes/calculate?region=${region}&direction=${direction}&days=${days}&threshold=${threshold}&payout=${payout}`)
+      const res = await fetch(`/api/quotes/calculate?region=${encodeURIComponent(region)}&direction=${direction}&days=${days}&threshold=${threshold}&payout=${payout}`)
       const data = await res.json()
-      setPremium(data.premium ?? data.premiumAmount ?? 23.63)
+      if (!res.ok) throw new Error(data.error || `Quote request failed (${res.status})`)
+      const amount = data.premium ?? data.premiumAmount
+      const parsed = typeof amount === 'number' ? amount : Number(amount)
+      if (!Number.isFinite(parsed) || parsed <= 0) throw new Error('Quote service returned an invalid premium.')
+      setPremium(parsed)
       setQuoteCountdown(120)
       setStep(6)
-    } catch {
-      setPremium(23.63)
-      setQuoteCountdown(120)
-      setStep(6)
+    } catch (err) {
+      setPremium(null)
+      setQuoteCountdown(null)
+      setQuoteError(err instanceof Error ? err.message : 'Unable to calculate a quote.')
     } finally {
       setIsCalculating(false)
     }
@@ -451,6 +457,8 @@ function BuyFlowContent() {
             <p className="text-sm text-white/40 mb-6">
               Define when your coverage triggers and how much you receive.
             </p>
+            <p className="text-xs text-white/40 mb-6">Demo flat, non-actuarial pricing only; the displayed value is not a risk-based premium estimate.</p>
+            {quoteError && <p className="text-sm text-status-danger mb-4" role="alert">{quoteError}</p>}
 
             <div className="space-y-6">
               <div className="card p-6">
@@ -597,7 +605,7 @@ function BuyFlowContent() {
               <div className="border-t border-white/[0.06] pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="label">Premium</div>
+                <div className="label">Demo flat, non-actuarial premium</div>
                     <div className="font-mono text-3xl font-bold text-white mt-1">{premium.toFixed(2)} <span className="text-lg text-white/40">USDC</span></div>
                   </div>
                   <div className="text-right">
@@ -611,11 +619,7 @@ function BuyFlowContent() {
             {/* Irreversibility notice */}
             <div className="mt-4 p-3 bg-surface-2 rounded-xl flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-status-triggered mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-white/40">
-                This action is irreversible. Purchasing this policy will deduct {premium.toFixed(2)} USDC
-                from your wallet and create an on-chain policy account. Settlement is automatic and deterministic.
-                This is not traditional insurance.
-              </p>
+              <p className="text-xs text-white/40">Demo settlement is owner-signed, not automatic or guaranteed. This action is irreversible. Purchasing this policy deducts {premium.toFixed(2)} USDC from your wallet and creates an on-chain policy account. This is not traditional insurance.</p>
             </div>
 
             <div className="flex justify-between mt-8">

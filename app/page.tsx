@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Nav from '../components/Nav'
-import { Cloud, Zap, Shield, BarChart3, Droplets, ArrowRight, CheckCircle2, Database, Lock, Timer, Vote } from 'lucide-react'
+import { Cloud, Zap, Shield, BarChart3, Droplets, ArrowRight, CheckCircle2, Database, Lock, Timer, Vote, FlaskConical } from 'lucide-react'
 
 function RainParticles() {
   // Deterministic pseudo-random (seeded) so SSR + hydration render identical
@@ -88,10 +88,12 @@ function HeroSection() {
               Buy Cover
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/pools" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
-              <Droplets className="w-4 h-4" />
-              View Pools
+            <Link href="/evidence" className="btn-secondary inline-flex items-center justify-center gap-2 text-base">
+              <FlaskConical className="w-4 h-4" />
+              Explore the Evidence Lab
+              <ArrowRight className="w-4 h-4" />
             </Link>
+
           </div>
 
           {/* Trust line */}

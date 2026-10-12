@@ -9,6 +9,7 @@ import { Cloud, Menu, X, Droplets, Shield, BarChart3, Scale, Vote } from 'lucide
 
 const NAV_LINKS = [
   { href: '/buy', label: 'Buy Cover', icon: Shield },
+  { href: '/evidence', label: 'Evidence Lab', icon: Cloud },
   { href: '/portfolio', label: 'Portfolio', icon: BarChart3 },
   { href: '/pools', label: 'Underwrite', icon: Droplets },
   { href: '/settle', label: 'Settle', icon: Scale },
