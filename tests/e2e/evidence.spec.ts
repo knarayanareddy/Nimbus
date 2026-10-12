@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { createHash } from 'node:crypto'
-import { canonicalJson } from '../../lib/evidence'
+import { canonicalJson, verifyReceipt } from '../../lib/evidence'
+import { readFileSync } from 'node:fs'
 
 test('captured sample, receipt export/import and buy handoff work without a wallet', async ({ page, isMobile }) => {
   const errors: string[] = []
@@ -14,11 +15,29 @@ test('captured sample, receipt export/import and buy handoff work without a wall
   await expect(page.getByText('Offline recorded evidence · captured archive sample. This is not a live replay.')).toBeVisible()
   await expect(page.getByRole('row')).toHaveCount(15)
   await expect(page.getByRole('button', { name: 'Anchor receipt on Solana devnet' })).toBeDisabled()
+  await page.evaluate(() => {
+    const revoked: string[] = []
+    Object.defineProperty(window, '__nimbusRevokedUrls', { value: revoked })
+    const original = URL.revokeObjectURL.bind(URL)
+    URL.revokeObjectURL = url => { revoked.push(url); original(url) }
+  })
+  await page.clock.install()
   const downloadEvent = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Download receipt' }).click()
   const download = await downloadEvent
   const path = await download.path()
   expect(path).toBeTruthy()
+  expect(await download.failure()).toBeNull()
+  const exported = JSON.parse(readFileSync(path!, 'utf8'))
+  expect(verifyReceipt(exported).digest).toBe(exported.digest)
+  expect(download.suggestedFilename()).toBe(`nimbus-receipt-${exported.digest.slice(0, 12)}.json`)
+  const pendingLink = page.locator('a[download][href^="blob:"]')
+  await expect(pendingLink).toHaveCount(1)
+  const blobUrl = await pendingLink.getAttribute('href')
+  expect(await page.evaluate(() => (window as unknown as { __nimbusRevokedUrls: string[] }).__nimbusRevokedUrls)).toEqual([])
+  await page.clock.fastForward(60_001)
+  await expect(pendingLink).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { __nimbusRevokedUrls: string[] }).__nimbusRevokedUrls)).toEqual([blobUrl])
   await page.getByLabel('Choose receipt JSON to verify').setInputFiles(path!)
   await expect(page.getByRole('status')).toContainText('Receipt verified')
   const link = page.getByRole('link', { name: 'Continue to buy settings' })

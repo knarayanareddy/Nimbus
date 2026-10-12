@@ -62,7 +62,15 @@ export default function EvidencePage() {
   function download() {
     if (!result) return
     const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `nimbus-receipt-${result.digest.slice(0, 12)}.json`; link.click(); URL.revokeObjectURL(url)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url; link.download = `nimbus-receipt-${result.digest.slice(0, 12)}.json`
+    link.style.display = 'none'; document.body.appendChild(link)
+    try { link.click() }
+    finally {
+      // Allow the browser to consume the download before releasing its URL.
+      window.setTimeout(() => { URL.revokeObjectURL(url); link.remove() }, 60_000)
+    }
   }
 
   async function importReceipt(file?: File) {

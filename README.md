@@ -36,6 +36,7 @@ A changed result/reading/term is rejected. This checks internal integrity, regio
 ```sh
 npm run lint
 npm run test:unit       # 62 tests (includes 35 inherited decoding tests)
+npm run test:adapter    # 6 fail-closed/version/idempotence patch tests
 npm run build
 npm run typecheck
 npm run test:e2e        # 10 desktop/mobile flows; zero retries
@@ -95,7 +96,7 @@ npm run deploy:cloudflare
 
 `wrangler.jsonc` targets the owner's existing account and a distinct Worker `nimbus-worldsfair-2026`. Change the non-secret account/Worker identifiers before deploying to your own account. Do not copy credentials into source or browser bundles. No R2/D1 resource or paid plan is provisioned.
 
-`build:cloudflare` applies a narrow, version-checked compatibility patch: OpenNext 1.20.10 omitted Next 16.4's required `preview-props.json`, producing Worker 1101. The patch expands the manifest glob, is idempotent, and fails if upstream code changes. A fresh checkout therefore preserves the observed fix. Fresh CSP nonces use dynamic rendering; arbitrary inline script is not allowed. Retained edge middleware is deliberate OpenNext compatibility and produces a Next deprecation warning.
+`build:cloudflare` applies a narrow, version-checked compatibility patch: OpenNext 1.20.10 omitted Next 16.4's required `preview-props.json`, producing Worker 1101. The patch checks the installed package version is exactly `1.20.10` before either patching or accepting an already-patched file, requires one unambiguous known manifest glob, and is idempotent. Six isolated synthetic-package tests exercise these fail-closed paths. A fresh checkout therefore preserves the observed fix. Fresh CSP nonces use dynamic rendering; arbitrary inline script is not allowed. Retained edge middleware is deliberate OpenNext compatibility and produces a Next deprecation warning.
 
 ## Honest limits
 

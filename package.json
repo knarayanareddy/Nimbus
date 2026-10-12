@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint app components lib --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "test:adapter": "node --test scripts/patch-opennext-preview.test.cjs",
     "test:unit": "tsc -p tsconfig.unit.json && mocha .test-build/tests/*.test.js",
     "verify:receipt": "ts-node --project tsconfig.offchain.json scripts/verify-receipt.ts",
     "test:e2e": "playwright test",

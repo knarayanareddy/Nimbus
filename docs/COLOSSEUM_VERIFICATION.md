@@ -4,6 +4,7 @@
 
 | Check | Actual observed result |
 |---|---|
+| OpenNext compatibility patch regression | 6 passed, 0 failed; pre-fix run had 4 failures proving missing version/ambiguity guards; mismatched/already-patched/missing/changed/ambiguous package inputs now fail closed without writes |
 | TypeScript unit/decoding/evidence/ingestion/transaction-builder tests | 62 passed, 0 failed |
 | Inclusive comparator mutation | Replacing <= with < in isolated compiled output caused 3 actual boundary-test failures; restored evidence suite passed 20/20 |
 | Rust host tests after settlement accounting integration | 12 passed, 0 failed (1 id + 3 inherited property + 8 new balance tests) |
@@ -26,8 +27,9 @@
 ## Exact public deployment readback
 - Worker: `nimbus-worldsfair-2026`
 - Public app: https://nimbus-worldsfair-2026.hermes-cf-bot.workers.dev/evidence
-- Final observed active version: `b3aaca37-4c3c-463a-aa3d-e49d29b2ecb0`, at 100% traffic after a successful deploy and separate deployment-list readback. The final logo HTTP fetch, 10 remote desktop/mobile flows and fresh live archive receipt verification passed on this version.
-- Application source matches commit `f65e78a4419ff53f6794f77c0bd98323cba5d3ed`; subsequent commits update evidence/docs only. Both application and Rust host jobs passed in GitHub Actions run `38255954305` on that commit.
+- Final observed active version: `0d8e1363-d5ce-4c50-8b93-8e12cec50439`, at 100% traffic after a successful deploy and separate deployment-list readback. All 10 strengthened remote desktop/mobile flows and fresh live archive receipt verification passed on this version, including actual exported receipt integrity and delayed cleanup.
+- Previous working version `b3aaca37-4c3c-463a-aa3d-e49d29b2ecb0` passed the logo HTTP fetch and original 10 remote flows before the bounded review follow-up.
+- Previous application checkpoint `f65e78a4419ff53f6794f77c0bd98323cba5d3ed` passed both application and Rust host jobs in GitHub Actions run `38255954305`. The subsequent bounded review fix adds an explicit adapter guard and deferred receipt-download cleanup with regression gates.
 - Intermediate working version `17dedd3a-64a6-4812-88ad-7a97b717339f` was confirmed via deployment readback after a timed-out CLI.
 - Initial version `bd93b89c-6e86-46bf-b2a6-99730078f6b0` was NOT a working deployment: every dynamic request returned Worker1101. Both local workerd and cloud logs identified `Unexpected loadManifest(/.next/server/preview-props.json)`.
 - A reproducible narrow build patch adds that required Next16.4 manifest to OpenNext1.20.10's inlining glob. Local/remote browser suites then exercised the actual workflow. No permissive CSP or fake HTTP handler replaced the app.
@@ -40,6 +42,11 @@
 5. Receipt import unmounted the result panel, collapsing page height while mobile was scrolled. It now retains the prior result while verifying, rejects failed imports, and breaks long digest/status words.
 6. Original production CSP blocked framework inline hydration. Dynamic request nonces preserve a restricted script policy; tests validate nonce changes and working interactions. Exact vendor font domains are allowed for inherited wallet CSS.
 7. Existing Next upgrade PR was reused then moved to 16.4.0 with regression checks; new artifacts do not imply all dependency vulnerabilities are gone.
+
+## Bounded late-review follow-up
+A read-only delegated review identified a real missing installed-version check in the OpenNext patch and a possible browser URL-revocation race (not reproduced as a failed user download). The patch now checks exact `1.20.10` metadata before both modification and idempotent acceptance, and rejects ambiguous source patterns. Six tests execute the real script on isolated synthetic package trees; four failed before the repair and all six passed after it.
+
+Receipt export now attaches a hidden download link and delays URL/link cleanup for 60 seconds. Desktop/mobile Chromium tests verify the actual downloaded file, canonical receipt digest and filename, then use a virtual clock to assert the real cleanup callback runs. An initial test-only blob fetch was blocked by existing `connect-src`; that invalid probe was replaced with cleanup observation, not a relaxed CSP. No cross-browser/Safari certification or comprehensive audit is claimed.
 
 ## Still blocks real policy deployment or production use
 - SBF stack diagnostics must be eliminated and the complete program loaded/exercised on a validator before policy deployment can be called ready.
